@@ -43,10 +43,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full">
       <aside className="relative hidden w-[45%] shrink-0 overflow-hidden border-r border-border lg:flex">
-        <img
-          src="/hero-bg.jpg"
-          alt="Imperpoços engenharia em impermeabilização"
-          className="absolute inset-0 h-full w-full object-cover"
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full"
+          style={{
+            background: 'linear-gradient(160deg, #3d6e8c 0%, #1a2a3a 50%, #2a4a6a 100%)',
+          }}
         />
         <div
           aria-hidden="true"

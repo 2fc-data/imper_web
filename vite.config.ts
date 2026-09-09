@@ -13,20 +13,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       devOptions: { enabled: true, suppressWarnings: true },
       includeAssets: ['favicon_imper.webp'],
-      manifest: {
-        name: 'Imperpoços | Painel',
-        short_name: 'Imperpoços',
-        description: 'Impermeabilização em Poços de Caldas/MG',
-        theme_color: '#eff0f1',
-        background_color: '#eff0f1',
-        display: 'standalone',
-        start_url: '/login',
-        scope: '/',
-        icons: [
-          { src: 'favicon_imper.webp', sizes: '192x192', type: 'image/webp', purpose: 'any maskable' },
-          { src: 'favicon_imper.webp', sizes: '512x512', type: 'image/webp', purpose: 'any maskable' },
-        ],
-      },
+      manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
         navigateFallback: '/index.html',
