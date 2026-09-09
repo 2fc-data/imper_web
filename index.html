@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f5f7fa" />
+    <meta
+      name="description"
+      content="Imperpoços — impermeabilização de piscinas, lajes e paredes em Poços de Caldas/MG. Há 33 anos protegendo sua construção contra infiltração."
+    />
+    <link rel="icon" href="/favicon_imper.webp" type="image/webp" />
+    <title>Imperpoços | Impermeabilização em Poços de Caldas/MG</title>
+    <!--
+      ╔══════════════════════════════════════════════════════════════╗
+      ║  DIRECTION: INDUSTRIAL BLUE                                 ║
+      ║  Professional engineering credibility — steel, precision,   ║
+      ║  and reliability as visual metaphors for waterproofing.     ║
+      ║                                                            ║
+      ║  Palette:                                                  ║
+      ║    Steel Blue  #3d6e8c  (primary — trust, professionalism) ║
+      ║    Amber       #c48a2a  (accent — energy, CTA contrast)    ║
+      ║    Cool Slate  #e8eaef  (secondary — neutrality, balance)  ║
+      ║    Deep Navy   #1a2a3a  (dark text, depth)                 ║
+      ║    Off White   #f5f7fa  (background — clean, technical)    ║
+      ║                                                            ║
+      ║  Typography: Plus Jakarta Sans (headings) + Inter (body)   ║
+      ║  Materials: Clean surfaces, steel textures, precision      ║
+      ║  Motion: Smooth scroll with cool color shifts              ║
+      ║  Mode: Light + Dark                                        ║
+      ╚══════════════════════════════════════════════════════════════╝
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("imper-theme");
+          var dark =
+            saved === "dark" ||
+            (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
