@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
 import { BackToLogin } from '../components/auth/BackToLogin';
 import Turnstile from '../components/Turnstile';
+import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -95,9 +96,8 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="senha">Senha</Label>
-              <Input
+              <PasswordInput
                 id="senha"
-                type="password"
                 required
                 minLength={6}
                 autoComplete="new-password"

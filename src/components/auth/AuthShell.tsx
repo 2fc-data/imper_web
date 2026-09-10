@@ -8,16 +8,16 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-full">
       <aside className="relative hidden w-[45%] shrink-0 overflow-hidden border-r border-border bg-primary/70 lg:flex">
         <div className="relative z-10 flex flex-col p-10">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-primary font-serif">
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-primary-foreground font-serif">
             Imperpoços
           </p>
 
           <div className="mt-auto space-y-6">
-            <h1 className="max-w-md text-4xl font-bold leading-tight tracking-tight font-serif">
+            <h1 className="max-w-md text-4xl font-bold leading-tight tracking-tight text-primary-foreground font-serif">
               Engenharia que protege onde a água ataca.
             </h1>
 
-            <div className="flex items-center gap-3 text-sm">
+            <div className="flex items-center gap-3 text-sm text-primary-foreground">
               <span
                 aria-hidden="true"
                 className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary"

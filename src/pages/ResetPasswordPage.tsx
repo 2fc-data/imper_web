@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AuthShell } from '../components/auth/AuthShell';
+import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { redefinirSenha } from '../lib/api';
 
@@ -70,9 +70,8 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="senha">Nova senha</Label>
-                <Input
+                <PasswordInput
                   id="senha"
-                  type="password"
                   required
                   minLength={6}
                   autoComplete="new-password"
@@ -83,9 +82,8 @@ export default function ResetPasswordPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmacao">Confirme a nova senha</Label>
-                <Input
+                <PasswordInput
                   id="confirmacao"
-                  type="password"
                   required
                   minLength={6}
                   autoComplete="new-password"

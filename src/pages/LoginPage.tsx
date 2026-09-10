@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
 import { BackToLogin } from '../components/auth/BackToLogin';
+import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -73,9 +74,8 @@ export default function LoginPage() {
                   Esqueci a senha
                 </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="senha"
-                type="password"
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
