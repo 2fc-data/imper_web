@@ -29,7 +29,7 @@ export default function ComoTrabalhamosPage() {
               variants={fadeUp}
               className="relative rounded-xl border bg-card p-5 hover-lift transition-all hover:border-primary/40"
             >
-              <span className="text-3xl font-extrabold text-primary/30 font-serif">
+              <span className="text-3xl font-extrabold text-accent font-serif">
                 {String(index + 1).padStart(2, '0')}
               </span>
               <h3 className="mt-2 font-semibold text-foreground">
