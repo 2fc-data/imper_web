@@ -98,6 +98,7 @@ export default function RegisterPage() {
                 id="senha"
                 type="password"
                 required
+                minLength={6}
                 autoComplete="new-password"
                 placeholder="Mínimo 6 caracteres"
                 value={senha}
@@ -106,9 +107,9 @@ export default function RegisterPage() {
             </div>
             <Turnstile onChange={setTurnstileToken} />
             {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div role="alert" aria-live="assertive" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
-              </p>
+              </div>
             )}
             <Button
               type="submit"

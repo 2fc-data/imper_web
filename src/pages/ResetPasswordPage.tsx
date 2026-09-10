@@ -74,6 +74,7 @@ export default function ResetPasswordPage() {
                   id="senha"
                   type="password"
                   required
+                  minLength={6}
                   autoComplete="new-password"
                   placeholder="Mínimo 6 caracteres"
                   value={senha}
@@ -86,17 +87,18 @@ export default function ResetPasswordPage() {
                   id="confirmacao"
                   type="password"
                   required
+                  minLength={6}
                   autoComplete="new-password"
                   placeholder="Repita a senha"
                   value={confirmacao}
                   onChange={(e) => setConfirmacao(e.target.value)}
                 />
               </div>
-              {error && (
-                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+          {error && (
+            <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+              {error}
+            </div>
+          )}
               <Button
                 type="submit"
                 size="lg"

@@ -83,9 +83,9 @@ export default function LoginPage() {
               />
             </div>
             {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div role="alert" aria-live="assertive" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
-              </p>
+              </div>
             )}
             <Button
               type="submit"
