@@ -5,9 +5,12 @@ export function useCidades() {
   const [cidades, setCidades] = useState<CidadeAtendida[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError(null);
     listarCidades()
       .then((data) => {
         if (active) setCidades(data);
@@ -24,7 +27,9 @@ export function useCidades() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [retryKey]);
 
-  return { cidades, loading, error };
+  const retry = () => setRetryKey((k) => k + 1);
+
+  return { cidades, loading, error, retry };
 }

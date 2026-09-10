@@ -45,7 +45,7 @@ export default function OrcamentoPage() {
 
   useEffect(() => {
     if (!enviado) return;
-    const timer = setTimeout(() => navigate('/'), 5000);
+    const timer = setTimeout(() => navigate('/'), 10_000);
     return () => clearTimeout(timer);
   }, [enviado, navigate]);
 
@@ -81,6 +81,10 @@ export default function OrcamentoPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (telefone && !/\(\d{2}\)\s?\d{4,5}-?\d{4}/.test(telefone)) {
+      setError('Informe um telefone no formato (XX) XXXXX-XXXX.');
+      return;
+    }
     setLoading(true);
     try {
       await solicitarOrcamento({
@@ -128,19 +132,12 @@ export default function OrcamentoPage() {
             </p>
             <Link
               to="/"
-              className={cn(
-                buttonVariants({
-                  variant: 'secondary',
-                  size: 'lg',
-                  className:
-                    'mt-6 bg-primary text-primary-foreground hover:bg-background/90 hover:text-foreground',
-                }),
-              )}
+              className={cn(buttonVariants({ variant: 'outline' }), 'mt-6')}
             >
               Voltar ao início
             </Link>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Redirecionando em 5 segundos...
+            <p className="mt-2 text-xs text-muted-foreground">
+              Redirecionando automaticamente em 10 segundos…
             </p>
           </m.div>
         </div>
