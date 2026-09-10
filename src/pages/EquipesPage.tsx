@@ -61,13 +61,18 @@ export function EquipesPage({ viewAtiva, onNavegar }: Props) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold">Equipes</h2>
         <div className="flex flex-wrap gap-2">
+          <label className="sr-only" htmlFor="filtro-status">
+            Filtrar por status
+          </label>
           <Input
+            aria-label="Buscar equipes"
             placeholder="Buscar..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="h-9 w-48"
           />
           <select
+            id="filtro-status"
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
             className={cn(selectClasses, 'h-9 w-36')}
@@ -107,7 +112,16 @@ function EquipeCard({ equipe }: { equipe: EquipeItem }) {
     <Card>
       <CardHeader
         className="cursor-pointer py-3"
+        role="button"
+        tabIndex={0}
+        aria-expanded={expandido}
         onClick={() => setExpandido(!expandido)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpandido(!expandido);
+          }
+        }}
       >
         <div className="flex items-start justify-between">
           <div>

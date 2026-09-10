@@ -10,8 +10,12 @@ const selectClasses =
 export function RecordsFilter({ value, onChange, total }: RecordsFilterProps) {
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <span>Exibir</span>
+      <label className="sr-only" htmlFor="records-per-page">
+        Exibir registros por página
+      </label>
+      <span aria-hidden="true">Exibir</span>
       <select
+        id="records-per-page"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         className={selectClasses}

@@ -22,9 +22,9 @@ interface Props {
 
 const STATUS_ATIVIDADE_COLORS: Record<string, string> = {
   PENDENTE: 'bg-muted text-muted-foreground',
-  EM_ANDAMENTO: 'bg-blue-500/10 text-blue-600',
-  CONCLUIDA: 'bg-emerald-500/10 text-emerald-600',
-  BLOQUEADA: 'bg-red-500/10 text-red-600',
+  EM_ANDAMENTO: 'bg-primary/10 text-primary',
+  CONCLUIDA: 'bg-success/10 text-success',
+  BLOQUEADA: 'bg-destructive/10 text-destructive',
 };
 
 const STATUS_ATIVIDADE_LABELS: Record<string, string> = {
@@ -36,8 +36,8 @@ const STATUS_ATIVIDADE_LABELS: Record<string, string> = {
 
 const STATUS_CHECKLIST_COLORS: Record<string, string> = {
   PENDENTE: 'bg-muted text-muted-foreground',
-  CONCLUIDO: 'bg-emerald-500/10 text-emerald-600',
-  BLOQUEADO: 'bg-red-500/10 text-red-600',
+  CONCLUIDO: 'bg-success/10 text-success',
+  BLOQUEADO: 'bg-destructive/10 text-destructive',
 };
 
 export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
@@ -122,7 +122,7 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
             <CardDescription>Bloqueadas</CardDescription>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-red-600">
+            <span className="text-2xl font-bold text-destructive">
               {bloqueadas}
             </span>
           </CardContent>

@@ -24,13 +24,7 @@ interface Ponto {
   lng: number;
 }
 
-function LeafletMap({
-  pontos,
-  bounds,
-}: {
-  pontos: Ponto[];
-  bounds: L.LatLngBoundsExpression | null;
-}) {
+function LeafletMap({ pontos }: { pontos: Ponto[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -57,14 +51,20 @@ function LeafletMap({
 
     const marcadorIcon = createMarcador();
     pontos.forEach((p) => {
+      const popup = document.createElement('span');
+      popup.className = 'font-medium';
+      popup.textContent = `${p.nome} - ${p.uf}`;
       L.marker([p.lat, p.lng], { icon: marcadorIcon })
         .addTo(map)
-        .bindPopup(`<span class="font-medium">${p.nome} - ${p.uf}</span>`);
+        .bindPopup(popup);
     });
 
-    if (bounds) {
-      map.fitBounds(bounds, { padding: [40, 40] });
-    }
+    const coords: L.LatLngExpression[] = pontos.map((p) => [p.lat, p.lng]);
+    const b =
+      coords.length === 1
+        ? L.latLngBounds(coords[0], coords[0])
+        : L.latLngBounds(coords);
+    map.fitBounds(b, { padding: [40, 40] });
 
     return () => {
       if (mapRef.current) {
@@ -72,15 +72,15 @@ function LeafletMap({
         mapRef.current = null;
       }
     };
-  }, [pontos, bounds]);
+  }, [pontos]);
 
   return <div ref={containerRef} className="z-0 h-[360px] w-full rounded-lg" />;
 }
 
-const COR_MARCADOR = 'oklch(48% 0.10 252)';
+const COR_MARCADOR = 'oklch(var(--primary) / 1)';
 
 export default function AreaAtuacaoPage() {
-  const { cidades, loading, error } = useCidades();
+  const { cidades, loading, error, retry } = useCidades();
   const listRef = useRef<HTMLDivElement>(null);
   const inView = useInView(listRef, VIEWPORT);
 
@@ -96,26 +96,13 @@ export default function AreaAtuacaoPage() {
     [cidades],
   );
 
-  const bounds: L.LatLngBoundsExpression | null = useMemo(() => {
-    if (pontos.length === 0) return null;
-    if (pontos.length === 1) {
-      return [
-        [pontos[0]!.lat, pontos[0]!.lng],
-        [pontos[0]!.lat, pontos[0]!.lng],
-      ];
-    }
-    return L.latLngBounds(
-      pontos.map((p) => [p.lat, p.lng] as [number, number]),
-    );
-  }, [pontos]);
-
   return (
     <section id="area-de-atuacao" className="py-12 my-16 sm:py-16 sm:my-24">
       <div className="mx-auto w-full max-w-[1400px] px-4">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif text-foreground">
           Área de atuação
         </h2>
-        <p className="mt-2 max-w-2xl text-text-secondary">
+        <p className="mt-2 max-w-2xl text-muted-foreground">
           Atendemos Poços de Caldas e Região.
         </p>
         <m.div
@@ -126,27 +113,34 @@ export default function AreaAtuacaoPage() {
           animate={inView ? 'visible' : 'hidden'}
         >
           {loading && (
-            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-text-secondary">
+            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-muted-foreground">
               Carregando mapa...
             </div>
           )}
           {!loading && error && (
-            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-destructive">
-              {error}
+            <div className="flex h-[360px] flex-col items-center justify-center rounded-xl border bg-card text-sm text-destructive">
+              <p>{error}</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="mt-2 text-xs underline underline-offset-2 hover:text-primary"
+              >
+                Tentar novamente
+              </button>
             </div>
           )}
           {!loading && !error && pontos.length === 0 && (
-            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-text-secondary">
+            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-muted-foreground">
               Nenhuma cidade cadastrada ainda.
             </div>
           )}
-          {!loading && !error && pontos.length > 0 && bounds && (
+          {!loading && !error && pontos.length > 0 && (
             <m.div
               variants={fadeUp}
               className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
               <div className="relative rounded-xl border bg-card p-3">
-                <LeafletMap pontos={pontos} bounds={bounds} />
+                <LeafletMap pontos={pontos} />
               </div>
               <div className="hidden sm:flex items-center justify-center rounded-xl border bg-card overflow-hidden p-3">
                 <img

@@ -5,9 +5,12 @@ export function useServicos() {
   const [servicos, setServicos] = useState<ServicoMarketing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError(null);
     listarServicos()
       .then((data) => {
         if (active) setServicos(data);
@@ -24,7 +27,9 @@ export function useServicos() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [retryKey]);
 
-  return { servicos, loading, error };
+  const retry = () => setRetryKey((k) => k + 1);
+
+  return { servicos, loading, error, retry };
 }
