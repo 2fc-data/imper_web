@@ -7,7 +7,7 @@ import { useServicos } from '../lib/useServicos';
 import { cn } from '../lib/utils';
 
 export default function ServicosPage() {
-  const { servicos, loading, error } = useServicos();
+  const { servicos, loading, error, retry } = useServicos();
   const gridRef = useRef<HTMLDivElement>(null);
   const inView = useInView(gridRef, VIEWPORT);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -22,7 +22,7 @@ export default function ServicosPage() {
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif text-foreground">
           Nossas especialidades
         </h2>
-        <p className="mt-2 text-text-secondary">
+        <p className="mt-2 text-muted-foreground">
           Soluções de engenharia para cada tipo de exposição à água e à umidade.
           Clique em um serviço para ver os detalhes.
         </p>
@@ -47,10 +47,19 @@ export default function ServicosPage() {
               </div>
             ))}
           {!loading && error && (
-            <p className="text-sm text-destructive">{error}</p>
+            <div className="col-span-full text-center">
+              <p className="text-sm text-destructive">{error}</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="mt-2 text-sm text-primary underline underline-offset-2 hover:text-primary/80"
+              >
+                Tentar novamente
+              </button>
+            </div>
           )}
           {!loading && !error && servicos.length === 0 && (
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-muted-foreground">
               Nenhum serviço disponível no momento.
             </p>
           )}
@@ -100,7 +109,7 @@ export default function ServicosPage() {
                       strokeWidth={2}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="h-5 w-5 text-text-secondary transition-colors group-hover:text-primary shrink-0"
+                      className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary shrink-0"
                       aria-hidden="true"
                     >
                       <path d="M6 9l6 6 6-6" />
@@ -113,21 +122,21 @@ export default function ServicosPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.98 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="absolute left-[-1px] right-[-1px] top-[calc(100%-1px)] z-30 rounded-b-xl border border-t-0 border-primary/40 bg-card p-5 shadow-2xl"
+                         className="absolute left-[-1px] right-[-1px] top-[calc(100%-1px)] z-30 rounded-b-xl border border-t-0 border-primary/40 bg-card p-5 shadow-2xl overflow-hidden"
                       >
-                        <p className="text-sm leading-relaxed text-text-secondary">
+                        <p className="text-sm leading-relaxed text-muted-foreground">
                           {servico.descricao}
                         </p>
                         <div className="mt-3 flex justify-end items-center gap-2">
                           <Link
                             to={`/orcamento?servico=${encodeURIComponent(servico.titulo)}`}
-                            aria-label="Solicitar orçamento"
+                            aria-label={`Solicitar orçamento para ${servico.titulo}`}
                             title="Solicitar orçamento"
                             className={cn(
-                              'inline-flex h-5 w-5 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
+                              'inline-flex h-11 w-11 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
                             )}
                           >
-                            SO
+                            <span aria-hidden="true">SO</span>
                           </Link>
                           <WhatsAppIconButton
                             className="h-5 w-5 rounded-xl"

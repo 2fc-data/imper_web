@@ -43,35 +43,45 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
 
-  if (!res.ok) {
-    let message = res.statusText || 'Erro inesperado';
-    let details: unknown;
-    try {
-      const body = await res.json();
-      if (typeof body?.message === 'string') message = body.message;
-      details = body?.details;
-    } catch {
-      /* corpo não-JSON */
+    if (!res.ok) {
+      let message = res.statusText || 'Erro inesperado';
+      let details: unknown;
+      try {
+        const body = await res.json();
+        if (typeof body?.message === 'string') message = body.message;
+        details = body?.details;
+      } catch {
+        /* corpo não-JSON */
+      }
+      const err = new Error(message) as Error & {
+        status?: number;
+        details?: unknown;
+      };
+      err.status = res.status;
+      err.details = details;
+      throw err;
     }
-    const err = new Error(message) as Error & {
-      status?: number;
-      details?: unknown;
-    };
-    err.status = res.status;
-    err.details = details;
-    throw err;
-  }
 
-  if (res.status === 204) return undefined as T;
-  const contentType = res.headers.get('content-type');
-  if (contentType && !contentType.includes('application/json')) {
-    throw new Error(
-      `Resposta inválida do servidor (${res.status}): esperava JSON mas recebeu ${contentType}`,
-    );
+    if (res.status === 204) return undefined as T;
+    const contentType = res.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+      throw new Error(
+        `Resposta inválida do servidor (${res.status}): esperava JSON mas recebeu ${contentType}`,
+      );
+    }
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(timeout);
   }
-  return (await res.json()) as T;
 }
 
 export const api = {

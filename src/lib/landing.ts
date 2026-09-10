@@ -26,11 +26,3 @@ export const ETAPAS = [
       'Ensaio de estanqueidade e entrega com orientações de uso e manutenção para durabilidade.',
   },
 ];
-
-export const REGIAO = [
-  'Poços de Caldas',
-  'Andradas',
-  'Campestre',
-  'Botelhos',
-  'Cidades de MG, SP, BA e TO',
-];

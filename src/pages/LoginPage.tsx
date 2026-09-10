@@ -97,8 +97,7 @@ export default function LoginPage() {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-          <BackToLogin to="/" label="Volte para Página Inicial" />
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Não tem conta?{' '}
             <Link
               to="/cadastro"

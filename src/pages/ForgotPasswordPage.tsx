@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
                 Se o e-mail estiver cadastrado, um link de redefinição foi
                 gerado.
               </p>
-              {devToken && (
+              {import.meta.env.DEV && devToken && (
                 <div className="space-y-2">
                   <Label htmlFor="devToken">Ambiente de desenvolvimento</Label>
                   <Input

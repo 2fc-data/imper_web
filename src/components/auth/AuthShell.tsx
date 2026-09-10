@@ -6,7 +6,37 @@ import { ThemeToggle } from '../../theme/ThemeToggle';
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full">
-      <aside className="relative hidden w-[45%] shrink-0 overflow-hidden border-r border-border bg-primary/70 lg:flex">
+      <aside className="relative hidden w-[45%] shrink-0 overflow-hidden border-r border-border lg:flex">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full"
+          style={{
+            background: 'linear-gradient(160deg, hsl(var(--primary) / 0.7) 0%, hsl(var(--primary) / 0.15) 50%, hsl(var(--primary) / 0.4) 100%)',
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-primary/20 mix-blend-multiply"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/60"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(0deg, var(--border) 0 1px, transparent 1px 72px), repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 72px)',
+            opacity: 0.35,
+            mixBlendMode: 'multiply',
+          }}
+        />
+        <span
+          aria-hidden="true"
+          className="absolute left-0 top-0 h-full w-1 bg-primary"
+        />
+
         <div className="relative z-10 flex flex-col p-10">
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-primary-foreground font-serif">
             Imperpoços
@@ -17,22 +47,30 @@ export function AuthShell({ children }: { children: ReactNode }) {
               Engenharia que protege onde a água ataca.
             </h1>
 
-            <div className="flex items-center gap-3 text-sm text-primary-foreground">
-              <span
-                aria-hidden="true"
-                className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary-foreground"
-              />
-              Conformidade com a{' '}
-              <a
-                href="https://abnt.org.br"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 decoration-foreground/30 transition-colors hover:text-foreground hover:decoration-foreground"
-              >
-                NBR 9574
-              </a>{' '}
-              — garantia e suporte especializado
-            </div>
+            <ul className="space-y-3">
+              {CALLOUTS.map((item) => (
+                <li key={item} className="flex items-center gap-3 text-sm">
+                  <span
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary"
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <dl className="grid grid-cols-3 gap-6 border-t border-border pt-6">
+              {STATS.map((stat) => (
+                <div key={stat.label}>
+                  <dt className="text-lg font-bold tracking-tight text-foreground font-serif">
+                    {stat.value}
+                  </dt>
+                   <dd className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
+                    {stat.label}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </aside>

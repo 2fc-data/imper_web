@@ -1,5 +1,5 @@
 import { AnimatePresence, m } from 'framer-motion';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import logoImper from '../../assets/logo_imper.webp';
 import { cn } from '../../lib/utils';
@@ -28,6 +28,38 @@ const SECTION_BY_ROUTE: Record<string, string> = {
 
 export function LandingLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const nav = navRef.current;
+    if (!nav) return;
+
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusable = nav!.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', handleKey);
+    nav.querySelector<HTMLElement>('a, button')?.focus();
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [menuOpen]);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -149,6 +181,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               />
 
               <m.nav
+                ref={navRef}
                 initial={{ y: '-100%', opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '-100%', opacity: 0 }}
@@ -231,6 +264,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 href="https://www.facebook.com/imperpocos"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Imperpoços no Facebook"
                 className="inline-flex items-center gap-2 rounded px-0 py-0.5 text-sm font-medium transition-colors hover:text-primary"
               >
                 <svg
@@ -247,6 +281,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 href="https://www.instagram.com/imperpocos"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Imperpoços no Instagram"
                 className="inline-flex items-center gap-2 rounded px-0 py-0.5 text-sm font-medium transition-colors hover:text-primary"
               >
                 <svg
@@ -296,7 +331,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             <img
               src={logoImper}
               alt="Imperpoços"
-              className="h-45 w-auto rounded-md border-6 border-white object-contain opacity-90"
+              className="h-45 w-auto rounded-md border-6 border-border object-contain opacity-90"
             />
           </div>
         </div>

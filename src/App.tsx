@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense, useState } from 'react';
+import { Component, lazy, type ReactNode, Suspense, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { LandingLayout } from './components/landing/LandingLayout';
@@ -92,10 +92,39 @@ const ExecucaoDashboardPage = lazy(() =>
 
 function PageFallback() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center p-4">
+    <div className="flex min-h-[50vh] items-center justify-center p-4" role="status" aria-live="polite">
       <span className="text-sm text-muted-foreground">Carregando...</span>
     </div>
   );
+}
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-4 text-center">
+          <p className="text-sm text-destructive">Algo deu errado.</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-sm text-primary underline hover:text-primary/80"
+          >
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function ProtectedLayout({
@@ -460,8 +489,9 @@ function CatchAllRedirect() {
 
 export default function App() {
   return (
-    <Suspense fallback={<PageFallback />}>
-      <Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
         <Route
           path="/login"
           element={
@@ -581,6 +611,7 @@ export default function App() {
         />
         <Route path="*" element={<CatchAllRedirect />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
