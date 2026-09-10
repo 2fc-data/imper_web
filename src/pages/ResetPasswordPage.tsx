@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AuthShell } from '../components/auth/AuthShell';
+import { BackToLogin } from '../components/auth/BackToLogin';
 import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
@@ -59,12 +60,7 @@ export default function ResetPasswordPage() {
               <p className="text-sm text-muted-foreground">
                 Senha redefinida com sucesso. Já pode acessar o sistema.
               </p>
-              <Link
-                to="/login"
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 py-3 text-sm font-medium shadow-sm transition-all hover:bg-primary/10 hover:text-primary hover-lift"
-              >
-                Ir para o login
-              </Link>
+              <BackToLogin />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -92,11 +88,11 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirmacao(e.target.value)}
                 />
               </div>
-          {error && (
-            <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
-              {error}
-            </div>
-          )}
+              {error && (
+                <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+                  {error}
+                </div>
+              )}
               <Button
                 type="submit"
                 size="lg"

@@ -86,19 +86,19 @@ export default function ForgotPasswordPage() {
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-          {error && (
-            <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
-              {error}
-            </div>
-          )}
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full"
-                  disabled={loading}
-                >
-                  {loading ? 'Enviando...' : 'Enviar link'}
-                </Button>
+              {error && (
+                <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? 'Enviando...' : 'Enviar link'}
+              </Button>
               </form>
               <BackToLogin />
             </>

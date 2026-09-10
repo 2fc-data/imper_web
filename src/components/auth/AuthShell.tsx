@@ -20,11 +20,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3 text-sm text-primary-foreground">
               <span
                 aria-hidden="true"
-                className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary"
+                className="h-1.5 w-1.5 shrink-0 rotate-45 bg-primary-foreground"
               />
               Conformidade com a{' '}
               <a
-                href="https://pt.scribd.com/document/713022317/ABNT-NBR-9575-2010-Impermeabilizacao-Selecao-de-projeto"
+                href="https://abnt.org.br"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline underline-offset-2 decoration-foreground/30 transition-colors hover:text-foreground hover:decoration-foreground"
