@@ -151,7 +151,7 @@ export default function OrcamentoPage() {
   return (
     <section className="border-y bg-card/60 py-12 sm:py-16">
       <div className="mx-auto w-full max-w-[1400px] px-4">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif">
           Entre em contato
         </h2>
         <p className="mt-2 max-w-2xl text-muted-foreground">

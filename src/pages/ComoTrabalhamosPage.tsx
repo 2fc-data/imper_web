@@ -13,7 +13,7 @@ export default function ComoTrabalhamosPage() {
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif text-foreground">
           Como trabalhamos
         </h2>
-        <p className="mt-2 text-text-secondary">
+        <p className="mt-2 text-muted-foreground">
           Um processo técnico, transparente e com resultado comprovado.
         </p>
         <m.ol
@@ -35,7 +35,7 @@ export default function ComoTrabalhamosPage() {
               <h3 className="mt-2 font-semibold text-foreground">
                 {etapa.title}
               </h3>
-              <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 {etapa.description}
               </p>
             </m.li>

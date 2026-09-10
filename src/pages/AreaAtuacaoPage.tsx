@@ -115,7 +115,7 @@ export default function AreaAtuacaoPage() {
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif text-foreground">
           Área de atuação
         </h2>
-        <p className="mt-2 max-w-2xl text-text-secondary">
+        <p className="mt-2 max-w-2xl text-muted-foreground">
           Atendemos Poços de Caldas e Região.
         </p>
         <m.div
@@ -126,7 +126,7 @@ export default function AreaAtuacaoPage() {
           animate={inView ? 'visible' : 'hidden'}
         >
           {loading && (
-            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-text-secondary">
+            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-muted-foreground">
               Carregando mapa...
             </div>
           )}
@@ -136,7 +136,7 @@ export default function AreaAtuacaoPage() {
             </div>
           )}
           {!loading && !error && pontos.length === 0 && (
-            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-text-secondary">
+            <div className="flex h-[360px] items-center justify-center rounded-xl border bg-card text-sm text-muted-foreground">
               Nenhuma cidade cadastrada ainda.
             </div>
           )}

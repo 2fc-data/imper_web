@@ -20,7 +20,7 @@ export default function ContatoPage() {
       className="bg-background py-12 my-16 sm:py-16 sm:my-24 dark:bg-card/60"
     >
       <div className="mx-auto w-full max-w-[1400px] px-4">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif">
           Canais de atendimento
         </h2>
         <p className="mt-2 text-muted-foreground">

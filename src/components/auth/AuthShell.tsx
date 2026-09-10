@@ -101,7 +101,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
                   <dt className="text-lg font-bold tracking-tight text-foreground font-serif">
                     {stat.value}
                   </dt>
-                  <dd className="mt-1 text-xs uppercase tracking-widest text-text-secondary">
+                   <dd className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
                     {stat.label}
                   </dd>
                 </div>
