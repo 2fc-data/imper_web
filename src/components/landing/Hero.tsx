@@ -7,15 +7,6 @@ export function Hero() {
       id="inicio"
       className="relative flex min-h-[90vh] items-center justify-center overflow-hidden bg-background pt-12"
     >
-      <div
-        aria-hidden="true"
-        className="absolute -right-40 -top-40 h-[300px] w-[300px] rounded-full bg-primary/5 blur-xl"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute -bottom-40 -left-40 h-[300px] w-[300px] rounded-full bg-accent/5 blur-xl"
-      />
-
       <div className="mx-auto max-w-[1400px] px-4 py-24 text-center sm:px-6 lg:px-8">
         <m.div
           initial={{ opacity: 0, y: 20 }}

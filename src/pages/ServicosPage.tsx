@@ -22,7 +22,7 @@ export default function ServicosPage() {
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif text-foreground">
           Nossas especialidades
         </h2>
-        <p className="mt-2 text-text-secondary">
+        <p className="mt-2 text-muted-foreground">
           Soluções de engenharia para cada tipo de exposição à água e à umidade.
           Clique em um serviço para ver os detalhes.
         </p>
@@ -50,7 +50,7 @@ export default function ServicosPage() {
             <p className="text-sm text-destructive">{error}</p>
           )}
           {!loading && !error && servicos.length === 0 && (
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-muted-foreground">
               Nenhum serviço disponível no momento.
             </p>
           )}
@@ -100,7 +100,7 @@ export default function ServicosPage() {
                       strokeWidth={2}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="h-5 w-5 text-text-secondary transition-colors group-hover:text-primary shrink-0"
+                      className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary shrink-0"
                       aria-hidden="true"
                     >
                       <path d="M6 9l6 6 6-6" />
@@ -115,7 +115,7 @@ export default function ServicosPage() {
                         transition={{ duration: 0.2, ease: 'easeOut' }}
                         className="absolute left-[-1px] right-[-1px] top-[calc(100%-1px)] z-30 rounded-b-xl border border-t-0 border-primary/40 bg-card p-5 shadow-2xl"
                       >
-                        <p className="text-sm leading-relaxed text-text-secondary">
+                        <p className="text-sm leading-relaxed text-muted-foreground">
                           {servico.descricao}
                         </p>
                         <div className="mt-3 flex justify-end items-center gap-2">
