@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
+import { BackToLogin } from '../components/auth/BackToLogin';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -96,7 +97,8 @@ export default function LoginPage() {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-          <p className="mt-4 border-t border-border/60 pt-4 text-center text-sm text-muted-foreground">
+          <BackToLogin to="/" label="Volte para Página Inicial" />
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Não tem conta?{' '}
             <Link
               to="/cadastro"

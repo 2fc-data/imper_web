@@ -2,6 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
+import { BackToLogin } from '../components/auth/BackToLogin';
 import Turnstile from '../components/Turnstile';
 import { Button } from '../components/ui/button';
 import {
@@ -120,7 +121,8 @@ export default function RegisterPage() {
               {loading ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
-          <p className="mt-4 border-t border-border/60 pt-4 text-center text-sm text-muted-foreground">
+          <BackToLogin />
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Já tem conta?{' '}
             <Link
               to="/login"
