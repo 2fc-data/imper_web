@@ -130,13 +130,13 @@ export default function ServicosPage() {
                         <div className="mt-3 flex justify-end items-center gap-2">
                           <Link
                             to={`/orcamento?servico=${encodeURIComponent(servico.titulo)}`}
-                            aria-label="Solicitar orçamento"
+                            aria-label={`Solicitar orçamento para ${servico.titulo}`}
                             title="Solicitar orçamento"
                             className={cn(
                               'inline-flex h-11 w-11 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
                             )}
                           >
-                            SO
+                            <span aria-hidden="true">SO</span>
                           </Link>
                           <WhatsAppIconButton
                             className="h-5 w-5 rounded-xl"

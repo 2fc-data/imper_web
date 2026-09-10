@@ -77,7 +77,7 @@ function LeafletMap({ pontos }: { pontos: Ponto[] }) {
   return <div ref={containerRef} className="z-0 h-[360px] w-full rounded-lg" />;
 }
 
-const COR_MARCADOR = 'oklch(48% 0.10 252)';
+const COR_MARCADOR = 'oklch(var(--primary) / 1)';
 
 export default function AreaAtuacaoPage() {
   const { cidades, loading, error, retry } = useCidades();

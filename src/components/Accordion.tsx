@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { cn } from '../lib/utils';
 
 export function Accordion({
@@ -11,9 +11,9 @@ export function Accordion({
   }[];
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" role="list">
       {items.map((item, i) => (
-        <AccordionItem key={i} {...item} />
+        <AccordionItem key={i} index={i} {...item} />
       ))}
     </div>
   );
@@ -23,17 +23,25 @@ function AccordionItem({
   titulo,
   descricao,
   conteudo,
+  index,
 }: {
   titulo: string;
   descricao?: string;
   conteudo: ReactNode;
+  index: number;
 }) {
   const [open, setOpen] = useState(false);
+  const id = useId();
+  const triggerId = `accordion-trigger-${id}`;
+  const panelId = `accordion-panel-${id}`;
 
   return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 transition-colors">
+    <div className="rounded-lg border border-border/60 bg-muted/20 transition-colors" role="listitem">
       <button
         type="button"
+        id={triggerId}
+        aria-expanded={open}
+        aria-controls={panelId}
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left"
       >
@@ -62,7 +70,12 @@ function AccordionItem({
         </svg>
       </button>
       {open && (
-        <div className="border-t border-border/40 px-4 pb-4 pt-3">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={triggerId}
+          className="border-t border-border/40 px-4 pb-4 pt-3"
+        >
           {conteudo}
         </div>
       )}

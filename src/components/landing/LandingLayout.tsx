@@ -264,6 +264,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 href="https://www.facebook.com/imperpocos"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Imperpoços no Facebook"
                 className="inline-flex items-center gap-2 rounded px-0 py-0.5 text-sm font-medium transition-colors hover:text-primary"
               >
                 <svg
@@ -280,6 +281,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 href="https://www.instagram.com/imperpocos"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Imperpoços no Instagram"
                 className="inline-flex items-center gap-2 rounded px-0 py-0.5 text-sm font-medium transition-colors hover:text-primary"
               >
                 <svg
@@ -329,7 +331,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             <img
               src={logoImper}
               alt="Imperpoços"
-              className="h-45 w-auto rounded-md border-6 border-white object-contain opacity-90"
+              className="h-45 w-auto rounded-md border-6 border-border object-contain opacity-90"
             />
           </div>
         </div>

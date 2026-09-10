@@ -14,6 +14,7 @@ export function WhatsAppButton({
       href={`${WHATSAPP_URL}?text=${encodeURIComponent(WHATSAPP_TEXT)}`}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label="Falar no WhatsApp"
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-lg bg-transparent px-5 py-3 text-base font-semibold text-whatsapp transition-colors hover:bg-whatsapp-hover hover:text-white',
         className,

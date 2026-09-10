@@ -47,7 +47,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           aria-hidden="true"
           className="absolute inset-0 h-full w-full"
           style={{
-            background: 'linear-gradient(160deg, #3d6e8c 0%, #1a2a3a 50%, #2a4a6a 100%)',
+            background: 'linear-gradient(160deg, hsl(var(--primary) / 0.7) 0%, hsl(var(--primary) / 0.15) 50%, hsl(var(--primary) / 0.4) 100%)',
           }}
         />
         <div

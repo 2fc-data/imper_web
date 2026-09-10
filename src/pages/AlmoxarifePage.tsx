@@ -35,7 +35,7 @@ const STATUS_COLORS: Record<string, string> = {
   NOTIFICADA: 'bg-blue-500/10 text-blue-600',
   RETIRADA: 'bg-emerald-500/10 text-emerald-600',
   CONCLUIDA: 'bg-emerald-600/10 text-emerald-700',
-  CANCELADA: 'bg-red-500/10 text-red-600',
+  CANCELADA: 'bg-destructive/10 text-destructive',
 };
 
 const STATUS_LABELS: Record<string, string> = {
