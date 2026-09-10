@@ -1,43 +1,7 @@
 import { m } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { fadeUp, stagger } from '../../lib/motion';
 import { ThemeToggle } from '../../theme/ThemeToggle';
-
-const CALLOUTS = [
-  'Lajes, terraços e coberturas',
-  "Caixas d'água e reservatórios",
-  'Estruturas enterradas e subsolos',
-];
-
-const STATS = [
-  { value: '30+', label: 'anos de obra' },
-  { value: 'NBR 9574', label: 'norma de execução' },
-  { value: '5.000+', label: 'm² impermeabilizados' },
-];
-
-function BackHomeLink() {
-  return (
-    <Link
-      to="/"
-      className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-4 w-4"
-        aria-hidden="true"
-      >
-        <path d="M19 12H5M12 19l-7-7 7-7" />
-      </svg>
-      Voltar para Home
-    </Link>
-  );
-}
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -74,12 +38,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
         />
 
         <div className="relative z-10 flex flex-col p-10">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-primary font-serif">
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-primary-foreground font-serif">
             Imperpoços
           </p>
 
-          <div className="mt-auto space-y-8">
-            <h1 className="max-w-md text-4xl font-bold leading-tight tracking-tight font-serif">
+          <div className="mt-auto space-y-6">
+            <h1 className="max-w-md text-4xl font-bold leading-tight tracking-tight text-primary-foreground font-serif">
               Engenharia que protege onde a água ataca.
             </h1>
 
@@ -112,8 +76,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col bg-background">
-        <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <BackHomeLink />
+        <div className="flex items-center justify-end px-4 py-4 sm:px-6 lg:px-8">
           <ThemeToggle />
         </div>
 

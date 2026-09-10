@@ -1,6 +1,8 @@
 import { type FormEvent, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AuthShell } from '../components/auth/AuthShell';
+import { BackToLogin } from '../components/auth/BackToLogin';
+import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -9,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { redefinirSenha } from '../lib/api';
 
@@ -48,32 +49,27 @@ export default function ResetPasswordPage() {
     <AuthShell>
       <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl tracking-tight">
+          <CardTitle className="text-2xl tracking-tight font-serif">
             Redefinir senha
           </CardTitle>
           <CardDescription>Digite sua nova senha</CardDescription>
         </CardHeader>
         <CardContent>
           {done ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Senha redefinida com sucesso. Já pode acessar o sistema.
               </p>
-              <Link
-                to="/login"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:text-primary-foreground hover:shadow-none hover-lift"
-              >
-                Ir para o login
-              </Link>
+              <BackToLogin />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="senha">Nova senha</Label>
-                <Input
+                <PasswordInput
                   id="senha"
-                  type="password"
                   required
+                  minLength={6}
                   autoComplete="new-password"
                   placeholder="Mínimo 6 caracteres"
                   value={senha}
@@ -82,10 +78,10 @@ export default function ResetPasswordPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmacao">Confirme a nova senha</Label>
-                <Input
+                <PasswordInput
                   id="confirmacao"
-                  type="password"
                   required
+                  minLength={6}
                   autoComplete="new-password"
                   placeholder="Repita a senha"
                   value={confirmacao}
@@ -93,14 +89,14 @@ export default function ResetPasswordPage() {
                 />
               </div>
               {error && (
-                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
                   {error}
-                </p>
+                </div>
               )}
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground hover-lift font-semibold shadow-md transition-all hover:shadow-none"
+                className="w-full"
                 disabled={loading}
               >
                 {loading ? 'Salvando...' : 'Redefinir senha'}

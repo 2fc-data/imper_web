@@ -2,7 +2,9 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
+import { BackToLogin } from '../components/auth/BackToLogin';
 import Turnstile from '../components/Turnstile';
+import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -51,7 +53,7 @@ export default function RegisterPage() {
     <AuthShell>
       <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl tracking-tight">Criar conta</CardTitle>
+          <CardTitle className="text-2xl tracking-tight font-serif">Criar conta</CardTitle>
           <CardDescription>
             Cadastre-se para acompanhar seus pedidos de impermeabilização
           </CardDescription>
@@ -94,10 +96,10 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="senha">Senha</Label>
-              <Input
+              <PasswordInput
                 id="senha"
-                type="password"
                 required
+                minLength={6}
                 autoComplete="new-password"
                 placeholder="Mínimo 6 caracteres"
                 value={senha}
@@ -106,20 +108,21 @@ export default function RegisterPage() {
             </div>
             <Turnstile onChange={setTurnstileToken} />
             {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div role="alert" aria-live="assertive" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
-              </p>
+              </div>
             )}
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground hover-lift font-semibold shadow-md transition-all hover:shadow-none"
+              className="w-full"
               disabled={loading}
             >
               {loading ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <BackToLogin />
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             Já tem conta?{' '}
             <Link
               to="/login"

@@ -2,6 +2,8 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
+import { BackToLogin } from '../components/auth/BackToLogin';
+import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -72,9 +74,8 @@ export default function LoginPage() {
                   Esqueci a senha
                 </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="senha"
-                type="password"
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
@@ -83,14 +84,14 @@ export default function LoginPage() {
               />
             </div>
             {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
                 {error}
-              </p>
+              </div>
             )}
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-md transition-all hover:shadow-lg hover:shadow-primary/25"
+              className="w-full"
               disabled={loading}
             >
               {loading ? 'Entrando...' : 'Entrar'}
