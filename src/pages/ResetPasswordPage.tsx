@@ -48,20 +48,20 @@ export default function ResetPasswordPage() {
     <AuthShell>
       <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl tracking-tight">
+          <CardTitle className="text-2xl tracking-tight font-serif">
             Redefinir senha
           </CardTitle>
           <CardDescription>Digite sua nova senha</CardDescription>
         </CardHeader>
         <CardContent>
           {done ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Senha redefinida com sucesso. Já pode acessar o sistema.
               </p>
               <Link
                 to="/login"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:text-primary-foreground hover:shadow-none hover-lift"
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 py-3 text-sm font-medium shadow-sm transition-all hover:bg-primary/10 hover:text-primary hover-lift"
               >
                 Ir para o login
               </Link>
@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground hover-lift font-semibold shadow-md transition-all hover:shadow-none"
+                className="w-full"
                 disabled={loading}
               >
                 {loading ? 'Salvando...' : 'Redefinir senha'}

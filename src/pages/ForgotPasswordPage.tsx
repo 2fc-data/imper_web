@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
     <AuthShell>
       <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl tracking-tight">
+          <CardTitle className="text-2xl tracking-tight font-serif">
             Recuperar senha
           </CardTitle>
           <CardDescription>
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
         </CardHeader>
         <CardContent>
           {done ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Se o e-mail estiver cadastrado, um link de redefinição foi
                 gerado.
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
               )}
               <Link
                 to="/login"
-                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:bg-primary/10 hover:text-primary hover:text-primary-foreground hover-lift"
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 py-3 text-sm font-medium shadow-sm transition-all hover:bg-primary/10 hover:text-primary hover-lift"
               >
                 Voltar para o login
               </Link>
@@ -99,7 +99,7 @@ export default function ForgotPasswordPage() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground hover-lift font-semibold shadow-md transition-all hover:shadow-none"
+                  className="w-full"
                   disabled={loading}
                 >
                   {loading ? 'Enviando...' : 'Enviar link'}
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
               </form>
               <Link
                 to="/login"
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:bg-primary/10 hover-lift"
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 py-3 text-sm font-medium shadow-sm transition-all hover:bg-primary/10 hover:text-primary hover-lift"
               >
                 <svg
                   viewBox="0 0 24 24"

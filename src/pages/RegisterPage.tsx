@@ -51,7 +51,7 @@ export default function RegisterPage() {
     <AuthShell>
       <Card className="border-border/60 bg-card/80 shadow-xl backdrop-blur">
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl tracking-tight">Criar conta</CardTitle>
+          <CardTitle className="text-2xl tracking-tight font-serif">Criar conta</CardTitle>
           <CardDescription>
             Cadastre-se para acompanhar seus pedidos de impermeabilização
           </CardDescription>
@@ -113,13 +113,13 @@ export default function RegisterPage() {
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground hover-lift font-semibold shadow-md transition-all hover:shadow-none"
+              className="w-full"
               disabled={loading}
             >
               {loading ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-4 border-t border-border/60 pt-4 text-center text-sm text-muted-foreground">
             Já tem conta?{' '}
             <Link
               to="/login"

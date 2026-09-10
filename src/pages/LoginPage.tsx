@@ -67,7 +67,7 @@ export default function LoginPage() {
                 <Label htmlFor="senha">Senha</Label>
                 <Link
                   to="/recuperar-senha"
-                  className="text-xs font-medium text-text-secondary transition-colors hover:text-primary"
+                  className="text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
                 >
                   Esqueci a senha
                 </Link>
@@ -90,13 +90,13 @@ export default function LoginPage() {
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-md transition-all hover:shadow-lg hover:shadow-primary/25"
+              className="w-full"
               disabled={loading}
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-text-secondary">
+          <p className="mt-4 border-t border-border/60 pt-4 text-center text-sm text-muted-foreground">
             Não tem conta?{' '}
             <Link
               to="/cadastro"
