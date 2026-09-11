@@ -21,17 +21,13 @@ import {
   registrarEntradaMaterial,
   registrarSaidaMaterial,
   type StatusMaterial,
-  type TipoMaterial,
   type TipoMovimento,
   type UnidadeMedida,
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
 import { cn } from '../lib/utils';
 
-const ROTULO_TIPO: Record<TipoMaterial, string> = {
-  MATERIAL: 'Material',
-  EQUIPAMENTO: 'Equipamento',
-};
+
 
 function toNum(v: number | string | null | undefined): number {
   if (v === null || v === undefined) return 0;
@@ -53,7 +49,6 @@ function abaixoDoMinimo(m: MaterialItem): boolean {
 
 const emptyForm = {
   nome: '',
-  tipo: 'MATERIAL' as TipoMaterial,
   categoriaId: '' as number | '',
   unidadeId: 1,
   quantidadeMinima: '',
@@ -119,14 +114,6 @@ export function MateriaisAnalises({ materiais }: MateriaisAnalisesProps) {
     0,
   );
 
-  const porTipo = materiais.reduce(
-    (acc, m) => {
-      acc[m.tipo] = (acc[m.tipo] || 0) + 1;
-      return acc;
-    },
-    {} as Record<TipoMaterial, number>,
-  );
-
   return (
     <div className="space-y-6">
       <div>
@@ -173,37 +160,6 @@ export function MateriaisAnalises({ materiais }: MateriaisAnalisesProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-        <h3 className="font-semibold text-base">Distribuição por Tipo</h3>
-        <div className="space-y-2">
-          {total === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum dado registrado.
-            </p>
-          ) : (
-            (Object.keys(porTipo) as TipoMaterial[]).map((tipo) => {
-              const qtd = porTipo[tipo];
-              const perc = total ? Math.round((qtd / total) * 100) : 0;
-              return (
-                <div key={tipo} className="space-y-1">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span>{ROTULO_TIPO[tipo]}</span>
-                    <span>
-                      {qtd} ({perc}%)
-                    </span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all"
-                      style={{ width: `${perc}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -248,18 +204,6 @@ function MaterialForm({
             placeholder="Ex.: Água sanitária, Desengraxante..."
             className={inputCls}
           />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Tipo</label>
-          <select
-            value={form.tipo}
-            onChange={(e) =>
-              setForm({ ...form, tipo: e.target.value as TipoMaterial })
-            }
-            className={inputCls}
-          >
-            <option value="MATERIAL">Material</option>
-          </select>
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">Categoria</label>
@@ -411,7 +355,7 @@ function Movimentos({ material, onVoltar, onAtualizar }: MovimentosProps) {
           {material.nome}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {ROTULO_TIPO[material.tipo]} · Movimentação de estoque
+          Movimentação de estoque
         </p>
       </header>
 
@@ -587,7 +531,6 @@ export default function MateriaisAdminPage({
     setEditando(m);
     setForm({
       nome: m.nome,
-      tipo: m.tipo,
       categoriaId: m.categoriaId ?? '',
       unidadeId: m.unidadeId,
       quantidadeMinima:
@@ -614,7 +557,6 @@ export default function MateriaisAdminPage({
     try {
       const payload: MaterialInput = {
         nome: form.nome,
-        tipo: form.tipo,
         categoriaId: form.categoriaId === '' ? null : form.categoriaId,
         unidadeId: form.unidadeId,
         quantidadeMinima: numOuNull(form.quantidadeMinima) ?? undefined,
@@ -687,7 +629,7 @@ export default function MateriaisAdminPage({
     if (categoriaFiltro !== '' && m.categoriaId !== categoriaFiltro)
       return false;
     return busca.trim()
-      ? `${m.nome} ${ROTULO_TIPO[m.tipo]} ${m.categoria?.nome ?? ''}`
+      ? `${m.nome} ${m.categoria?.nome ?? ''}`
           .toLowerCase()
           .includes(busca.trim().toLowerCase())
       : true;
@@ -822,9 +764,6 @@ export default function MateriaisAdminPage({
                   <div className="flex flex-wrap items-center gap-2">
                     <CardTitle className="text-base">{m.nome}</CardTitle>
                     <BadgeStatus status={m.status} />
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-                      {ROTULO_TIPO[m.tipo]}
-                    </span>
                   </div>
                   <BadgeSaldo valor={saldoDe(m)} destaque={baixo} />
                 </div>

@@ -130,22 +130,20 @@ export function ItemForm({
               </div>
             )}
 
-            {!isEpi && (
-              <div className="space-y-1.5">
-                <Label htmlFor="numeroPatrimonio">Nº de patrimônio</Label>
-                <Input
-                  id="numeroPatrimonio"
-                  placeholder="Opcional"
-                  value={form.numeroPatrimonio ?? ''}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      numeroPatrimonio: e.target.value || undefined,
-                    })
-                  }
-                />
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="numeroPatrimonio">Nº de patrimônio</Label>
+              <Input
+                id="numeroPatrimonio"
+                placeholder="Opcional"
+                value={form.numeroPatrimonio ?? ''}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    numeroPatrimonio: e.target.value || undefined,
+                  })
+                }
+              />
+            </div>
 
             {!isEpi && (
               <div className="space-y-1.5">

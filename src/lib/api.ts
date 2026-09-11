@@ -909,6 +909,7 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
     cores,
     tamanhos,
     colaboradores,
+    unidadesMedida,
   ] = await Promise.all([
     api.get<LookupItem[]>('/epis/lookups/categorias'),
     api.get<SubcategoriaItem[]>('/epis/lookups/subcategorias'),
@@ -918,6 +919,7 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
     api.get<LookupItem[]>('/epis/lookups/cores'),
     api.get<LookupItem[]>('/epis/lookups/tamanhos'),
     api.get<{ id: number; nome: string }[]>('/epis/lookups/colaboradores'),
+    api.get<UnidadeMedida[]>('/epis/lookups/unidades-medida'),
   ]);
   return {
     categorias,
@@ -928,6 +930,7 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
     cores,
     tamanhos,
     colaboradores,
+    unidadesMedida,
   };
 }
 
@@ -1179,6 +1182,7 @@ export interface EpiItem {
   codigo: string;
   nome: string;
   numeroCa: string | null;
+  numeroPatrimonio: string | null;
   dataValidade: string | null;
   quantidade: number;
   quantidadeMinima: number | null;
@@ -1204,6 +1208,7 @@ export interface EpiInput {
   codigo: string;
   nome: string;
   numeroCa?: string;
+  numeroPatrimonio?: string;
   dataValidade?: string;
   quantidade?: number;
   quantidadeMinima?: number;
@@ -1382,7 +1387,7 @@ export interface MaterialItem {
 
 export interface MaterialInput {
   nome: string;
-  tipo: TipoMaterial;
+  tipo?: TipoMaterial;
   categoriaId?: number | null;
   unidadeId: number;
   quantidadeMinima?: number;

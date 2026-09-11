@@ -48,6 +48,7 @@ const emptyForm: ItemFormData = {
   codigo: '',
   nome: '',
   numeroCa: '',
+  numeroPatrimonio: '',
   dataValidade: '',
   quantidade: 0,
   quantidadeMinima: 0,
@@ -212,6 +213,7 @@ export default function EpisAdminPage({
       codigo: e.codigo,
       nome: e.nome,
       numeroCa: e.numeroCa ?? '',
+      numeroPatrimonio: e.numeroPatrimonio ?? '',
       dataValidade: toLocalDateTime(e.dataValidade),
       quantidade: e.quantidade,
       quantidadeMinima: e.quantidadeMinima ?? 0,
@@ -242,6 +244,7 @@ export default function EpisAdminPage({
         codigo: form.codigo,
         nome: form.nome ?? '',
         numeroCa: form.numeroCa || undefined,
+        numeroPatrimonio: form.numeroPatrimonio || undefined,
         dataValidade: fromLocalDateTime(form.dataValidade ?? ''),
         quantidade: form.quantidade ?? 0,
         quantidadeMinima: form.quantidadeMinima,
@@ -441,7 +444,7 @@ export default function EpisAdminPage({
                 </span>
               </div>
               <CardDescription className="text-sm">
-                CA: {e.numeroCa ?? '—'} · Estoque: {e.quantidade}{' '}
+                CA: {e.numeroCa ?? '—'} · Patrimônio: {e.numeroPatrimonio ?? '—'} · Estoque: {e.quantidade}{' '}
                 {e.quantidadeMinima !== null && `(mín. ${e.quantidadeMinima})`}
               </CardDescription>
             </CardHeader>
