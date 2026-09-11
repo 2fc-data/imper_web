@@ -87,9 +87,6 @@ export function CatalogoAtividadesPage({ viewAtiva, onNavegar }: Props) {
               </option>
             ))}
           </select>
-          <Button size="sm" onClick={() => onNavegar('novo')}>
-            + Nova Atividade
-          </Button>
         </div>
       </div>
 

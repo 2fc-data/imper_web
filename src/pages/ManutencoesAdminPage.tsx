@@ -768,17 +768,7 @@ export default function ManutencoesAdminPage({
         </select>
       </div>
 
-      {editando ? (
-        formulario
-      ) : (
-        <Button
-          type="button"
-          onClick={() => onNavegar?.('novo')}
-          className="w-full sm:w-auto"
-        >
-          + Nova manutenção
-        </Button>
-      )}
+      {editando && formulario}
 
       <div className="space-y-3">
         {filtradas.map((m) => (

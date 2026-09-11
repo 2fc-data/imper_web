@@ -82,9 +82,6 @@ export function EquipesPage({ viewAtiva, onNavegar }: Props) {
             <option value="INATIVA">Inativa</option>
             <option value="EM_EXECUCAO">Em Execução</option>
           </select>
-          <Button size="sm" onClick={() => onNavegar('novo')}>
-            + Nova Equipe
-          </Button>
         </div>
       </div>
 

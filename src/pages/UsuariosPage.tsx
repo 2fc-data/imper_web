@@ -841,12 +841,6 @@ export default function UsuariosPage({
             Gerencie os usuários do sistema e seus perfis de acesso.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => onNavegar?.('analises')}>
-            Análises
-          </Button>
-          <Button onClick={() => onNavegar?.('novo')}>Novo Usuário</Button>
-        </div>
       </div>
 
       {error && (
