@@ -160,11 +160,13 @@ export function ItemForm({
                   <option value="" disabled>
                     Selecione...
                   </option>
-                  {(lookups?.statuses ?? []).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nome}
-                    </option>
-                  ))}
+                  {[...(lookups?.statuses ?? [])]
+                    .sort((a, b) => a.nome.localeCompare(b.nome))
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nome}
+                      </option>
+                    ))}
                 </select>
               </div>
             )}
@@ -284,11 +286,13 @@ export function ItemForm({
                 className={selectClasses}
               >
                 <option value="">Sem marca</option>
-                {(lookups?.marcas ?? []).map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.nome}
-                  </option>
-                ))}
+                {[...(lookups?.marcas ?? [])]
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -309,11 +313,13 @@ export function ItemForm({
                 className={selectClasses}
               >
                 <option value="">Sem categoria</option>
-                {(lookups?.categorias ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
+                {[...(lookups?.categorias ?? [])]
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -334,11 +340,13 @@ export function ItemForm({
                 className={selectClasses}
               >
                 <option value="">Selecione a categoria primeiro</option>
-                {subcategoriasDaCategoria.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.nome}
-                  </option>
-                ))}
+                {[...subcategoriasDaCategoria]
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -358,11 +366,13 @@ export function ItemForm({
                 className={selectClasses}
               >
                 <option value="">Sem localização</option>
-                {(lookups?.localizacoes ?? []).map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.nome}
-                  </option>
-                ))}
+                {[...(lookups?.localizacoes ?? [])]
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -382,11 +392,13 @@ export function ItemForm({
                 className={selectClasses}
               >
                 <option value="">Sem fornecedor</option>
-                {(lookups?.fornecedores ?? []).map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.nome}
-                  </option>
-                ))}
+                {[...(lookups?.fornecedores ?? [])]
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -406,11 +418,13 @@ export function ItemForm({
                 className={selectClasses}
               >
                 <option value="">Sem unidade</option>
-                {(lookups?.unidadesMedida ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nome}
-                  </option>
-                ))}
+                {[...(lookups?.unidadesMedida ?? [])]
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.nome}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -434,11 +448,13 @@ export function ItemForm({
                     className={selectClasses}
                   >
                     <option value="">Sem estado</option>
-                    {(lookups?.estadosConservacao ?? []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nome}
-                      </option>
-                    ))}
+                    {[...(lookups?.estadosConservacao ?? [])]
+                      .sort((a, b) => a.nome.localeCompare(b.nome))
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nome}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">

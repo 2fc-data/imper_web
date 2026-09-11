@@ -1374,7 +1374,7 @@ export interface MaterialItem {
   tipo: TipoMaterial;
   categoriaId: number | null;
   categoria?: LookupItem;
-  unidadeId: number;
+  unidadeId: number | null;
   unidade?: UnidadeMedida;
   quantidadeMinima: number | null;
   custoUnitario: number | string | null;
@@ -1389,7 +1389,7 @@ export interface MaterialInput {
   nome: string;
   tipo?: TipoMaterial;
   categoriaId?: number | null;
-  unidadeId: number;
+  unidadeId?: number | null;
   quantidadeMinima?: number;
   custoUnitario?: number;
 }

@@ -50,7 +50,7 @@ function abaixoDoMinimo(m: MaterialItem): boolean {
 const emptyForm = {
   nome: '',
   categoriaId: '' as number | '',
-  unidadeId: 1,
+  unidadeId: '' as number | '',
   quantidadeMinima: '',
   custoUnitario: '',
   status: 'ATIVO' as StatusMaterial,
@@ -218,27 +218,32 @@ function MaterialForm({
             className={inputCls}
           >
             <option value="">Selecione...</option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
+            {[...categorias]
+              .sort((a, b) => a.nome.localeCompare(b.nome))
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Unidade</label>
+          <label className="mb-1 block text-sm font-medium">Unidade de Medida</label>
           <select
             value={form.unidadeId}
             onChange={(e) =>
-              setForm({ ...form, unidadeId: Number(e.target.value) })
+              setForm({ ...form, unidadeId: e.target.value === '' ? '' : Number(e.target.value) })
             }
             className={inputCls}
           >
-            {unidadesMedida.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nome}
-              </option>
-            ))}
+            <option value=""></option>
+            {[...unidadesMedida]
+              .sort((a, b) => a.nome.localeCompare(b.nome))
+              .map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nome}
+                </option>
+              ))}
           </select>
         </div>
         <div>
@@ -532,7 +537,7 @@ export default function MateriaisAdminPage({
     setForm({
       nome: m.nome,
       categoriaId: m.categoriaId ?? '',
-      unidadeId: m.unidadeId,
+      unidadeId: m.unidadeId ?? '',
       quantidadeMinima:
         m.quantidadeMinima === null ? '' : String(m.quantidadeMinima),
       custoUnitario:
@@ -558,7 +563,7 @@ export default function MateriaisAdminPage({
       const payload: MaterialInput = {
         nome: form.nome,
         categoriaId: form.categoriaId === '' ? null : form.categoriaId,
-        unidadeId: form.unidadeId,
+        unidadeId: form.unidadeId === '' ? null : form.unidadeId,
         quantidadeMinima: numOuNull(form.quantidadeMinima) ?? undefined,
         custoUnitario: numOuNull(form.custoUnitario) ?? undefined,
       };
