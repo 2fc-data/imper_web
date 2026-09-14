@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '../components/ui/button';
+import { CepInput, type CepDados } from '../components/ui/cep-input';
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
+import { CpfCnpjInput } from '../components/ui/cpf-cnpj-input';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
@@ -208,12 +210,26 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [cpfCnpj, setCpfCnpj] = useState('');
+  const [cep, setCep] = useState('');
+  const [endereco, setEndereco] = useState('');
+  const [bairro, setBairro] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [estado, setEstado] = useState('');
+  const [numero, setNumero] = useState('');
+  const [complemento, setComplemento] = useState('');
+  const [cepValido, setCepValido] = useState(false);
+
   useEffect(() => {
     Promise.all([
       listarPapeis().catch(() => {}),
       listarCargos().catch(() => {}),
     ]).then(([papeisResult, cargosResult]) => {
-      if (papeisResult) setPapeis(papeisResult);
+      if (papeisResult) {
+        setPapeis(papeisResult);
+        const cliente = papeisResult.find((p) => p.nome === 'CLIENTE');
+        if (cliente) setPapelId(cliente.id);
+      }
       if (cargosResult) setCargos(cargosResult);
     });
   }, []);
@@ -225,11 +241,19 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
     try {
       await criarUsuario({
         nome,
-        email,
+        email: email || undefined,
         senha,
         telefone: telefone || undefined,
         papelId,
         cargoId: cargoId ?? undefined,
+        cpfCnpj: cpfCnpj || undefined,
+        cep: cep || undefined,
+        endereco: endereco || undefined,
+        bairro: bairro || undefined,
+        cidade: cidade || undefined,
+        estado: estado || undefined,
+        numero: numero || undefined,
+        complemento: complemento || undefined,
       });
       onCriado();
     } catch (err) {
@@ -275,6 +299,8 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
                 <Label htmlFor="nome">Nome *</Label>
                 <Input
                   id="nome"
+                  autoComplete="one-time-code"
+                  name="nome_novo"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Nome completo"
@@ -285,14 +311,15 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail *</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="one-time-code"
+                  name="email_novo"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@exemplo.com"
-                  required
                   disabled={saving}
                 />
               </div>
@@ -302,6 +329,8 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
                 <Input
                   id="senha"
                   type="password"
+                  autoComplete="new-password"
+                  name="senha_novo"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
@@ -315,6 +344,8 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
                 <Label htmlFor="telefone">Telefone</Label>
                 <Input
                   id="telefone"
+                  autoComplete="one-time-code"
+                  name="telefone_novo"
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
                   placeholder="(00) 00000-0000"
@@ -322,6 +353,109 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                <CpfCnpjInput
+                  id="cpfCnpj"
+                  name="cpfCnpj_novo"
+                  value={cpfCnpj}
+                  onChange={setCpfCnpj}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cep">CEP</Label>
+                <CepInput
+                  id="cep"
+                  name="cep_novo"
+                  value={cep}
+                  onChange={setCep}
+                  onConsulta={(dados: CepDados) => {
+                    setEndereco(dados.logradouro);
+                    setBairro(dados.bairro);
+                    setCidade(dados.cidade);
+                    setEstado(dados.estado);
+                    setCepValido(true);
+                  }}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+
+            {cepValido && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="endereco">Endereço</Label>
+                  <Input
+                    id="endereco"
+                    autoComplete="street-address"
+                    placeholder="Rua, avenida..."
+                    value={endereco}
+                    onChange={(e) => setEndereco(e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    autoComplete="address-level2"
+                    placeholder="Bairro"
+                    value={bairro}
+                    onChange={(e) => setBairro(e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    autoComplete="address-level1"
+                    placeholder="Cidade"
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="estado">UF</Label>
+                  <Input
+                    id="estado"
+                    autoComplete="address-level1"
+                    maxLength={2}
+                    placeholder="UF"
+                    value={estado}
+                    onChange={(e) => setEstado(e.target.value.toUpperCase())}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero">Número</Label>
+                  <Input
+                    id="numero"
+                    inputMode="numeric"
+                    autoComplete="address-line1"
+                    placeholder="Número"
+                    value={numero}
+                    onChange={(e) => setNumero(e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="complemento">Complemento</Label>
+                  <Input
+                    id="complemento"
+                    placeholder="Apto, bloco..."
+                    value={complemento}
+                    onChange={(e) => setComplemento(e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="cargo">Cargo</Label>
                 <select

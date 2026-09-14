@@ -123,8 +123,8 @@ export function logout(): void {
 
 export interface CadastroInput {
   nome: string;
-  email: string;
-  telefone?: string;
+  telefone: string;
+  email?: string;
   senha: string;
   turnstileToken?: string;
 }
@@ -136,11 +136,9 @@ export async function cadastrar(input: CadastroInput): Promise<LoginResponse> {
 }
 
 export async function recuperarSenha(
-  email: string,
+  input: { canal: 'email' | 'whatsapp'; email?: string; telefone?: string },
 ): Promise<{ ok: boolean; devToken?: string }> {
-  return api.post<{ ok: boolean; devToken?: string }>('/auth/recuperar-senha', {
-    email,
-  });
+  return api.post<{ ok: boolean; devToken?: string }>('/auth/recuperar-senha', input);
 }
 
 export async function redefinirSenha(
@@ -203,11 +201,19 @@ export async function atualizarUsuario(
 
 export interface CriarUsuarioInput {
   nome: string;
-  email: string;
+  email?: string;
   senha: string;
   telefone?: string;
   papelId: number;
   cargoId?: number | null;
+  cpfCnpj?: string;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  numero?: string;
+  complemento?: string;
 }
 
 export async function criarUsuario(input: CriarUsuarioInput): Promise<Usuario> {

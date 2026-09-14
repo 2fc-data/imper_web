@@ -13,8 +13,17 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { recuperarSenha } from '../lib/api';
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export default function ForgotPasswordPage() {
+  const [canal, setCanal] = useState<'email' | 'whatsapp'>('email');
   const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
   const [done, setDone] = useState(false);
   const [devToken, setDevToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +34,11 @@ export default function ForgotPasswordPage() {
     setError(null);
     setLoading(true);
     try {
-      const result = await recuperarSenha(email);
+      const result = await recuperarSenha({
+        canal,
+        email: canal === 'email' ? email : undefined,
+        telefone: canal === 'whatsapp' ? telefone : undefined,
+      });
       setDone(true);
       setDevToken(result.devToken ?? null);
     } catch (err) {
@@ -45,15 +58,15 @@ export default function ForgotPasswordPage() {
             Recuperar senha
           </CardTitle>
           <CardDescription>
-            Informe seu e-mail para receber um link de redefinição
+            Escolha como deseja receber o código de redefinição
           </CardDescription>
         </CardHeader>
         <CardContent>
           {done ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Se o e-mail estiver cadastrado, um link de redefinição foi
-                gerado.
+                Se as credenciais estiverem corretas, um código de redefinição foi
+                enviado via {canal === 'email' ? 'e-mail' : 'WhatsApp'}.
               </p>
               {import.meta.env.DEV && devToken && (
                 <div className="space-y-2">
@@ -75,17 +88,54 @@ export default function ForgotPasswordPage() {
             <>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    placeholder="voce@empresa.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                  <Label>Canal de recebimento</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={canal === 'email' ? 'default' : 'outline'}
+                      className="flex-1"
+                      onClick={() => setCanal('email')}
+                    >
+                      E-mail
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={canal === 'whatsapp' ? 'default' : 'outline'}
+                      className="flex-1"
+                      onClick={() => setCanal('whatsapp')}
+                    >
+                      WhatsApp
+                    </Button>
+                  </div>
                 </div>
+                {canal === 'email' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      placeholder="voce@empresa.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                )}
+                {canal === 'whatsapp' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone">Telefone (WhatsApp)</Label>
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      required
+                      autoComplete="tel"
+                      placeholder="(00) 00000-0000"
+                      value={telefone}
+                      onChange={(e) => setTelefone(formatPhone(e.target.value))}
+                    />
+                  </div>
+                )}
               {error && (
                 <div role="alert" aria-live="assertive" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-center text-sm text-destructive">
                   {error}
@@ -97,7 +147,7 @@ export default function ForgotPasswordPage() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? 'Enviando...' : 'Enviar link'}
+                {loading ? 'Enviando...' : 'Enviar código'}
               </Button>
               </form>
               <BackToLogin />
