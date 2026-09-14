@@ -16,6 +16,13 @@ import {
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export default function RegisterPage() {
   const { cadastrar } = useAuth();
   const navigate = useNavigate();
@@ -34,8 +41,8 @@ export default function RegisterPage() {
     try {
       const authed = await cadastrar({
         nome,
-        email,
-        telefone: telefone || undefined,
+        telefone,
+        email: email || undefined,
         senha,
         turnstileToken: turnstileToken || undefined,
       });
@@ -61,7 +68,7 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nome">Nome</Label>
+              <Label htmlFor="nome">Nome *</Label>
               <Input
                 id="nome"
                 required
@@ -72,11 +79,22 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="telefone">Telefone *</Label>
+              <Input
+                id="telefone"
+                type="tel"
+                required
+                autoComplete="tel"
+                placeholder="(00) 00000-0000"
+                value={telefone}
+                onChange={(e) => setTelefone(formatPhone(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail (opcional)</Label>
               <Input
                 id="email"
                 type="email"
-                required
                 autoComplete="email"
                 placeholder="voce@empresa.com"
                 value={email}
@@ -84,18 +102,7 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone (opcional)</Label>
-              <Input
-                id="telefone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="(00) 00000-0000"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="senha">Senha</Label>
+              <Label htmlFor="senha">Senha *</Label>
               <PasswordInput
                 id="senha"
                 required
