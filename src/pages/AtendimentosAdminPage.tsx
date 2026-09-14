@@ -321,6 +321,7 @@ export function AtendimentoList({
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Telefone</th>
               <th className="px-4 py-3">Canal / Motivo</th>
+              <th className="px-4 py-3">Prioridade</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Data</th>
               <th className="px-4 py-3 text-right">Ações</th>
@@ -330,7 +331,7 @@ export function AtendimentoList({
             {loading ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Carregando atendimentos...
@@ -339,7 +340,7 @@ export function AtendimentoList({
             ) : atendimentos.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Nenhum atendimento encontrado.
@@ -395,6 +396,19 @@ export function AtendimentoList({
                         <option value="INATIVO">INATIVO</option>
                       </select>
                     </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.urgencia === 'URGENTISSIMO'
+                            ? 'bg-destructive/15 text-destructive'
+                            : item.urgencia === 'URGENTE'
+                              ? 'bg-warning/15 text-warning'
+                              : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {item.urgencia ?? '—'}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString('pt-BR')}
                     </td>
@@ -410,7 +424,7 @@ export function AtendimentoList({
                   </tr>
                   {expandidoId === item.id && (
                     <tr className="bg-primary/10">
-                      <td colSpan={6} className="px-4 py-3">
+                      <td colSpan={7} className="px-4 py-3">
                         <div className="space-y-3">
                           <div className="text-sm font-semibold text-foreground">
                             Histórico de Atendimento
@@ -522,9 +536,9 @@ export function NovoAtendimentoForm({
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [canal, setCanal] = useState<CanalAtendimento>('WHATSAPP');
-  const [motivo, setMotivo] = useState('DUVIDA');
-  const [urgencia, setUrgencia] = useState<Urgencia>('NORMAL');
+  const [canal, setCanal] = useState<CanalAtendimento | ''>('');
+  const [motivo, setMotivo] = useState('');
+  const [urgencia, setUrgencia] = useState<Urgencia | ''>('');
   const [cep, setCep] = useState('');
   const [endereco, setEndereco] = useState('');
   const [bairro, setBairro] = useState('');
@@ -624,6 +638,10 @@ export function NovoAtendimentoForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canal || !motivo || !urgencia) {
+      setErro('Preencha Canal, Motivo e Prioridade.');
+      return;
+    }
     setLoading(true);
     setErro(null);
     try {
@@ -757,40 +775,46 @@ export function NovoAtendimentoForm({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
-            <label className={campoLabel}>Canal</label>
+            <label className={campoLabel}>Canal *</label>
             <select
               value={canal}
-              onChange={(e) => setCanal(e.target.value as CanalAtendimento)}
+              onChange={(e) => setCanal(e.target.value as CanalAtendimento | '')}
+              required
               className={campoInput}
             >
-              <option value="WHATSAPP">WHATSAPP</option>
+              <option value="">Selecione...</option>
               <option value="FORMULARIO">FORMULÁRIO</option>
               <option value="LOJA">LOJA</option>
               <option value="TELEFONE">TELEFONE</option>
+              <option value="WHATSAPP">WHATSAPP</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className={campoLabel}>Motivo</label>
+            <label className={campoLabel}>Motivo *</label>
             <select
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
+              required
               className={campoInput}
             >
-              <option value="DUVIDA">DÚVIDA</option>
+              <option value="">Selecione...</option>
               <option value="AGENDAR_AVALIACAO_ORCAMENTO">
                 AGENDAR AVALIAÇÃO DE ORÇAMENTO
               </option>
+              <option value="DUVIDA">DÚVIDA</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
-            <label className={campoLabel}>Urgência</label>
+            <label className={campoLabel}>Prioridade *</label>
             <select
               value={urgencia}
-              onChange={(e) => setUrgencia(e.target.value as Urgencia)}
+              onChange={(e) => setUrgencia(e.target.value as Urgencia | '')}
+              required
               className={campoInput}
             >
+              <option value="">Selecione...</option>
               <option value="NORMAL">NORMAL</option>
               <option value="URGENTE">URGENTE</option>
               <option value="URGENTISSIMO">URGENTÍSSIMO</option>
