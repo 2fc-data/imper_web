@@ -543,6 +543,16 @@ function ModalEditarUsuario({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [cpfCnpj, setCpfCnpj] = useState(usuario.cpfCnpj ?? '');
+  const [cep, setCep] = useState(usuario.endereco?.cep ?? '');
+  const [endereco, setEndereco] = useState(usuario.endereco?.logradouro ?? '');
+  const [bairro, setBairro] = useState(usuario.endereco?.bairro ?? '');
+  const [cidade, setCidade] = useState(usuario.endereco?.cidade ?? '');
+  const [estado, setEstado] = useState(usuario.endereco?.estado ?? '');
+  const [numero, setNumero] = useState(usuario.endereco?.numero ?? '');
+  const [complemento, setComplemento] = useState(usuario.endereco?.complemento ?? '');
+  const [cepValido, setCepValido] = useState(!!usuario.endereco?.logradouro);
+
   async function handleSalvar(e: FormEvent) {
     e.preventDefault();
     if (!papelId) return;
@@ -555,6 +565,14 @@ function ModalEditarUsuario({
         papelId,
         cargoId: cargoId ?? null,
         ativo,
+        cpfCnpj: cpfCnpj || undefined,
+        cep: cep || undefined,
+        endereco: endereco || undefined,
+        bairro: bairro || undefined,
+        cidade: cidade || undefined,
+        estado: estado || undefined,
+        numero: numero || undefined,
+        complemento: complemento || undefined,
       });
       onSalvo();
       onFechar();
@@ -569,7 +587,7 @@ function ModalEditarUsuario({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <form
         onSubmit={handleSalvar}
-        className="w-full max-w-md space-y-4 rounded-xl bg-background p-6 shadow-xl border"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto space-y-4 rounded-xl bg-background p-6 shadow-xl border"
       >
         <h3 className="text-lg font-bold">Editar Usuário</h3>
         {err && (
@@ -596,6 +614,95 @@ function ModalEditarUsuario({
             disabled={saving}
           />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-cpfCnpj">CPF/CNPJ</Label>
+          <CpfCnpjInput
+            id="edit-cpfCnpj"
+            value={cpfCnpj}
+            onChange={setCpfCnpj}
+            disabled={saving}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-cep">CEP</Label>
+          <CepInput
+            id="edit-cep"
+            value={cep}
+            onChange={setCep}
+            onConsulta={(dados: CepDados) => {
+              setEndereco(dados.logradouro);
+              setBairro(dados.bairro);
+              setCidade(dados.cidade);
+              setEstado(dados.estado);
+              setCepValido(true);
+            }}
+            disabled={saving}
+          />
+        </div>
+        {cepValido && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="edit-endereco">Endereço</Label>
+              <Input
+                id="edit-endereco"
+                placeholder="Rua, avenida..."
+                value={endereco}
+                onChange={(e) => setEndereco(e.target.value)}
+                disabled={saving}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-bairro">Bairro</Label>
+              <Input
+                id="edit-bairro"
+                value={bairro}
+                onChange={(e) => setBairro(e.target.value)}
+                disabled={saving}
+              />
+            </div>
+            <div className="grid gap-4 grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-cidade">Cidade</Label>
+                <Input
+                  id="edit-cidade"
+                  value={cidade}
+                  onChange={(e) => setCidade(e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-estado">UF</Label>
+                <Input
+                  id="edit-estado"
+                  maxLength={2}
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value.toUpperCase())}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-numero">Número</Label>
+                <Input
+                  id="edit-numero"
+                  value={numero}
+                  onChange={(e) => setNumero(e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-complemento">Complemento</Label>
+                <Input
+                  id="edit-complemento"
+                  value={complemento}
+                  onChange={(e) => setComplemento(e.target.value)}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+          </>
+        )}
         <div className="space-y-2">
           <Label htmlFor="edit-papel">Perfil de Acesso *</Label>
           <select

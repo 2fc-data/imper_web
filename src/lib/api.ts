@@ -169,6 +169,17 @@ export interface Usuario {
   cargoId: number | null;
   cargo?: { id: number; nome: string } | null;
   createdAt: string;
+  cpfCnpj?: string | null;
+  endereco?: {
+    id: number;
+    logradouro: string;
+    numero: string | null;
+    complemento: string | null;
+    bairro: string | null;
+    cidade: string | null;
+    estado: string | null;
+    cep: string | null;
+  } | null;
 }
 
 export async function listarUsuarios(): Promise<Usuario[]> {
@@ -194,6 +205,14 @@ export async function atualizarUsuario(
     papelId?: number;
     cargoId?: number | null;
     ativo?: boolean;
+    cpfCnpj?: string;
+    cep?: string;
+    endereco?: string;
+    bairro?: string;
+    cidade?: string;
+    estado?: string;
+    numero?: string;
+    complemento?: string;
   },
 ): Promise<Usuario> {
   return api.put<Usuario>(`/usuarios/${id}`, data);
