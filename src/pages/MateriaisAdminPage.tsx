@@ -18,11 +18,7 @@ import {
   type MaterialInput,
   type MaterialItem,
   type MaterialLookups,
-  type MaterialMovimentoItem,
-  registrarEntradaMaterial,
-  registrarSaidaMaterial,
   type StatusMaterial,
-  type TipoMovimento,
   type UnidadeMedida,
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
@@ -301,204 +297,12 @@ function MaterialForm({
   );
 }
 
-interface MovimentosProps {
-  material: MaterialItem;
-  onVoltar: () => void;
-  onAtualizar: (m: MaterialItem) => void;
-}
-
-function Movimentos({ material, onVoltar, onAtualizar }: MovimentosProps) {
-  const [tipo, setTipo] = useState<TipoMovimento>('ENTRADA');
-  const [quantidade, setQuantidade] = useState('');
-  const [observacao, setObservacao] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const qtd = numOuNull(quantidade);
-    if (qtd === null || qtd <= 0) {
-      setError('Informe uma quantidade maior que zero.');
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const fn =
-        tipo === 'ENTRADA' ? registrarEntradaMaterial : registrarSaidaMaterial;
-      const novoSaldo = await fn(material.id, {
-        quantidade: qtd,
-        observacao: observacao.trim() || undefined,
-      });
-      setQuantidade('');
-      setObservacao('');
-      const detalhe = await detalharMaterial(material.id);
-      onAtualizar({
-        ...detalhe,
-        saldo: detalhe.saldo
-          ? { ...detalhe.saldo, saldo: novoSaldo }
-          : {
-              materialId: material.id,
-              saldo: novoSaldo,
-              updatedAt: new Date().toISOString(),
-            },
-      });
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Falha ao registrar movimento',
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const movimentos: MaterialMovimentoItem[] = material.movimentos ?? [];
-
-  return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {material.nome}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Movimentação de estoque
-        </p>
-      </header>
-
-      {error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Registrar movimento</CardTitle>
-            <CardDescription>
-              Saldo atual: {saldoDe(material)} {material.unidade?.nome}
-              {material.quantidadeMinima !== null &&
-                ` · mín. ${material.quantidadeMinima}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant={tipo === 'ENTRADA' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTipo('ENTRADA')}
-                >
-                  Entrada
-                </Button>
-                <Button
-                  type="button"
-                  variant={tipo === 'SAIDA' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTipo('SAIDA')}
-                >
-                  Saída
-                </Button>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Quantidade ({material.unidade?.nome})
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step="any"
-                  required
-                  value={quantidade}
-                  onChange={(e) => setQuantidade(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Observação
-                </label>
-                <textarea
-                  value={observacao}
-                  onChange={(e) => setObservacao(e.target.value)}
-                  rows={2}
-                  placeholder="Motivo/observação (opcional)"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </div>
-              <Button type="submit" disabled={saving} className="w-full">
-                {saving
-                  ? 'Registrando...'
-                  : tipo === 'ENTRADA'
-                    ? 'Registrar entrada'
-                    : 'Registrar saída'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Histórico de movimentos</CardTitle>
-            <CardDescription>Últimas 50 movimentações</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {movimentos.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                Nenhum movimento registrado.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {movimentos.map((mv) => (
-                  <div
-                    key={mv.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm"
-                  >
-                    <div className="min-w-0">
-                      <span
-                        className={cn(
-                          'text-sm font-medium',
-                          mv.tipo === 'ENTRADA'
-                            ? 'text-emerald-600'
-                            : 'text-destructive',
-                        )}
-                      >
-                        {mv.tipo === 'ENTRADA' ? '+' : '−'}
-                        {toNum(mv.quantidade)} {material.unidade?.nome}
-                      </span>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {formatarData(mv.createdAt)}
-                        {mv.registradoPor?.nome
-                          ? ` · ${mv.registradoPor.nome}`
-                          : ''}
-                        {mv.observacao ? ` · ${mv.observacao}` : ''}
-                      </p>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      saldo {toNum(mv.saldoApos)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Button type="button" variant="outline" onClick={onVoltar}>
-        ← Voltar para a lista
-      </Button>
-    </div>
-  );
-}
-
 export default function MateriaisAdminPage({
   viewAtiva = 'lista',
   onNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista' | 'novo' | 'movimentos';
-  onNavegar?: (v: 'analises' | 'lista' | 'novo' | 'movimentos') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo';
+  onNavegar?: (v: 'analises' | 'lista' | 'novo') => void;
 }) {
   const [materiais, setMateriais] = useState<MaterialItem[]>([]);
   const [lookups, setLookups] = useState<MaterialLookups | null>(null);
@@ -514,9 +318,6 @@ export default function MateriaisAdminPage({
     null,
   );
   const [excluindo, setExcluindo] = useState<number | null>(null);
-  const [materialAberto, setMaterialAberto] = useState<MaterialItem | null>(
-    null,
-  );
 
   const carregarTodos = useCallback(async () => {
     setError(null);
@@ -631,26 +432,6 @@ export default function MateriaisAdminPage({
     }
   }
 
-  async function abrirMovimentos(m: MaterialItem) {
-    setError(null);
-    try {
-      const detalhe = await detalharMaterial(m.id);
-      setMaterialAberto(detalhe);
-      onNavegar?.('movimentos');
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Falha ao carregar movimentos',
-      );
-    }
-  }
-
-  function atualizarMaterialAberto(m: MaterialItem) {
-    setMaterialAberto(m);
-    setMateriais((prev) =>
-      prev.map((x) => (x.id === m.id ? { ...x, saldo: m.saldo } : x)),
-    );
-  }
-
   const filtrados = materiais.filter((m) => {
     if (categoriaFiltro !== '' && m.categoriaId !== categoriaFiltro)
       return false;
@@ -683,16 +464,6 @@ export default function MateriaisAdminPage({
           </Button>
         )}
       </div>
-    );
-  }
-
-  if (viewAtiva === 'movimentos' && materialAberto) {
-    return (
-      <Movimentos
-        material={materialAberto}
-        onVoltar={() => onNavegar?.('lista')}
-        onAtualizar={atualizarMaterialAberto}
-      />
     );
   }
 
@@ -809,14 +580,6 @@ export default function MateriaisAdminPage({
                       : `Cadastrado em ${formatarData(m.createdAt)}`}
                   </span>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => abrirMovimentos(m)}
-                    >
-                      Movimentos
-                    </Button>
                     <Button
                       type="button"
                       variant="outline"

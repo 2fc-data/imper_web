@@ -1170,22 +1170,6 @@ export async function excluirEquipamento(id: number): Promise<EquipamentoItem> {
   return api.del<EquipamentoItem>(`/equipamentos/${id}`);
 }
 
-export async function registrarRetiradaEquipamento(
-  id: number,
-  input: { colaboradorId: number; observacao?: string },
-): Promise<RetiradaEquipamentoItem> {
-  return api.post<RetiradaEquipamentoItem>(
-    `/equipamentos/${id}/retirada`,
-    input,
-  );
-}
-
-export async function registrarDevolucaoEquipamento(
-  id: number,
-): Promise<RetiradaEquipamentoItem> {
-  return api.post<RetiradaEquipamentoItem>(`/equipamentos/${id}/devolucao`);
-}
-
 // ---------------------------------------------------------------------------
 // EPIs
 // ---------------------------------------------------------------------------
@@ -1419,11 +1403,6 @@ export interface MaterialInput {
   custoUnitario?: number;
 }
 
-export interface MaterialMovimentoInput {
-  quantidade: number;
-  observacao?: string;
-}
-
 export interface MaterialLookups {
   categorias: LookupItem[];
   subcategorias: SubcategoriaItem[];
@@ -1472,20 +1451,6 @@ export async function atualizarMaterial(
   },
 ): Promise<MaterialItem> {
   return api.put<MaterialItem>(`/materiais/${id}`, input);
-}
-
-export async function registrarEntradaMaterial(
-  id: number,
-  input: MaterialMovimentoInput,
-): Promise<number> {
-  return api.post<number>(`/materiais/${id}/entrada`, input);
-}
-
-export async function registrarSaidaMaterial(
-  id: number,
-  input: MaterialMovimentoInput,
-): Promise<number> {
-  return api.post<number>(`/materiais/${id}/saida`, input);
 }
 
 export async function excluirMaterial(id: number): Promise<MaterialItem> {
@@ -1819,7 +1784,9 @@ export interface SeparacaoItem {
 
 export interface SeparacaoItemDetalhe {
   id: number;
-  materialId: number;
+  materialId: number | null;
+  epiId: number | null;
+  equipamentoId: number | null;
   descricaoItem?: string;
   quantidade?: number | string;
   quantidadeNecessaria: number | string;
@@ -1829,6 +1796,8 @@ export interface SeparacaoItemDetalhe {
   retiradoEm?: string | null;
   devolvidoEm?: string | null;
   material?: MaterialItem;
+  epi?: EpiItem;
+  equipamento?: EquipamentoItem;
 }
 
 export async function listarSeparacoes(params?: {
@@ -1872,4 +1841,24 @@ export async function registrarDevolucaoSeparacao(
   id: number,
 ): Promise<SeparacaoItem> {
   return api.put<SeparacaoItem>(`/separacao/${id}/devolucao`);
+}
+
+export async function registrarRetiradaItemSeparacao(
+  separacaoId: number,
+  itemId: number,
+  dados: { colaboradorId: number; observacao?: string },
+): Promise<unknown> {
+  return api.put(`/separacao/${separacaoId}/itens/${itemId}/retirar`, dados);
+}
+
+export async function registrarDevolucaoItemSeparacao(
+  separacaoId: number,
+  itemId: number,
+  dados: { observacao?: string; status?: 'DEVOLVIDO' | 'PERDIDO' },
+): Promise<unknown> {
+  return api.put(`/separacao/${separacaoId}/itens/${itemId}/devolver`, dados);
+}
+
+export async function excluirSeparacao(id: number): Promise<void> {
+  return api.del<void>(`/separacao/${id}`);
 }

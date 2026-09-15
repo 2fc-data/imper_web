@@ -1,3 +1,6 @@
+/**
+ * @deprecated Substituído por RetiradaDeItensPage. Mantido para backward compatibility.
+ */
 import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/button';
 import {

@@ -22,7 +22,7 @@ export function WhatsAppIconButton({
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"
-      title="WhatsApp"
+      title="Contato por WhatsApp"
       className={cn(
         'inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-whatsapp transition-colors hover:bg-whatsapp-hover hover:text-white',
         className,

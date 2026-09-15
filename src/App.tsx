@@ -19,6 +19,7 @@ import {
   OrcamentosSidebar,
   OSSidebar,
   RbacSidebar,
+  RetiradaDeItensSidebar,
   ServicosSidebar,
   UsuariosSidebar,
   VisitasSidebar,
@@ -82,6 +83,11 @@ const AlmoxarifePage = lazy(() =>
 const MovimentacaoPage = lazy(() =>
   import('./pages/MovimentacaoPage').then((m) => ({
     default: m.MovimentacaoPage,
+  })),
+);
+const RetiradaDeItensPage = lazy(() =>
+  import('./pages/RetiradaDeItensPage').then((m) => ({
+    default: m.RetiradaDeItensPage,
   })),
 );
 const ExecucaoDashboardPage = lazy(() =>
@@ -332,7 +338,7 @@ function EpisRoute() {
 
 function MateriaisRoute() {
   const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'lista' | 'novo' | 'movimentos'
+    'analises' | 'lista' | 'novo'
   >('lista');
 
   return (
@@ -459,6 +465,17 @@ function MovimentacaoRoute() {
       }
     >
       <MovimentacaoPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+    </ProtectedLayout>
+  );
+}
+
+function RetiradaDeItensRoute() {
+  return (
+    <ProtectedLayout
+      requiredPermissions={['gerenciar_estoque', 'gerenciar_equipamentos']}
+      sidebar={<RetiradaDeItensSidebar />}
+    >
+      <RetiradaDeItensPage />
     </ProtectedLayout>
   );
 }
@@ -600,6 +617,7 @@ export default function App() {
         <Route element={<EquipesRoute />} path="/equipes" />
         <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
         <Route element={<MovimentacaoRoute />} path="/movimentacoes" />
+        <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
         <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
         <Route
           element={
