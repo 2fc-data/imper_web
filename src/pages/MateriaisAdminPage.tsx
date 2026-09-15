@@ -821,6 +821,14 @@ export default function MateriaisAdminPage({
                       type="button"
                       variant="outline"
                       size="sm"
+                      onClick={() => comecarEdicao(m)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       disabled={toggling === m.id}
                       onClick={() => handleToggleStatus(m)}
                     >
@@ -829,14 +837,6 @@ export default function MateriaisAdminPage({
                         : m.status === 'ATIVO'
                           ? 'Desativar'
                           : 'Ativar'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => comecarEdicao(m)}
-                    >
-                      Editar
                     </Button>
                     {confirmandoExclusao === m.id ? (
                       <div className="flex items-center gap-1">

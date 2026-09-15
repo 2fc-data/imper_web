@@ -464,6 +464,14 @@ export default function EpisAdminPage({
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={() => comecarEdicao(e)}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     disabled={toggling === e.id}
                     onClick={() => handleToggleAtivo(e)}
                   >
@@ -472,14 +480,6 @@ export default function EpisAdminPage({
                       : e.ativo
                         ? 'Desativar'
                         : 'Ativar'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => comecarEdicao(e)}
-                  >
-                    Editar
                   </Button>
                   {confirmandoExclusao === e.id ? (
                     <>
