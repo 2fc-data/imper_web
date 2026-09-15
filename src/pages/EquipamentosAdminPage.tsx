@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Input } from '../components/ui/input';
 import {
   atualizarEquipamento,
   criarEquipamento,
@@ -19,9 +18,6 @@ import {
   excluirEquipamento,
   listarEquipamentos,
   listarLookupsEquipamentos,
-  listarUsuarios,
-  registrarDevolucaoEquipamento,
-  registrarRetiradaEquipamento,
 } from '../lib/api';
 import {
   formatarData,
@@ -30,9 +26,6 @@ import {
   toLocalDateTime,
 } from '../lib/datetime';
 import { cn } from '../lib/utils';
-
-const selectClasses =
-  'flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
 
 function BadgeAtivoEquipamento({ ativo }: { ativo: boolean }) {
   return (
@@ -195,7 +188,6 @@ export default function EquipamentosAdminPage({
 }: EquipamentosAdminPageProps) {
   const [equipamentos, setEquipamentos] = useState<EquipamentoItem[]>([]);
   const [lookups, setLookups] = useState<EquipamentoLookups | null>(null);
-  const [usuarios, setUsuarios] = useState<{ id: number; nome: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<number | ''>('');
@@ -207,24 +199,16 @@ export default function EquipamentosAdminPage({
     null,
   );
   const [excluindo, setExcluindo] = useState<number | null>(null);
-  const [retiraForm, setRetiraForm] = useState<{
-    equipamentoId: number;
-    colaboradorId: number | '';
-    observacao: string;
-    salvando: boolean;
-  }>({ equipamentoId: 0, colaboradorId: '', observacao: '', salvando: false });
 
   const carregarTodos = useCallback(async () => {
     setError(null);
     try {
-      const [eqs, cats, usrs] = await Promise.all([
+      const [eqs, cats] = await Promise.all([
         listarEquipamentos(),
         listarLookupsEquipamentos(),
-        listarUsuarios(),
       ]);
       setEquipamentos(eqs);
       setLookups(cats);
-      setUsuarios(usrs.filter((u) => u.ativo));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Falha ao carregar equipamentos',
@@ -350,43 +334,6 @@ export default function EquipamentosAdminPage({
     }
   }
 
-  async function handleRetirar(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!retiraForm.colaboradorId) return;
-    setRetiraForm((r) => ({ ...r, salvando: true }));
-    setError(null);
-    try {
-      await registrarRetiradaEquipamento(retiraForm.equipamentoId, {
-        colaboradorId: Number(retiraForm.colaboradorId),
-        observacao: retiraForm.observacao || undefined,
-      });
-      setRetiraForm({
-        equipamentoId: 0,
-        colaboradorId: '',
-        observacao: '',
-        salvando: false,
-      });
-      await recarregarEquipamentos();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Falha ao registrar retirada',
-      );
-      setRetiraForm((r) => ({ ...r, salvando: false }));
-    }
-  }
-
-  async function handleDevolver(e: EquipamentoItem) {
-    setError(null);
-    try {
-      await registrarDevolucaoEquipamento(e.id);
-      await recarregarEquipamentos();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Falha ao registrar devolução',
-      );
-    }
-  }
-
   const formulario = (
     <ItemForm
       tipo="EQUIPAMENTO"
@@ -479,8 +426,6 @@ export default function EquipamentosAdminPage({
 
                 <div className="space-y-3">
                   {paginados.map((e) => {
-                    const retiradaEmAberto = e.responsavel != null;
-                    const novo = retiraForm.equipamentoId === e.id;
                     return (
                       <Card key={e.id}>
                         <CardHeader className="pb-2">
@@ -522,163 +467,56 @@ export default function EquipamentosAdminPage({
                               <span> · {formatarValor(e.valorAquisicao)}</span>
                             )}
                           </div>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {retiradaEmAberto ? (
-                                <span className="rounded-md bg-sky-500/10 px-2 py-1 text-xs font-medium text-sky-600">
-                                  Retirado por {e.responsavel?.nome}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">
-                                  Disponível para retirada
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              {novo ? (
-                                <form
-                                  onSubmit={handleRetirar}
-                                  className="flex flex-wrap items-center gap-2"
-                                >
-                                  <select
-                                    required
-                                    value={retiraForm.colaboradorId}
-                                    onChange={(ev) =>
-                                      setRetiraForm({
-                                        ...retiraForm,
-                                        colaboradorId: ev.target.value
-                                          ? Number(ev.target.value)
-                                          : '',
-                                      })
-                                    }
-                                    className={cn(
-                                      selectClasses,
-                                      'h-10 max-w-[220px]',
-                                    )}
-                                  >
-                                    <option value="" disabled>
-                                      Colaborador...
-                                    </option>
-                                    {usuarios.map((u) => (
-                                      <option key={u.id} value={u.id}>
-                                        {u.nome}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <Input
-                                    placeholder="Observação (opcional)"
-                                    value={retiraForm.observacao}
-                                    onChange={(ev) =>
-                                      setRetiraForm({
-                                        ...retiraForm,
-                                        observacao: ev.target.value,
-                                      })
-                                    }
-                                    className="h-10 max-w-[220px]"
-                                  />
-                                  <Button
-                                    type="submit"
-                                    size="sm"
-                                    disabled={retiraForm.salvando}
-                                  >
-                                    {retiraForm.salvando
-                                      ? 'Salvando...'
-                                      : 'Confirmar'}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      setRetiraForm({
-                                        equipamentoId: 0,
-                                        colaboradorId: '',
-                                        observacao: '',
-                                        salvando: false,
-                                      })
-                                    }
-                                  >
-                                    Cancelar
-                                  </Button>
-                                </form>
-                              ) : retiradaEmAberto ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => comecarEdicao(e)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={excluindo === e.id}
+                              onClick={() => handleToggleAtivo(e)}
+                            >
+                              {e.ativo ? 'Desativar' : 'Ativar'}
+                            </Button>
+                            {confirmandoExclusao === e.id ? (
+                              <>
                                 <Button
                                   type="button"
-                                  variant="outline"
+                                  variant="destructive"
                                   size="sm"
-                                  onClick={() => handleDevolver(e)}
+                                  disabled={excluindo === e.id}
+                                  onClick={() => handleExcluir(e.id)}
                                 >
-                                  Registrar devolução
+                                  {excluindo === e.id
+                                    ? 'Excluindo...'
+                                    : 'Confirmar exclusão'}
                                 </Button>
-                              ) : (
-                                e.ativo && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      setRetiraForm({
-                                        equipamentoId: e.id,
-                                        colaboradorId: '',
-                                        observacao: '',
-                                        salvando: false,
-                                      })
-                                    }
-                                  >
-                                    Registrar retirada
-                                  </Button>
-                                )
-                              )}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => comecarEdicao(e)}
-                              >
-                                Editar
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={excluindo === e.id}
-                                onClick={() => handleToggleAtivo(e)}
-                              >
-                                {e.ativo ? 'Desativar' : 'Ativar'}
-                              </Button>
-                              {confirmandoExclusao === e.id ? (
-                                <>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="sm"
-                                    disabled={excluindo === e.id}
-                                    onClick={() => handleExcluir(e.id)}
-                                  >
-                                    {excluindo === e.id
-                                      ? 'Excluindo...'
-                                      : 'Confirmar exclusão'}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setConfirmandoExclusao(null)}
-                                  >
-                                    Cancelar
-                                  </Button>
-                                </>
-                              ) : (
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => setConfirmandoExclusao(e.id)}
+                                  onClick={() => setConfirmandoExclusao(null)}
                                 >
-                                  Excluir
+                                  Cancelar
                                 </Button>
-                              )}
-                            </div>
+                              </>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setConfirmandoExclusao(e.id)}
+                              >
+                                Excluir
+                              </Button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

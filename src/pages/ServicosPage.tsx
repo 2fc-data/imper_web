@@ -131,15 +131,15 @@ export default function ServicosPage() {
                           <Link
                             to={`/orcamento?servico=${encodeURIComponent(servico.titulo)}`}
                             aria-label={`Solicitar orçamento para ${servico.titulo}`}
-                            title="Solicitar orçamento"
+                            title="Solicitar Orçamento"
                             className={cn(
-                              'inline-flex h-11 w-11 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
+                              'inline-flex h-6 w-6 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
                             )}
                           >
                             <span aria-hidden="true">SO</span>
                           </Link>
                           <WhatsAppIconButton
-                            className="h-5 w-5 rounded-xl"
+                            className="h-6 w-6 rounded-xl"
                             text={`Olá! Gostaria de um orçamento de impermeabilização para ${servico.titulo}.`}
                           />
                         </div>

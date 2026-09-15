@@ -177,15 +177,9 @@ export const NAV_ITEMS: NavItem[] = [
         requiredPermissions: ['gerenciar_os', 'criar_os'],
       },
       {
-        to: '/almoxarife',
-        label: 'Almoxarife',
+        to: '/retirada-de-itens',
+        label: 'Retirada de Itens',
         icon: <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />,
-        requiredPermissions: ['gerenciar_estoque', 'gerenciar_equipamentos'],
-      },
-      {
-        to: '/movimentacoes',
-        label: 'Movimentações',
-        icon: <Icon d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />,
         requiredPermissions: ['gerenciar_estoque', 'gerenciar_equipamentos'],
       },
     ],

@@ -186,7 +186,7 @@ export function EquipamentosSidebar({
         Novo Equipamento
       </SidebarButton>
       <SidebarNote>
-        Cadastro, patrimônio, retiradas e devoluções dos equipamentos.
+        Cadastro e patrimônio dos equipamentos.
       </SidebarNote>
     </>
   );
@@ -418,8 +418,8 @@ export function MateriaisSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo' | 'movimentos';
-  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'movimentos') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
 }) {
   return (
     <>
@@ -637,6 +637,22 @@ export function MovimentacaoSidebar({
       </SidebarButton>
       <SidebarNote>
         Acompanhe movimentações de equipamentos, EPIs e materiais.
+      </SidebarNote>
+    </>
+  );
+}
+
+export function RetiradaDeItensSidebar() {
+  return (
+    <>
+      <SidebarButton
+        active
+        icon={icone('M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10')}
+      >
+        Retirada de Itens
+      </SidebarButton>
+      <SidebarNote>
+        Gerencie retiradas e devoluções de equipamentos, EPIs e materiais.
       </SidebarNote>
     </>
   );
