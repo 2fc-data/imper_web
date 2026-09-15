@@ -1488,6 +1488,10 @@ export async function registrarSaidaMaterial(
   return api.post<number>(`/materiais/${id}/saida`, input);
 }
 
+export async function excluirMaterial(id: number): Promise<MaterialItem> {
+  return api.del<MaterialItem>(`/materiais/${id}`);
+}
+
 // ─── RBAC (Papéis e Permissões) ───────────────────────────────────────────
 
 export interface PermissaoRbac {

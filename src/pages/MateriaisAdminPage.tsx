@@ -12,6 +12,7 @@ import {
   atualizarMaterial,
   criarMaterial,
   detalharMaterial,
+  excluirMaterial,
   listarLookupsMateriais,
   listarMateriais,
   type MaterialInput,
@@ -509,6 +510,10 @@ export default function MateriaisAdminPage({
   const [editando, setEditando] = useState<MaterialItem | null>(null);
   const [form, setForm] = useState<MaterialFormData>(emptyForm);
   const [toggling, setToggling] = useState<number | null>(null);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(
+    null,
+  );
+  const [excluindo, setExcluindo] = useState<number | null>(null);
   const [materialAberto, setMaterialAberto] = useState<MaterialItem | null>(
     null,
   );
@@ -607,6 +612,22 @@ export default function MateriaisAdminPage({
       );
     } finally {
       setToggling(null);
+    }
+  }
+
+  async function handleExcluir(id: number) {
+    setExcluindo(id);
+    setError(null);
+    try {
+      await excluirMaterial(id);
+      setMateriais((prev) => prev.filter((x) => x.id !== id));
+      setConfirmandoExclusao(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Falha ao excluir material',
+      );
+    } finally {
+      setExcluindo(null);
     }
   }
 
@@ -817,6 +838,38 @@ export default function MateriaisAdminPage({
                     >
                       Editar
                     </Button>
+                    {confirmandoExclusao === m.id ? (
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={excluindo === m.id}
+                          onClick={() => handleExcluir(m.id)}
+                        >
+                          {excluindo === m.id ? 'Excluindo...' : 'Confirmar'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={excluindo === m.id}
+                          onClick={() => setConfirmandoExclusao(null)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => setConfirmandoExclusao(m.id)}
+                      >
+                        Excluir
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
