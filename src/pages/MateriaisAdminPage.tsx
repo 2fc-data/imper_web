@@ -200,7 +200,7 @@ function MaterialForm({
             required
             minLength={2}
             value={form.nome}
-            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            onChange={(e) => setForm({ ...form, nome: e.target.value.toUpperCase() })}
             placeholder="Ex.: Água sanitária, Desengraxante..."
             className={inputCls}
           />

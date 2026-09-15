@@ -105,7 +105,7 @@ function ModalEditarLookup({
           <Label>Nome</Label>
           <Input
             value={nome}
-            onChange={(e) => setNome(e.target.value)}
+            onChange={(e) => setNome(e.target.value.toUpperCase())}
             placeholder="Nome do item"
             autoFocus
           />
@@ -335,7 +335,7 @@ function CardCatologo({
             <Label>Nome</Label>
             <Input
               value={form.nome}
-              onChange={(e) => setForm({ ...form, nome: e.target.value })}
+              onChange={(e) => setForm({ ...form, nome: e.target.value.toUpperCase() })}
               placeholder="Nome do item"
             />
           </div>
@@ -553,7 +553,7 @@ export function CatalogosOperacionais({
                       <Input
                         value={formSub.nome}
                         onChange={(e) =>
-                          setFormSub({ ...formSub, nome: e.target.value })
+                          setFormSub({ ...formSub, nome: e.target.value.toUpperCase() })
                         }
                         placeholder="Nome da subcategoria"
                       />
@@ -769,7 +769,7 @@ export function CatalogosOperacionais({
                         onChange={(e) =>
                           setFormFornecedor({
                             ...formFornecedor,
-                            nome: e.target.value,
+                            nome: e.target.value.toUpperCase(),
                           })
                         }
                         placeholder="Nome do fornecedor"

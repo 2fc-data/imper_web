@@ -111,7 +111,7 @@ export function ItemForm({
                   minLength={2}
                   placeholder="Ex.: Capacete de segurança"
                   value={form.nome ?? ''}
-                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                  onChange={(e) => setForm({ ...form, nome: e.target.value.toUpperCase() })}
                 />
               </div>
             ) : (
@@ -124,7 +124,7 @@ export function ItemForm({
                   placeholder="Ex.: Compressor de ar 100L"
                   value={form.descricao ?? ''}
                   onChange={(e) =>
-                    setForm({ ...form, descricao: e.target.value })
+                    setForm({ ...form, descricao: e.target.value.toUpperCase() })
                   }
                 />
               </div>
