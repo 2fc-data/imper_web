@@ -874,7 +874,7 @@ export default function UsuariosPage({
   const [papeis, setPapeis] = useState<PapelRbac[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
-  const [filtroLocal, setFiltroLocal] = useState<string>('');
+  const [filtroLocal, setFiltroLocal] = useState<string>('CLIENTE');
   const [saving, setSaving] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editandoUsuario, setEditandoUsuario] = useState<Usuario | null>(null);
