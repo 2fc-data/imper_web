@@ -534,6 +534,7 @@ function ModalEditarUsuario({
   onSalvo: () => void;
 }) {
   const [nome, setNome] = useState(usuario.nome);
+  const [email, setEmail] = useState(usuario.email ?? '');
   const [telefone, setTelefone] = useState(usuario.telefone ?? '');
   const [papelId, setPapelId] = useState(usuario.papeis?.[0]?.id ?? 0);
   const [cargoId, setCargoId] = useState<number | undefined>(
@@ -551,6 +552,7 @@ function ModalEditarUsuario({
     try {
       await atualizarUsuario(usuario.id, {
         nome: nome.trim(),
+        email: email.trim() || undefined,
         telefone: telefone.trim() || undefined,
         papelId,
         cargoId: cargoId ?? null,
@@ -593,6 +595,16 @@ function ModalEditarUsuario({
             id="edit-telefone"
             value={telefone}
             onChange={(e) => setTelefone(e.target.value)}
+            disabled={saving}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-email">E-mail</Label>
+          <Input
+            id="edit-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={saving}
           />
         </div>

@@ -201,6 +201,7 @@ export async function atualizarUsuario(
   id: number,
   data: {
     nome?: string;
+    email?: string;
     telefone?: string;
     papelId?: number;
     cargoId?: number | null;
@@ -306,7 +307,7 @@ export async function buscarMinhaConta(): Promise<MinhaConta> {
 }
 
 export async function buscarClientes(q: string): Promise<MeuCliente[]> {
-  return api.get<MeuCliente[]>(`/cliente?q=${encodeURIComponent(q)}`);
+  return api.get<MeuCliente[]>(`/clientes?q=${encodeURIComponent(q)}`);
 }
 
 export async function listarMinhasOS(): Promise<MinhaOS[]> {
@@ -401,8 +402,7 @@ export interface OrcamentoInput {
   nome: string;
   telefone: string;
   email?: string;
-  motivo?: string;
-  mensagem?: string;
+  descricao?: string;
   cep?: string;
   endereco?: string;
   bairro?: string;
@@ -417,7 +417,6 @@ export interface OrcamentoResult {
   id: number;
   nome: string;
   canal: string;
-  motivo: string;
   status: string;
   createdAt: string;
 }
@@ -473,7 +472,6 @@ export type {
 export interface AtendimentoItem {
   id: number;
   canal: CanalAtendimento;
-  motivo: string;
   urgencia: Urgencia | null;
   status: StatusAtendimento;
   descricao: string | null;
@@ -504,7 +502,6 @@ export interface CriarAtendimentoInput {
   telefone?: string;
   email?: string;
   canal: CanalAtendimento;
-  motivo: string;
   urgencia?: Urgencia;
   descricao?: string;
   enderecoNovo?: DadosEndereco;

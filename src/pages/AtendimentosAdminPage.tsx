@@ -6,6 +6,7 @@ import {
   atualizarStatusAtendimento,
   buscarClientes,
   type CanalAtendimento,
+  criarAgendamento,
   criarAtendimento,
   listarAtendimentos,
   listarLogsAtendimento,
@@ -35,14 +36,6 @@ export function AtendimentosAnalises({
   const porCanal = atendimentos.reduce(
     (acc, c) => {
       acc[c.canal] = (acc[c.canal] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  const porMotivo = atendimentos.reduce(
-    (acc, c) => {
-      acc[c.motivo] = (acc[c.motivo] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>,
@@ -84,67 +77,34 @@ export function AtendimentosAnalises({
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-          <h3 className="font-semibold text-base">Distribuição por Canal</h3>
-          <div className="space-y-2">
-            {Object.entries(porCanal).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum dado registrado.
-              </p>
-            ) : (
-              Object.entries(porCanal).map(([canal, qtd]) => {
-                const perc = total ? Math.round((qtd / total) * 100) : 0;
-                return (
-                  <div key={canal} className="space-y-1">
-                    <div className="flex justify-between text-xs font-medium">
-                      <span>{canal}</span>
-                      <span>
-                        {qtd} ({perc}%)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${perc}%` }}
-                      />
-                    </div>
+      <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
+        <h3 className="font-semibold text-base">Distribuição por Canal</h3>
+        <div className="space-y-2">
+          {Object.entries(porCanal).length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum dado registrado.
+            </p>
+          ) : (
+            Object.entries(porCanal).map(([canal, qtd]) => {
+              const perc = total ? Math.round((qtd / total) * 100) : 0;
+              return (
+                <div key={canal} className="space-y-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span>{canal}</span>
+                    <span>
+                      {qtd} ({perc}%)
+                    </span>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-          <h3 className="font-semibold text-base">Distribuição por Motivo</h3>
-          <div className="space-y-2">
-            {Object.entries(porMotivo).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum dado registrado.
-              </p>
-            ) : (
-              Object.entries(porMotivo).map(([motivo, qtd]) => {
-                const perc = total ? Math.round((qtd / total) * 100) : 0;
-                return (
-                  <div key={motivo} className="space-y-1">
-                    <div className="flex justify-between text-xs font-medium">
-                      <span>{motivo}</span>
-                      <span>
-                        {qtd} ({perc}%)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
-                      <div
-                        className="h-full bg-warning transition-all"
-                        style={{ width: `${perc}%` }}
-                      />
-                    </div>
+                  <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${perc}%` }}
+                    />
                   </div>
-                );
-              })
-            )}
-          </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>
@@ -194,6 +154,8 @@ export function AtendimentoList({
   const [logs, setLogs] = useState<AtendimentoLogItem[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [descricaoDraft, setDescricaoDraft] = useState('');
+  const [agendarData, setAgendarData] = useState('');
+  const [statusDraft, setStatusDraft] = useState<StatusAtendimento | null>(null);
   const [salvando, setSalvando] = useState(false);
 
   const alternarExpandido = async (id: number) => {
@@ -201,10 +163,14 @@ export function AtendimentoList({
       setExpandidoId(null);
       setLogs([]);
       setDescricaoDraft('');
+      setAgendarData('');
+      setStatusDraft(null);
       return;
     }
     setExpandidoId(id);
     setDescricaoDraft('');
+    setAgendarData('');
+    setStatusDraft(null);
     setLogsLoading(true);
     setLogs([]);
     try {
@@ -216,13 +182,28 @@ export function AtendimentoList({
     }
   };
 
-  const salvarLog = async (id: number) => {
-    if (!descricaoDraft.trim()) return;
+  const salvarLog = async (atendimento: AtendimentoItem) => {
+    if (!descricaoDraft.trim() && statusDraft === null) return;
     setSalvando(true);
     try {
-      await onRegistrarLog(id, descricaoDraft.trim());
-      setLogs(await onCarregarLogs(id));
+      if (statusDraft !== null && statusDraft !== atendimento.status) {
+        await onStatusChange(atendimento.id, statusDraft);
+      }
+      if (descricaoDraft.trim()) {
+        await onRegistrarLog(atendimento.id, descricaoDraft.trim());
+      }
+      if (agendarData && atendimento.cliente?.id) {
+        await criarAgendamento({
+          clienteId: atendimento.cliente.id,
+          atendimentoId: atendimento.id,
+          tipo: 'VISITA',
+          dataPrevista: new Date(agendarData).toISOString(),
+        });
+      }
+      setLogs(await onCarregarLogs(atendimento.id));
       setDescricaoDraft('');
+      setAgendarData('');
+      setStatusDraft(null);
     } catch (err) {
       console.error('Erro ao registrar atendimento:', err);
     } finally {
@@ -234,6 +215,8 @@ export function AtendimentoList({
     setExpandidoId(null);
     setLogs([]);
     setDescricaoDraft('');
+    setAgendarData('');
+    setStatusDraft(null);
   };
 
   return (
@@ -321,7 +304,6 @@ export function AtendimentoList({
             <tr>
               <th className="px-4 py-3">Cliente</th>
               <th className="px-4 py-3">Telefone</th>
-              <th className="px-4 py-3">Canal / Motivo</th>
               <th className="px-4 py-3">Prioridade</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Data</th>
@@ -332,7 +314,7 @@ export function AtendimentoList({
             {loading ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Carregando atendimentos...
@@ -341,7 +323,7 @@ export function AtendimentoList({
             ) : atendimentos.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Nenhum atendimento encontrado.
@@ -365,39 +347,6 @@ export function AtendimentoList({
                       {item.cliente?.telefone ?? '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-xs font-semibold">{item.canal}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {item.motivo}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={item.status}
-                        onChange={(e) =>
-                          onStatusChange(
-                            item.id,
-                            e.target.value as StatusAtendimento,
-                          )
-                        }
-                        className={`cursor-pointer rounded-md border bg-background px-2 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors ${
-                          item.status === 'NOVO'
-                            ? 'border-info/40 text-info'
-                            : item.status === 'EM_ANDAMENTO'
-                              ? 'border-primary/40 text-primary'
-                              : item.status === 'CONCLUIDO'
-                                ? 'border-success/40 text-success'
-                                : item.status === 'INATIVO'
-                                  ? 'border-destructive/40 text-destructive'
-                                  : 'border-input text-muted-foreground'
-                        }`}
-                      >
-                        <option value="NOVO">NOVO</option>
-                        <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
-                        <option value="CONCLUIDO">CONCLUÍDO</option>
-                        <option value="INATIVO">INATIVO</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-3">
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                           item.urgencia === 'URGENTISSIMO'
@@ -408,6 +357,25 @@ export function AtendimentoList({
                         }`}
                       >
                         {item.urgencia ?? '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.status === 'NOVO'
+                            ? 'bg-info/15 text-info'
+                            : item.status === 'EM_ANDAMENTO'
+                              ? 'bg-primary/15 text-primary'
+                              : item.status === 'CONCLUIDO'
+                                ? 'bg-success/15 text-success'
+                                : 'bg-destructive/15 text-destructive'
+                        }`}
+                      >
+                        {item.status === 'EM_ANDAMENTO'
+                          ? 'EM ANDAMENTO'
+                          : item.status === 'CONCLUIDO'
+                            ? 'CONCLUÍDO'
+                            : item.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
@@ -425,8 +393,16 @@ export function AtendimentoList({
                   </tr>
                   {expandidoId === item.id && (
                     <tr className="bg-primary/10">
-                      <td colSpan={7} className="px-4 py-3">
+                      <td colSpan={6} className="px-4 py-3">
                         <div className="space-y-3">
+                          {item.descricao && (
+                            <div className="rounded-md border bg-background p-2.5 text-xs">
+                              <span className="font-semibold text-foreground">Descrição:</span>{' '}
+                              <span className="text-muted-foreground whitespace-pre-wrap">
+                                {item.descricao}
+                              </span>
+                            </div>
+                          )}
                           <div className="text-sm font-semibold text-foreground">
                             Histórico de Atendimento
                           </div>
@@ -488,6 +464,45 @@ export function AtendimentoList({
                               placeholder="Descreva o atendimento realizado..."
                               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
+                            {item.cliente?.id && (
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-foreground">
+                                  Agendar visita técnica para:
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={agendarData}
+                                  onChange={(e) => setAgendarData(e.target.value)}
+                                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                />
+                              </div>
+                            )}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-semibold text-foreground">
+                                Status
+                              </label>
+                              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                {(['NOVO', 'EM_ANDAMENTO', 'CONCLUIDO', 'INATIVO'] as StatusAtendimento[]).map((s) => {
+                                  const selected = statusDraft !== null ? statusDraft === s : item.status === s;
+                                  return (
+                                    <label key={s} className="flex items-center gap-2 text-xs font-medium cursor-pointer text-foreground">
+                                      <span className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition-colors ${selected ? 'border-primary' : 'border-muted-foreground/50'}`}>
+                                        {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
+                                      </span>
+                                      <input
+                                        type="radio"
+                                        name={`status-${item.id}`}
+                                        value={s}
+                                        checked={selected}
+                                        onChange={() => setStatusDraft(s)}
+                                        className="sr-only"
+                                      />
+                                      {s === 'EM_ANDAMENTO' ? 'EM ANDAMENTO' : s === 'CONCLUIDO' ? 'CONCLUÍDO' : s}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
@@ -498,8 +513,8 @@ export function AtendimentoList({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => salvarLog(item.id)}
-                                disabled={salvando || !descricaoDraft.trim()}
+                                onClick={() => salvarLog(item)}
+                                disabled={salvando || (!descricaoDraft.trim() && statusDraft === null)}
                                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors disabled:opacity-50"
                               >
                                 {salvando ? 'Salvando...' : 'Salvar'}
@@ -538,7 +553,6 @@ export function NovoAtendimentoForm({
   const [email, setEmail] = useState('');
   const [descricao, setDescricao] = useState('');
   const [canal, setCanal] = useState<CanalAtendimento | ''>('LOJA');
-  const [motivo, setMotivo] = useState('');
   const [urgencia, setUrgencia] = useState<Urgencia | ''>('');
   const [cep, setCep] = useState('');
   const [endereco, setEndereco] = useState('');
@@ -639,8 +653,8 @@ export function NovoAtendimentoForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canal || !motivo || !urgencia) {
-      setErro('Preencha Canal, Motivo e Prioridade.');
+    if (!canal || !urgencia) {
+      setErro('Preencha Canal e Prioridade.');
       return;
     }
     setLoading(true);
@@ -653,7 +667,6 @@ export function NovoAtendimentoForm({
         email: email || undefined,
         descricao: descricao || undefined,
         canal,
-        motivo,
         urgencia,
         enderecoNovo: {
           logradouro: endereco || undefined,
@@ -793,22 +806,6 @@ export function NovoAtendimentoForm({
               <option value="LOJA">LOJA</option>
               <option value="TELEFONE">TELEFONE</option>
               <option value="WHATSAPP">WHATSAPP</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className={campoLabel}>Motivo *</label>
-            <select
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              required
-              className={campoInput}
-            >
-              <option value="">Selecione...</option>
-              <option value="AGENDAR_AVALIACAO_ORCAMENTO">
-                AGENDAR AVALIAÇÃO DE ORÇAMENTO
-              </option>
-              <option value="DUVIDA">DÚVIDA</option>
             </select>
           </div>
 
@@ -968,7 +965,7 @@ export function AtendimentosAdminPage({
   );
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
-  const [statusFiltro, setStatusFiltro] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState('NOVO');
   const [criadoDe, setCriadoDe] = useState('');
   const [criadoAte, setCriadoAte] = useState('');
   const [atualizadoDe, setAtualizadoDe] = useState('');

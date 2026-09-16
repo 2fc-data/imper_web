@@ -1,6 +1,6 @@
 import { m, useInView } from 'framer-motion';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Turnstile from '../components/Turnstile';
 import { Button, buttonVariants } from '../components/ui/button';
 import {
@@ -21,15 +21,12 @@ const textareaClasses =
 
 export default function OrcamentoPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const servico = searchParams.get('servico');
   const gridRef = useRef<HTMLDivElement>(null);
   const inView = useInView(gridRef, VIEWPORT);
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
-  const [motivo, setMotivo] = useState(servico ?? '');
-  const [mensagem, setMensagem] = useState('');
+  const [descricao, setDescricao] = useState('');
   const [cep, setCep] = useState('');
   const [endereco, setEndereco] = useState('');
   const [bairro, setBairro] = useState('');
@@ -91,8 +88,7 @@ export default function OrcamentoPage() {
         nome,
         telefone,
         email: email || undefined,
-        motivo: motivo || undefined,
-        mensagem: mensagem || undefined,
+        descricao: descricao || undefined,
         cep: cep || undefined,
         endereco: endereco || undefined,
         bairro: bairro || undefined,
@@ -212,17 +208,18 @@ export default function OrcamentoPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="motivo">
-                      Motivo do Contato{' '}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="motivo"
-                      required
-                      placeholder="Ex: Telhado, Lajes e paredes..."
-                      value={motivo}
-                      onChange={(e) => setMotivo(e.target.value)}
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <textarea
+                      id="descricao"
+                      className={textareaClasses}
+                      placeholder="Descreva o problema ou necessidade..."
+                      value={descricao}
+                      onChange={(e) => setDescricao(e.target.value)}
+                      maxLength={700}
                     />
+                    <p className="text-right text-xs text-muted-foreground">
+                      {descricao.length}/700
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cep">CEP (Local da visita técnica)</Label>
@@ -313,20 +310,6 @@ export default function OrcamentoPage() {
                             onChange={(e) => setComplemento(e.target.value)}
                           />
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="mensagem">Mensagem</Label>
-                        <textarea
-                          id="mensagem"
-                          className={cn(textareaClasses)}
-                          placeholder="Descreva o problema e/ou a referência do local (opcional)"
-                          maxLength={700}
-                          value={mensagem}
-                          onChange={(e) => setMensagem(e.target.value)}
-                        />
-                        <p className="text-right text-xs text-muted-foreground">
-                          {mensagem.length}/700
-                        </p>
                       </div>
                     </>
                   )}
