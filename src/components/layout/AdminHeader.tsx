@@ -48,18 +48,19 @@ export function AdminHeader({
         to="/"
         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="flex h-6 w-6 items-center justify-center text-primary">
           <svg
-            viewBox="0 0 24 24"
+            viewBox="0 0 25 25"
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-4 w-4"
+            className="h-6 w-6"
             aria-hidden="true"
           >
-            <path d="M8 8h8M8 12h8M8 16h8" />
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
         </div>
         <span className="text-base font-semibold tracking-tight uppercase">

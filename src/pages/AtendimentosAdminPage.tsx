@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
@@ -536,7 +537,7 @@ export function NovoAtendimentoForm({
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [canal, setCanal] = useState<CanalAtendimento | ''>('');
+  const [canal, setCanal] = useState<CanalAtendimento | ''>('LOJA');
   const [motivo, setMotivo] = useState('');
   const [urgencia, setUrgencia] = useState<Urgencia | ''>('');
   const [cep, setCep] = useState('');
@@ -714,9 +715,15 @@ export function NovoAtendimentoForm({
                       Buscando...
                     </p>
                   ) : sugestoes.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-muted-foreground">
-                      Nenhum cliente encontrado
-                    </p>
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      <p>Nenhum cliente encontrado</p>
+                      <Link
+                        to="/clientes/novo"
+                        className="mt-1 inline-block text-primary underline hover:text-primary/80"
+                      >
+                        Cadastrar novo cliente
+                      </Link>
+                    </div>
                   ) : (
                     <ul className="py-1">
                       {sugestoes.map((cliente) => (
@@ -782,7 +789,6 @@ export function NovoAtendimentoForm({
               required
               className={campoInput}
             >
-              <option value="">Selecione...</option>
               <option value="FORMULARIO">FORMULÁRIO</option>
               <option value="LOJA">LOJA</option>
               <option value="TELEFONE">TELEFONE</option>

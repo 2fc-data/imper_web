@@ -313,6 +313,28 @@ export async function listarMinhasOS(): Promise<MinhaOS[]> {
   return api.get<MinhaOS[]>('/cliente/os');
 }
 
+export interface ClienteAdmin {
+  id: number;
+  nome: string;
+  cpfCnpj: string | null;
+  telefone: string | null;
+  email: string | null;
+  createdAt: string;
+}
+
+export async function buscarClientesAdmin(q: string): Promise<ClienteAdmin[]> {
+  return api.get<ClienteAdmin[]>(`/clientes?q=${encodeURIComponent(q)}`);
+}
+
+export async function criarClienteAdmin(input: {
+  nome: string;
+  cpfCnpj?: string;
+  telefone?: string;
+  email?: string;
+}): Promise<ClienteAdmin> {
+  return api.post<ClienteAdmin>('/clientes', input);
+}
+
 export interface ServicoMarketing {
   id: number;
   titulo: string;

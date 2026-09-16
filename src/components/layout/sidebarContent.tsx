@@ -274,6 +274,14 @@ export function ClienteSidebar() {
   );
 }
 
+export function ClientesSidebar() {
+  return (
+    <SidebarNote>
+      Cadastro e gerenciamento de clientes.
+    </SidebarNote>
+  );
+}
+
 export function EmBreveSidebar({ texto }: { texto: string }) {
   return <SidebarNote>{texto}</SidebarNote>;
 }
@@ -447,40 +455,6 @@ export function MateriaisSidebar({
       <SidebarNote>
         Cadastro, saldo e movimentação (entrada/saída) do estoque.
       </SidebarNote>
-    </>
-  );
-}
-
-export function VisitasSidebar({
-  viewAtiva,
-  onNavegar,
-}: {
-  viewAtiva: 'analises' | 'lista' | 'agendar' | 'realizar';
-  onNavegar: (view: 'analises' | 'lista' | 'agendar' | 'realizar') => void;
-}) {
-  return (
-    <>
-      <SidebarButton
-        active={viewAtiva === 'analises'}
-        onClick={() => onNavegar('analises')}
-        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
-      >
-        Análises
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'lista'}
-        onClick={() => onNavegar('lista')}
-        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
-      >
-        Lista de Visitas
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'agendar'}
-        onClick={() => onNavegar('agendar')}
-        icon={icone('M12 4v16m8-8H4')}
-      >
-        Agendar Visita
-      </SidebarButton>
     </>
   );
 }
