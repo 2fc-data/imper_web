@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
   atualizarStatusAgendamento,
@@ -12,6 +13,11 @@ import {
   type TipoAgendamento,
   type Usuario,
 } from '../lib/api';
+import { CalendarioDisponibilidade } from '../components/disponibilidade/CalendarioDisponibilidade';
+import { ListaDisponibilidade } from '../components/disponibilidade/ListaDisponibilidade';
+import { GerenciarPadroes } from '../components/disponibilidade/GerenciarPadroes';
+import { GerenciarDatas } from '../components/disponibilidade/GerenciarDatas';
+import { SlotPicker } from '../components/disponibilidade/SlotPicker';
 
 const rotulosTipo: Record<TipoAgendamento, string> = {
   VISITA: 'Visita',
@@ -337,10 +343,9 @@ export function AgendamentoList({
                             e.target.value as StatusAgendamento,
                           )
                         }
-                        className={`cursor-pointer rounded-md border bg-background px-2 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors ${
-                          corStatus[item.status] ??
+                        className={`cursor-pointer rounded-md border bg-background px-2 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors ${corStatus[item.status] ??
                           'border-input text-muted-foreground'
-                        }`}
+                          }`}
                       >
                         <option value="PENDENTE">PENDENTE</option>
                         <option value="CONFIRMADO">CONFIRMADO</option>
@@ -410,16 +415,16 @@ export function AgendamentoList({
                               </p>
                               {(item.endereco.bairro ||
                                 item.endereco.cidade) && (
-                                <p className="text-muted-foreground">
-                                  {[
-                                    item.endereco.bairro,
-                                    item.endereco.cidade,
-                                    item.endereco.estado,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(' — ')}
-                                </p>
-                              )}
+                                  <p className="text-muted-foreground">
+                                    {[
+                                      item.endereco.bairro,
+                                      item.endereco.cidade,
+                                      item.endereco.estado,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' — ')}
+                                  </p>
+                                )}
                             </div>
                           )}
                         </div>
@@ -664,12 +669,9 @@ export function NovoAgendamentoForm({
 
         <div className="space-y-1.5">
           <label className={campoLabel}>Data e hora prevista *</label>
-          <input
-            type="datetime-local"
-            required
+          <SlotPicker
             value={dataPrevista}
-            onChange={(e) => setDataPrevista(e.target.value)}
-            className={campoInput}
+            onChange={setDataPrevista}
           />
         </div>
 
@@ -706,14 +708,15 @@ export function NovoAgendamentoForm({
 }
 
 interface AgendamentosAdminPageProps {
-  initialView?: 'analises' | 'lista' | 'novo';
-  onNavegar?: (view: 'analises' | 'lista' | 'novo') => void;
+  initialView?: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade';
+  onNavegar?: (view: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade') => void;
 }
 
 export function AgendamentosAdminPage({
   initialView = 'lista',
   onNavegar,
 }: AgendamentosAdminPageProps) {
+  const { user } = useAuth();
   const [agendamentos, setAgendamentos] = useState<AgendamentoItem[]>([]);
   const [agendamentosTodos, setAgendamentosTodos] = useState<AgendamentoItem[]>(
     [],
@@ -722,7 +725,9 @@ export function AgendamentosAdminPage({
   const [statusFiltro, setStatusFiltro] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('');
 
-  const mudarView = (novaView: 'analises' | 'lista' | 'novo') => {
+  const mudarView = (
+    novaView: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade',
+  ) => {
     if (onNavegar) onNavegar(novaView);
   };
 
@@ -807,6 +812,14 @@ export function AgendamentosAdminPage({
           }}
           onCancel={() => mudarView('lista')}
         />
+      )}
+      {initialView === 'calendario' && <CalendarioDisponibilidade />}
+      {initialView === 'disponibilidade' && (
+        <div className="space-y-6">
+          <GerenciarPadroes userId={user?.id ?? 0} />
+          <GerenciarDatas userId={user?.id ?? 0} />
+          <ListaDisponibilidade />
+        </div>
       )}
     </div>
   );

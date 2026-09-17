@@ -205,7 +205,7 @@ function AtendimentosRoute() {
 }
 
 function AgendamentosRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade'>(
     'lista',
   );
 
