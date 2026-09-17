@@ -20,6 +20,7 @@ interface CepInputProps {
   value: string;
   onChange: (value: string) => void;
   onConsulta?: (dados: CepDados) => void;
+  onErro?: () => void;
   disabled?: boolean;
   autoComplete?: string;
 }
@@ -30,6 +31,7 @@ export function CepInput({
   value,
   onChange,
   onConsulta,
+  onErro,
   disabled,
   autoComplete = 'postal-code',
 }: CepInputProps) {
@@ -43,6 +45,7 @@ export function CepInput({
         const data = await res.json();
         if (data.erro) {
           setStatus('erro');
+          onErro?.();
           return;
         }
         setStatus('ok');
@@ -54,6 +57,7 @@ export function CepInput({
         });
       } catch {
         setStatus('erro');
+        onErro?.();
       }
     },
     [onConsulta],

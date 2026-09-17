@@ -1,4 +1,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { PhoneInput } from '../components/ui/phone-input';
+import { CepInput, type CepDados } from '../components/ui/cep-input';
+import { EmailInput } from '../components/ui/email-input';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
@@ -203,6 +206,7 @@ export function AtendimentoList({
       setDescricaoDraft('');
       setAgendarData('');
       setStatusDraft(null);
+      fecharExpandido();
     } catch (err) {
       console.error('Erro ao registrar atendimento:', err);
     } finally {
@@ -622,35 +626,6 @@ export function NovoAtendimentoForm({
     };
   }, []);
 
-  async function buscarCep(digitos: string) {
-    if (!/^\d{8}$/.test(digitos)) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${digitos}/json/`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.erro) {
-        setErro('CEP não encontrado. Verifique e tente novamente.');
-        setCepValido(false);
-        return;
-      }
-      setErro(null);
-      setCepValido(true);
-      setEndereco(data.logradouro ?? '');
-      setBairro(data.bairro ?? '');
-      setCidade(data.localidade ?? '');
-      setEstado(data.uf ?? '');
-    } catch {
-      setCepValido(false);
-      setErro('Não foi possível consultar o CEP. Tente novamente.');
-    }
-  }
-
-  function formatarCep(valor: string) {
-    const digitos = valor.replace(/\D/g, '').slice(0, 8);
-    if (digitos.length > 5) return `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
-    return digitos;
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canal || !urgencia) {
@@ -763,13 +738,11 @@ export function NovoAtendimentoForm({
 
           <div className="space-y-1.5">
             <label className={campoLabel}>Telefone *</label>
-            <input
-              type="text"
+            <PhoneInput
               required
               value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
+              onChange={setTelefone}
               className={campoInput}
-              placeholder="(00) 00000-0000"
             />
           </div>
         </div>
@@ -777,12 +750,10 @@ export function NovoAtendimentoForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className={campoLabel}>E-mail</label>
-            <input
-              type="email"
+            <EmailInput
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={setEmail}
               className={campoInput}
-              placeholder="voce@empresa.com"
             />
           </div>
         </div>
@@ -832,19 +803,17 @@ export function NovoAtendimentoForm({
 
         <div className="space-y-1.5">
           <label className={campoLabel}>CEP (Local da visita técnica)</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="00000-000"
+          <CepInput
             value={cep}
-            onChange={(e) => {
-              const valor = formatarCep(e.target.value);
-              setCep(valor);
-              if (valor.replace(/\D/g, '').length === 8) {
-                buscarCep(valor.replace(/\D/g, ''));
-              }
+            onChange={setCep}
+            onConsulta={(dados: CepDados) => {
+              setEndereco(dados.logradouro);
+              setBairro(dados.bairro);
+              setCidade(dados.cidade);
+              setEstado(dados.estado);
+              setCepValido(true);
             }}
-            className={campoInput}
+            onErro={() => setCepValido(false)}
           />
           <p className="text-xs text-muted-foreground">
             Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
