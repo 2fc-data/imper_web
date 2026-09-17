@@ -9,7 +9,6 @@ import {
   AtendimentosSidebar,
   CatalogoAtividadesSidebar,
   ClienteSidebar,
-  ClientesSidebar,
   DashboardSidebar,
   EpisSidebar,
   EquipamentosSidebar,
@@ -64,9 +63,6 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const ServicosAdminPage = lazy(() => import('./pages/ServicosAdminPage'));
 const UsuariosPage = lazy(() => import('./pages/UsuariosPage'));
-const ClientesPage = lazy(() =>
-  import('./pages/ClientesPage').then((m) => ({ default: m.ClientesPage })),
-);
 const CatalogoAtividadesPage = lazy(() =>
   import('./pages/CatalogoAtividadesPage').then((m) => ({
     default: m.CatalogoAtividadesPage,
@@ -221,17 +217,6 @@ function AgendamentosRoute() {
       }
     >
       <AgendamentosAdminPage initialView={viewAtiva} onNavegar={setViewAtiva} />
-    </ProtectedLayout>
-  );
-}
-
-function ClientesRoute() {
-  return (
-    <ProtectedLayout
-      requiredPermissions={['criar_atendimento', 'editar_atendimento']}
-      sidebar={<ClientesSidebar />}
-    >
-      <ClientesPage />
     </ProtectedLayout>
   );
 }
@@ -594,7 +579,6 @@ export default function App() {
         />
         <Route element={<AtendimentosRoute />} path="/atendimentos" />
         <Route element={<AgendamentosRoute />} path="/agendamentos" />
-        <Route element={<ClientesRoute />} path="/clientes" />
         <Route element={<OrcamentosRoute />} path="/orcamentos" />
         <Route element={<OSRoute />} path="/os" />
         <Route element={<CatalogosRoute />} path="/catalogos" />

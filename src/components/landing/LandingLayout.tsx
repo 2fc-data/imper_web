@@ -81,7 +81,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-md"
       >
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-3">
           <Link
             to="/"
             className="rounded px-1.5 py-0.5 text-lg font-bold tracking-tight text-primary transition-colors hover:text-primary/80"
@@ -230,7 +230,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         </AnimatePresence>
       </m.header>
 
-      <main className="flex-1 bg-background h-full">{children}</main>
+      <main className="flex-1 bg-background h-full mx-9">{children}</main>
 
       <footer className="border-t bg-secondary py-8">
         <div className="mx-auto grid w-full max-w-[1400px] gap-8 px-4 sm:grid-cols-4">

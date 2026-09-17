@@ -51,18 +51,24 @@ export default function ContatoPage() {
                   rel="noopener noreferrer"
                   className="mt-1 block rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
                 >
-                  (35) 99999-4663
+                  (35) 99673-0651
                 </a>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
-                  Telefone
+                  Telefones
                 </p>
                 <a
                   href="tel:+553537211674"
                   className="mt-1 block rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
                 >
                   (35) 3721-1674
+                </a>
+                <a
+                  href="tel:+553537222514"
+                  className="mt-1 block rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
+                >
+                  (35) 3722-2514
                 </a>
               </div>
               <div>

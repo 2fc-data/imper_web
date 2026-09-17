@@ -274,14 +274,6 @@ export function ClienteSidebar() {
   );
 }
 
-export function ClientesSidebar() {
-  return (
-    <SidebarNote>
-      Cadastro e gerenciamento de clientes.
-    </SidebarNote>
-  );
-}
-
 export function EmBreveSidebar({ texto }: { texto: string }) {
   return <SidebarNote>{texto}</SidebarNote>;
 }

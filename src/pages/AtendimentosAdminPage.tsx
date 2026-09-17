@@ -1,5 +1,4 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
@@ -587,8 +586,10 @@ export function NovoAtendimentoForm({
       setDropdownAberto(true);
       try {
         const data = await buscarClientes(q);
+        console.log('buscarClientes:', q, '→', data.length, 'resultados', data);
         setSugestoes(data);
-      } catch {
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
         setSugestoes([]);
       } finally {
         setBuscandoClientes(false);
@@ -601,7 +602,6 @@ export function NovoAtendimentoForm({
     setNome(cliente.nome);
     if (cliente.telefone) setTelefone(cliente.telefone);
     if (cliente.email) setEmail(cliente.email);
-    if (cliente.endereco) setEndereco(cliente.endereco);
     setDropdownAberto(false);
     setSugestoes([]);
   }
@@ -730,12 +730,6 @@ export function NovoAtendimentoForm({
                   ) : sugestoes.length === 0 ? (
                     <div className="px-3 py-2 text-sm text-muted-foreground">
                       <p>Nenhum cliente encontrado</p>
-                      <Link
-                        to="/clientes/novo"
-                        className="mt-1 inline-block text-primary underline hover:text-primary/80"
-                      >
-                        Cadastrar novo cliente
-                      </Link>
                     </div>
                   ) : (
                     <ul className="py-1">
