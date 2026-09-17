@@ -76,7 +76,7 @@ export function AdminHeader({
             className={cn(
               'inline-flex h-9 items-center gap-1.5 rounded-md border border-transparent px-2 text-sm tabular-nums text-muted-foreground transition-colors sm:px-3',
               baixo &&
-                'border-destructive/40 bg-destructive/10 text-destructive',
+              'border-destructive/40 bg-destructive/10 text-destructive',
             )}
           >
             <svg

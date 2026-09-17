@@ -6,61 +6,22 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import type { MinhaConta, MinhaOS } from '../lib/api';
+import type { MinhaConta } from '../lib/api';
 import { api } from '../lib/api';
-
-function formatarValor(valor: string | number | null | undefined): string {
-  if (valor === null || valor === undefined || valor === '') return '–';
-  const num = Number(valor);
-  if (Number.isNaN(num)) return '–';
-  return num.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
-
-function formatarData(data: string | null | undefined): string {
-  if (!data) return '–';
-  const d = new Date(data);
-  if (Number.isNaN(d.getTime())) return '–';
-  return d.toLocaleDateString('pt-BR');
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  AGUARDANDO_APROVACAO: 'Aguardando aprovação',
-  AGENDADO: 'Agendado',
-  EM_ANDAMENTO: 'Em andamento',
-  CONCLUIDO: 'Concluído',
-  CONFIRMADO: 'Confirmado',
-  EM_SEPARACAO: 'Em separação',
-  SEPARADO: 'Separado',
-  ENTREGUE: 'Entregue',
-  CANCELADO: 'Cancelado',
-};
-
-const URGENCIA_LABEL: Record<string, string> = {
-  NORMAL: 'Normal',
-  URGENTE: 'Urgente',
-  URGENTISSIMO: 'Urgentíssimo',
-};
 
 export default function MinhaContaPage() {
   const { user } = useAuth();
   const [conta, setConta] = useState<MinhaConta | null>(null);
-  const [os, setOs] = useState<MinhaOS[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      api.get<MinhaConta>('/cliente/me'),
-      api.get<MinhaOS[]>('/cliente/os'),
-    ])
-      .then(([me, minhasOs]) => {
+    api
+      .get<MinhaConta>('/auth/me')
+      .then((me) => {
         if (!active) return;
         setConta(me);
-        setOs(minhasOs);
       })
       .catch((err) => {
         if (!active) return;
@@ -98,12 +59,12 @@ export default function MinhaContaPage() {
         <CardContent className="space-y-1 px-4 pb-4 text-sm">
           <p>
             <span className="text-muted-foreground">Nome: </span>
-            {conta?.cliente?.nome ?? conta?.nome ?? '–'}
+            {loading ? 'Carregando...' : conta?.nome ?? '–'}
           </p>
-          {conta?.cliente?.cpfCnpj && (
+          {conta?.cpfCnpj && (
             <p>
               <span className="text-muted-foreground">CPF/CNPJ: </span>
-              {conta.cliente.cpfCnpj}
+              {conta.cpfCnpj}
             </p>
           )}
           <p>
@@ -112,60 +73,21 @@ export default function MinhaContaPage() {
           </p>
           <p>
             <span className="text-muted-foreground">Telefone: </span>
-            {conta?.cliente?.telefone ?? conta?.telefone ?? '–'}
+            {conta?.telefone ?? '–'}
           </p>
-          {conta?.cliente?.endereco && (
+          {conta?.endereco && (
             <p>
               <span className="text-muted-foreground">Endereço: </span>
-              {conta.cliente.endereco}
+              {conta.endereco.logradouro}
+              {conta.endereco.numero ? `, ${conta.endereco.numero}` : ''}
+              {conta.endereco.bairro ? ` - ${conta.endereco.bairro}` : ''}
+              {conta.endereco.cidade ? ` - ${conta.endereco.cidade}` : ''}
+              {conta.endereco.estado ? `/${conta.endereco.estado}` : ''}
+              {conta.endereco.cep ? ` - CEP: ${conta.endereco.cep}` : ''}
             </p>
           )}
         </CardContent>
       </Card>
-
-      <div>
-        <h2 className="mb-2 text-base font-semibold">
-          Minhas ordens de serviço
-        </h2>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        ) : os.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma ordem de serviço no momento.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {os.map((ordem) => (
-              <Card key={ordem.id}>
-                <CardContent className="space-y-1 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">
-                      {ordem.codigo ?? `OS #${ordem.id}`}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {STATUS_LABEL[ordem.status] ?? ordem.status}
-                    </span>
-                  </div>
-                  {ordem.endereco && (
-                    <p className="text-sm text-muted-foreground">
-                      {ordem.endereco}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {URGENCIA_LABEL[ordem.urgencia] ?? ordem.urgencia} ·{' '}
-                      {formatarData(ordem.dataInicioPrevista)}
-                    </span>
-                    <span className="font-medium">
-                      {formatarValor(ordem.valorTotal)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

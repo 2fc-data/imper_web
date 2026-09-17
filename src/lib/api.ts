@@ -201,6 +201,7 @@ export async function atualizarUsuario(
   id: number,
   data: {
     nome?: string;
+    email?: string;
     telefone?: string;
     papelId?: number;
     cargoId?: number | null;
@@ -270,7 +271,6 @@ export interface MeuCliente {
   cpfCnpj: string | null;
   telefone: string | null;
   email: string | null;
-  endereco: string | null;
 }
 
 export interface MinhaConta {
@@ -280,37 +280,21 @@ export interface MinhaConta {
   telefone: string | null;
   papel: string;
   permissoes: string[];
-  cliente: MeuCliente | null;
-}
-
-export interface MinhaOS {
-  id: number;
-  codigo: string | null;
-  status: string;
-  urgencia: string;
-  valorTotal: string;
-  endereco: string | null;
-  dataInicioPrevista: string | null;
-  confirmadoPorCliente: boolean;
-  confirmadoEm: string | null;
-  createdAt: string;
-  orcamento: {
-    codigo: string | null;
-    valorTotal: string;
-    status: string;
+  cpfCnpj: string | null;
+  endereco: {
+    id: number;
+    logradouro: string;
+    numero: string | null;
+    complemento: string | null;
+    bairro: string | null;
+    cidade: string | null;
+    estado: string | null;
+    cep: string | null;
   } | null;
 }
 
-export async function buscarMinhaConta(): Promise<MinhaConta> {
-  return api.get<MinhaConta>('/cliente/me');
-}
-
 export async function buscarClientes(q: string): Promise<MeuCliente[]> {
-  return api.get<MeuCliente[]>(`/cliente?q=${encodeURIComponent(q)}`);
-}
-
-export async function listarMinhasOS(): Promise<MinhaOS[]> {
-  return api.get<MinhaOS[]>('/cliente/os');
+  return api.get<MeuCliente[]>(`/usuarios/buscar?q=${encodeURIComponent(q)}`);
 }
 
 export interface ClienteAdmin {
@@ -319,20 +303,10 @@ export interface ClienteAdmin {
   cpfCnpj: string | null;
   telefone: string | null;
   email: string | null;
-  createdAt: string;
 }
 
 export async function buscarClientesAdmin(q: string): Promise<ClienteAdmin[]> {
-  return api.get<ClienteAdmin[]>(`/clientes?q=${encodeURIComponent(q)}`);
-}
-
-export async function criarClienteAdmin(input: {
-  nome: string;
-  cpfCnpj?: string;
-  telefone?: string;
-  email?: string;
-}): Promise<ClienteAdmin> {
-  return api.post<ClienteAdmin>('/clientes', input);
+  return api.get<ClienteAdmin[]>(`/usuarios/buscar?q=${encodeURIComponent(q)}`);
 }
 
 export interface ServicoMarketing {
@@ -401,8 +375,7 @@ export interface OrcamentoInput {
   nome: string;
   telefone: string;
   email?: string;
-  motivo?: string;
-  mensagem?: string;
+  descricao?: string;
   cep?: string;
   endereco?: string;
   bairro?: string;
@@ -417,7 +390,6 @@ export interface OrcamentoResult {
   id: number;
   nome: string;
   canal: string;
-  motivo: string;
   status: string;
   createdAt: string;
 }
@@ -473,7 +445,6 @@ export type {
 export interface AtendimentoItem {
   id: number;
   canal: CanalAtendimento;
-  motivo: string;
   urgencia: Urgencia | null;
   status: StatusAtendimento;
   descricao: string | null;
@@ -504,7 +475,6 @@ export interface CriarAtendimentoInput {
   telefone?: string;
   email?: string;
   canal: CanalAtendimento;
-  motivo: string;
   urgencia?: Urgencia;
   descricao?: string;
   enderecoNovo?: DadosEndereco;
