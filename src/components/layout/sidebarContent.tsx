@@ -384,8 +384,8 @@ export function AgendamentosSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade';
+  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade') => void;
 }) {
   return (
     <>
@@ -409,6 +409,20 @@ export function AgendamentosSidebar({
         icon={icone('M12 4v16m8-8H4')}
       >
         Novo Agendamento
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'calendario'}
+        onClick={() => onNavegar('calendario')}
+        icon={icone('M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z')}
+      >
+        Calendário
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'disponibilidade'}
+        onClick={() => onNavegar('disponibilidade')}
+        icon={icone('M12 6v6m0 0v6m0-6h6m-6 0H6')}
+      >
+        Gerenciar Disponibilidade
       </SidebarButton>
     </>
   );
