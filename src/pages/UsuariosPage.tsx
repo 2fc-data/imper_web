@@ -12,6 +12,8 @@ import {
 import { CpfCnpjInput } from '../components/ui/cpf-cnpj-input';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { PhoneInput } from '../components/ui/phone-input';
+import { EmailInput } from '../components/ui/email-input';
 import {
   atualizarCargo,
   atualizarUsuario,
@@ -312,14 +314,11 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input
+                <EmailInput
                   id="email"
-                  type="email"
-                  autoComplete="one-time-code"
                   name="email_novo"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@exemplo.com"
+                  onChange={setEmail}
                   disabled={saving}
                 />
               </div>
@@ -342,13 +341,11 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="telefone">Telefone</Label>
-                <Input
+                <PhoneInput
                   id="telefone"
-                  autoComplete="one-time-code"
                   name="telefone_novo"
                   value={telefone}
-                  onChange={(e) => setTelefone(e.target.value)}
-                  placeholder="(00) 00000-0000"
+                  onChange={setTelefone}
                   disabled={saving}
                 />
               </div>
@@ -591,20 +588,19 @@ function ModalEditarUsuario({
         </div>
         <div className="space-y-2">
           <Label htmlFor="edit-telefone">Telefone</Label>
-          <Input
+          <PhoneInput
             id="edit-telefone"
             value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
+            onChange={setTelefone}
             disabled={saving}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="edit-email">E-mail</Label>
-          <Input
+          <EmailInput
             id="edit-email"
-            type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={setEmail}
             disabled={saving}
           />
         </div>

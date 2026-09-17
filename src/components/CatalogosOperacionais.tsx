@@ -40,6 +40,9 @@ import {
   CardTitle,
 } from './ui/card';
 import { Input } from './ui/input';
+import { PhoneInput } from './ui/phone-input';
+import { CpfCnpjInput } from './ui/cpf-cnpj-input';
+import { EmailInput } from './ui/email-input';
 import { Label } from './ui/label';
 
 const selectClasses =
@@ -777,39 +780,36 @@ export function CatalogosOperacionais({
                     </div>
                     <div className="space-y-1.5">
                       <Label>CNPJ</Label>
-                      <Input
+                      <CpfCnpjInput
                         value={formFornecedor.cnpj ?? ''}
-                        onChange={(e) =>
+                        onChange={(valor) =>
                           setFormFornecedor({
                             ...formFornecedor,
-                            cnpj: e.target.value,
+                            cnpj: valor,
                           })
                         }
-                        placeholder="Opcional"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <Label>Telefone</Label>
-                      <Input
+                      <PhoneInput
                         value={formFornecedor.telefone ?? ''}
-                        onChange={(e) =>
+                        onChange={(valor) =>
                           setFormFornecedor({
                             ...formFornecedor,
-                            telefone: e.target.value,
+                            telefone: valor,
                           })
                         }
-                        placeholder="Opcional"
                       />
                     </div>
                     <div className="space-y-1.5">
                       <Label>Email</Label>
-                      <Input
-                        type="email"
+                      <EmailInput
                         value={formFornecedor.email ?? ''}
-                        onChange={(e) =>
+                        onChange={(val) =>
                           setFormFornecedor({
                             ...formFornecedor,
-                            email: e.target.value,
+                            email: val,
                           })
                         }
                         placeholder="Opcional"

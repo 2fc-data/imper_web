@@ -12,6 +12,9 @@ import {
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { PhoneInput } from '../components/ui/phone-input';
+import { CepInput, type CepDados } from '../components/ui/cep-input';
+import { EmailInput } from '../components/ui/email-input';
 import { solicitarOrcamento } from '../lib/api';
 import { fadeUp, stagger, VIEWPORT } from '../lib/motion';
 import { cn } from '../lib/utils';
@@ -45,35 +48,6 @@ export default function OrcamentoPage() {
     const timer = setTimeout(() => navigate('/'), 10_000);
     return () => clearTimeout(timer);
   }, [enviado, navigate]);
-
-  async function buscarCep(digitos: string) {
-    if (!/^\d{8}$/.test(digitos)) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${digitos}/json/`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.erro) {
-        setError('CEP não encontrado. Verifique e tente novamente.');
-        setCepValido(false);
-        return;
-      }
-      setError(null);
-      setCepValido(true);
-      setEndereco(data.logradouro ?? '');
-      setBairro(data.bairro ?? '');
-      setCidade(data.localidade ?? '');
-      setEstado(data.uf ?? '');
-    } catch {
-      setCepValido(false);
-      setError('Não foi possível consultar o CEP. Tente novamente.');
-    }
-  }
-
-  function formatarCep(valor: string) {
-    const digitos = valor.replace(/\D/g, '').slice(0, 8);
-    if (digitos.length > 5) return `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
-    return digitos;
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -186,25 +160,19 @@ export default function OrcamentoPage() {
                     <Label htmlFor="telefone">
                       Telefone <span className="text-destructive">*</span>
                     </Label>
-                    <Input
+                    <PhoneInput
                       id="telefone"
-                      type="tel"
                       required
-                      autoComplete="tel"
-                      placeholder="(00) 00000-0000"
                       value={telefone}
-                      onChange={(e) => setTelefone(e.target.value)}
+                      onChange={setTelefone}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
-                    <Input
+                    <EmailInput
                       id="email"
-                      type="email"
-                      autoComplete="email"
-                      placeholder="voce@empresa.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={setEmail}
                     />
                   </div>
                   <div className="space-y-2">
@@ -223,19 +191,18 @@ export default function OrcamentoPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cep">CEP (Local da visita técnica)</Label>
-                    <Input
+                    <CepInput
                       id="cep"
-                      inputMode="numeric"
-                      autoComplete="postal-code"
-                      placeholder="00000-000"
                       value={cep}
-                      onChange={(e) => {
-                        const valor = formatarCep(e.target.value);
-                        setCep(valor);
-                        if (valor.replace(/\D/g, '').length === 8) {
-                          buscarCep(valor.replace(/\D/g, ''));
-                        }
+                      onChange={setCep}
+                      onConsulta={(dados: CepDados) => {
+                        setEndereco(dados.logradouro);
+                        setBairro(dados.bairro);
+                        setCidade(dados.cidade);
+                        setEstado(dados.estado);
+                        setCepValido(true);
                       }}
+                      onErro={() => setCepValido(false)}
                     />
                     <p className="text-xs text-muted-foreground">
                       Ao informar o CEP, preenchemos endereço, bairro, cidade e

@@ -11,14 +11,9 @@ import {
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { PhoneInput } from '../components/ui/phone-input';
+import { EmailInput } from '../components/ui/email-input';
 import { recuperarSenha } from '../lib/api';
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
 
 export default function ForgotPasswordPage() {
   const [canal, setCanal] = useState<'email' | 'whatsapp'>('email');
@@ -111,28 +106,22 @@ export default function ForgotPasswordPage() {
                 {canal === 'email' && (
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
-                    <Input
+                    <EmailInput
                       id="email"
-                      type="email"
                       required
-                      autoComplete="email"
-                      placeholder="voce@empresa.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={setEmail}
                     />
                   </div>
                 )}
                 {canal === 'whatsapp' && (
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone (WhatsApp)</Label>
-                    <Input
+                    <PhoneInput
                       id="telefone"
-                      type="tel"
                       required
-                      autoComplete="tel"
-                      placeholder="(00) 00000-0000"
                       value={telefone}
-                      onChange={(e) => setTelefone(formatPhone(e.target.value))}
+                      onChange={setTelefone}
                     />
                   </div>
                 )}

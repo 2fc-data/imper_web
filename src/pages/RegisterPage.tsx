@@ -15,13 +15,8 @@ import {
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
+import { PhoneInput } from '../components/ui/phone-input';
+import { EmailInput } from '../components/ui/email-input';
 
 export default function RegisterPage() {
   const { cadastrar } = useAuth();
@@ -80,25 +75,19 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="telefone">Telefone *</Label>
-              <Input
+              <PhoneInput
                 id="telefone"
-                type="tel"
                 required
-                autoComplete="tel"
-                placeholder="(00) 00000-0000"
                 value={telefone}
-                onChange={(e) => setTelefone(formatPhone(e.target.value))}
+                onChange={setTelefone}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail (opcional)</Label>
-              <Input
+              <EmailInput
                 id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="voce@empresa.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={setEmail}
               />
             </div>
             <div className="space-y-2">
