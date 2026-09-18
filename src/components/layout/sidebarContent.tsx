@@ -384,8 +384,8 @@ export function AgendamentosSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade';
-  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
 }) {
   return (
     <>
@@ -410,6 +410,19 @@ export function AgendamentosSidebar({
       >
         Novo Agendamento
       </SidebarButton>
+    </>
+  );
+}
+
+export function CalendarioSidebar({
+  viewAtiva,
+  onNavegar,
+}: {
+  viewAtiva: 'calendario' | 'disponibilidade' | 'datas' | 'padroes';
+  onNavegar: (view: 'calendario' | 'disponibilidade' | 'datas' | 'padroes') => void;
+}) {
+  return (
+    <>
       <SidebarButton
         active={viewAtiva === 'calendario'}
         onClick={() => onNavegar('calendario')}
@@ -423,6 +436,20 @@ export function AgendamentosSidebar({
         icon={icone('M12 6v6m0 0v6m0-6h6m-6 0H6')}
       >
         Gerenciar Disponibilidade
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'datas'}
+        onClick={() => onNavegar('datas')}
+        icon={icone('M8 7V3m8 4V3M3 11h18')}
+      >
+        Datas Específicas
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'padroes'}
+        onClick={() => onNavegar('padroes')}
+        icon={icone('M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')}
+      >
+        Horários Recorrentes
       </SidebarButton>
     </>
   );

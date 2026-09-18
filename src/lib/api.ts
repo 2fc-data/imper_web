@@ -72,13 +72,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
 
     if (res.status === 204) return undefined as T;
+    const text = await res.text();
+    if (!text || text.trim() === '') return undefined as T;
     const contentType = res.headers.get('content-type');
     if (contentType && !contentType.includes('application/json')) {
       throw new Error(
         `Resposta inválida do servidor (${res.status}): esperava JSON mas recebeu ${contentType}`,
       );
     }
-    return (await res.json()) as T;
+    return JSON.parse(text) as T;
   } finally {
     clearTimeout(timeout);
   }
@@ -1910,7 +1912,7 @@ export async function apiCriarPadrao(data: {
 
 export async function apiAtualizarPadrao(
   id: number,
-  data: Partial<{ ativo: boolean; capacidade: number; horaInicio: string; horaFim: string }>,
+  data: Partial<{ diaSemana: number; horaInicio: string; horaFim: string; capacidade: number; ativo: boolean }>,
 ): Promise<DisponibilidadePadrao> {
   return api.patch<DisponibilidadePadrao>(`/disponibilidade/padroes/${id}`, data);
 }
@@ -1945,7 +1947,7 @@ export async function apiCriarData(data: {
 
 export async function apiAtualizarData(
   id: number,
-  data: Partial<{ excluida: boolean; capacidade: number }>,
+  data: Partial<{ data: string; horaInicio: string; horaFim: string; capacidade: number; excluida: boolean }>,
 ): Promise<DisponibilidadeData> {
   return api.patch<DisponibilidadeData>(`/disponibilidade/datas/${id}`, data);
 }

@@ -13,10 +13,6 @@ import {
   type TipoAgendamento,
   type Usuario,
 } from '../lib/api';
-import { CalendarioDisponibilidade } from '../components/disponibilidade/CalendarioDisponibilidade';
-import { ListaDisponibilidade } from '../components/disponibilidade/ListaDisponibilidade';
-import { GerenciarPadroes } from '../components/disponibilidade/GerenciarPadroes';
-import { GerenciarDatas } from '../components/disponibilidade/GerenciarDatas';
 import { SlotPicker } from '../components/disponibilidade/SlotPicker';
 
 const rotulosTipo: Record<TipoAgendamento, string> = {
@@ -708,8 +704,8 @@ export function NovoAgendamentoForm({
 }
 
 interface AgendamentosAdminPageProps {
-  initialView?: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade';
-  onNavegar?: (view: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade') => void;
+  initialView?: 'analises' | 'lista' | 'novo';
+  onNavegar?: (view: 'analises' | 'lista' | 'novo') => void;
 }
 
 export function AgendamentosAdminPage({
@@ -725,9 +721,7 @@ export function AgendamentosAdminPage({
   const [statusFiltro, setStatusFiltro] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('');
 
-  const mudarView = (
-    novaView: 'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade',
-  ) => {
+  const mudarView = (novaView: 'analises' | 'lista' | 'novo') => {
     if (onNavegar) onNavegar(novaView);
   };
 
@@ -812,14 +806,6 @@ export function AgendamentosAdminPage({
           }}
           onCancel={() => mudarView('lista')}
         />
-      )}
-      {initialView === 'calendario' && <CalendarioDisponibilidade />}
-      {initialView === 'disponibilidade' && (
-        <div className="space-y-6">
-          <GerenciarPadroes userId={user?.id ?? 0} />
-          <GerenciarDatas userId={user?.id ?? 0} />
-          <ListaDisponibilidade />
-        </div>
       )}
     </div>
   );

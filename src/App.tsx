@@ -7,6 +7,7 @@ import {
   AgendamentosSidebar,
   AlmoxarifeSidebar,
   AtendimentosSidebar,
+  CalendarioSidebar,
   CatalogoAtividadesSidebar,
   ClienteSidebar,
   DashboardSidebar,
@@ -30,6 +31,12 @@ const AgendamentosAdminPage = lazy(() =>
     default: m.AgendamentosAdminPage,
   })),
 );
+const CalendarioPage = lazy(() =>
+  import('./pages/CalendarioPage').then((m) => ({
+    default: m.CalendarioPage,
+  })),
+);
+type CalendarioView = import('./pages/CalendarioPage').CalendarioView;
 const AtendimentosAdminPage = lazy(() =>
   import('./pages/AtendimentosAdminPage').then((m) => ({
     default: m.AtendimentosAdminPage,
@@ -205,7 +212,7 @@ function AtendimentosRoute() {
 }
 
 function AgendamentosRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo' | 'calendario' | 'disponibilidade'>(
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
     'lista',
   );
 
@@ -217,6 +224,21 @@ function AgendamentosRoute() {
       }
     >
       <AgendamentosAdminPage initialView={viewAtiva} onNavegar={setViewAtiva} />
+    </ProtectedLayout>
+  );
+}
+
+function CalendarioRoute() {
+  const [viewAtiva, setViewAtiva] = useState<CalendarioView>('calendario');
+
+  return (
+    <ProtectedLayout
+      requiredPermissions={['criar_atendimento', 'editar_atendimento']}
+      sidebar={
+        <CalendarioSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+      }
+    >
+      <CalendarioPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
@@ -579,6 +601,7 @@ export default function App() {
         />
         <Route element={<AtendimentosRoute />} path="/atendimentos" />
         <Route element={<AgendamentosRoute />} path="/agendamentos" />
+        <Route element={<CalendarioRoute />} path="/calendario" />
         <Route element={<OrcamentosRoute />} path="/orcamentos" />
         <Route element={<OSRoute />} path="/os" />
         <Route element={<CatalogosRoute />} path="/catalogos" />

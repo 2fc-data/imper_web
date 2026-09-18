@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { PhoneInput } from '../components/ui/phone-input';
 import { CepInput, type CepDados } from '../components/ui/cep-input';
 import { EmailInput } from '../components/ui/email-input';
+import { SlotPicker } from '../components/disponibilidade/SlotPicker';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
@@ -351,28 +352,26 @@ export function AtendimentoList({
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                          item.urgencia === 'URGENTISSIMO'
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${item.urgencia === 'URGENTISSIMO'
                             ? 'bg-destructive/15 text-destructive'
                             : item.urgencia === 'URGENTE'
                               ? 'bg-warning/15 text-warning'
                               : 'bg-muted text-muted-foreground'
-                        }`}
+                          }`}
                       >
                         {item.urgencia ?? '—'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                          item.status === 'NOVO'
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${item.status === 'NOVO'
                             ? 'bg-info/15 text-info'
                             : item.status === 'EM_ANDAMENTO'
                               ? 'bg-primary/15 text-primary'
                               : item.status === 'CONCLUIDO'
                                 ? 'bg-success/15 text-success'
                                 : 'bg-destructive/15 text-destructive'
-                        }`}
+                          }`}
                       >
                         {item.status === 'EM_ANDAMENTO'
                           ? 'EM ANDAMENTO'
@@ -565,6 +564,8 @@ export function NovoAtendimentoForm({
   const [numero, setNumero] = useState('');
   const [complemento, setComplemento] = useState('');
   const [cepValido, setCepValido] = useState(false);
+  const [agendar, setAgendar] = useState(false);
+  const [agendarSlot, setAgendarSlot] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -635,7 +636,7 @@ export function NovoAtendimentoForm({
     setLoading(true);
     setErro(null);
     try {
-      await criarAtendimento({
+      const atendimentoCriado = await criarAtendimento({
         clienteId: clienteIdSelecionado ?? undefined,
         nome,
         telefone,
@@ -653,6 +654,16 @@ export function NovoAtendimentoForm({
           cep: cep || undefined,
         },
       });
+
+      if (agendar && agendarSlot) {
+        await criarAgendamento({
+          clienteId: atendimentoCriado.cliente?.id ?? clienteIdSelecionado ?? 0,
+          atendimentoId: atendimentoCriado.id,
+          tipo: 'VISITA',
+          dataPrevista: new Date(agendarSlot).toISOString(),
+        });
+      }
+
       onSuccess();
     } catch (err: any) {
       setErro(err?.message || 'Falha ao cadastrar atendimento');
@@ -820,6 +831,44 @@ export function NovoAtendimentoForm({
             automaticamente.
           </p>
         </div>
+
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            type="checkbox"
+            id="agendar-checkbox"
+            checked={agendar}
+            onChange={(e) => {
+              setAgendar(e.target.checked);
+              if (!e.target.checked) setAgendarSlot('');
+            }}
+            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+          />
+          <label
+            htmlFor="agendar-checkbox"
+            className="text-sm font-medium text-foreground cursor-pointer select-none"
+          >
+            Agendar visita técnica
+          </label>
+        </div>
+
+        {agendar && (
+          <div className="space-y-1.5 rounded-lg border bg-muted/30 p-4">
+            <label className={campoLabel}>Horários Disponíveis</label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Selecione uma data e horário disponível para a visita técnica.
+            </p>
+            <SlotPicker
+              value={agendarSlot}
+              onChange={setAgendarSlot}
+              disabled={loading}
+            />
+            {agendarSlot && (
+              <p className="text-xs text-success font-medium mt-2">
+                ✓ Agendamento selecionado: {new Date(agendarSlot).toLocaleString('pt-BR')}
+              </p>
+            )}
+          </div>
+        )}
 
         {cepValido && (
           <>

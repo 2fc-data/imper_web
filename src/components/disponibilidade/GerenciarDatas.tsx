@@ -24,6 +24,14 @@ function formatarDataBR(iso: string): string {
   return `${dia}/${mes}/${ano}`;
 }
 
+function isoParaInputDate(iso: string): string {
+  const d = new Date(iso);
+  const dia = String(d.getDate()).padStart(2, '0');
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const ano = d.getFullYear();
+  return `${ano}-${mes}-${dia}`;
+}
+
 export function GerenciarDatas({ userId }: GerenciarDatasProps) {
   const now = new Date();
   const [mesAtual, setMesAtual] = useState(now.getMonth() + 1);
@@ -32,12 +40,22 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
+  // Formulário Nova Data
   const [novaData, setNovaData] = useState('');
   const [novoInicio, setNovoInicio] = useState('08:00');
   const [novoFim, setNovoFim] = useState('18:00');
   const [novaCapacidade, setNovaCapacidade] = useState(1);
   const [novaExcluida, setNovaExcluida] = useState(false);
   const [salvando, setSalvando] = useState(false);
+
+  // Edição Inline
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [editData, setEditData] = useState('');
+  const [editInicio, setEditInicio] = useState('08:00');
+  const [editFim, setEditFim] = useState('18:00');
+  const [editCapacidade, setEditCapacidade] = useState(1);
+  const [editExcluida, setEditExcluida] = useState(false);
+  const [salvandoEdit, setSalvandoEdit] = useState(false);
 
   async function carregar() {
     setCarregando(true);
@@ -88,6 +106,43 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
       setErro(err?.message || 'Erro ao criar data');
     } finally {
       setSalvando(false);
+    }
+  }
+
+  function iniciarEdicao(d: DisponibilidadeData) {
+    setEditandoId(d.id);
+    setEditData(isoParaInputDate(d.data));
+    setEditInicio(d.horaInicio);
+    setEditFim(d.horaFim);
+    setEditCapacidade(d.capacidade);
+    setEditExcluida(d.excluida);
+    setErro(null);
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+  }
+
+  async function handleSalvarEdicao(id: number) {
+    if (!editData) { setErro('Selecione uma data'); return; }
+    if (editInicio >= editFim) { setErro('Hora início deve ser anterior à hora fim'); return; }
+
+    setSalvandoEdit(true);
+    setErro(null);
+    try {
+      await apiAtualizarData(id, {
+        data: `${editData}T00:00:00.000Z`,
+        horaInicio: editInicio,
+        horaFim: editFim,
+        capacidade: editCapacidade,
+        excluida: editExcluida,
+      });
+      setEditandoId(null);
+      await carregar();
+    } catch (err: any) {
+      setErro(err?.message || 'Erro ao atualizar data');
+    } finally {
+      setSalvandoEdit(false);
     }
   }
 
@@ -177,26 +232,113 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
               </tr>
             </thead>
             <tbody>
-              {datas.map((d) => (
-                <tr key={d.id} className="border-t">
-                  <td className="px-3 py-2">{formatarDataBR(d.data)}</td>
-                  <td className="px-3 py-2">{d.horaInicio} - {d.horaFim}</td>
-                  <td className="px-3 py-2">{d.capacidade === 0 ? 'Ilimitado' : d.capacidade}</td>
-                  <td className="px-3 py-2">
-                    <span className={`text-xs px-2 py-0.5 rounded ${d.excluida ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                      {d.excluida ? 'Bloqueada' : 'Ativa'}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-right space-x-2">
-                    <button type="button" onClick={() => handleToggleExcluida(d.id, d.excluida)} className="text-xs text-muted-foreground hover:text-foreground">
-                      {d.excluida ? 'Desbloquear' : 'Bloquear'}
-                    </button>
-                    <button type="button" onClick={() => handleExcluir(d.id)} className="text-xs text-destructive hover:text-destructive/80">
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {datas.map((d) => {
+                const ehEditando = editandoId === d.id;
+                if (ehEditando) {
+                  return (
+                    <tr key={d.id} className="border-t bg-muted/40">
+                      <td className="px-3 py-2">
+                        <input
+                          type="date"
+                          value={editData}
+                          onChange={(e) => setEditData(e.target.value)}
+                          className="border rounded px-2 py-1 text-sm bg-background"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="time"
+                            value={editInicio}
+                            onChange={(e) => setEditInicio(e.target.value)}
+                            className="border rounded px-1 py-1 text-sm bg-background"
+                          />
+                          <span>-</span>
+                          <input
+                            type="time"
+                            value={editFim}
+                            onChange={(e) => setEditFim(e.target.value)}
+                            className="border rounded px-1 py-1 text-sm bg-background"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min={0}
+                          value={editCapacidade}
+                          onChange={(e) => setEditCapacidade(Number(e.target.value))}
+                          className="w-20 border rounded px-2 py-1 text-sm bg-background"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <select
+                          value={editExcluida ? 'true' : 'false'}
+                          onChange={(e) => setEditExcluida(e.target.value === 'true')}
+                          className="border rounded px-2 py-1 text-sm bg-background"
+                        >
+                          <option value="false">Ativa</option>
+                          <option value="true">Bloqueada</option>
+                        </select>
+                      </td>
+                      <td className="px-3 py-2 text-right space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => handleSalvarEdicao(d.id)}
+                          disabled={salvandoEdit}
+                          className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+                        >
+                          {salvandoEdit ? 'Salvando...' : 'Salvar'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelarEdicao}
+                          disabled={salvandoEdit}
+                          className="text-xs text-muted-foreground hover:underline disabled:opacity-50"
+                        >
+                          Cancelar
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+
+                return (
+                  <tr key={d.id} className="border-t">
+                    <td className="px-3 py-2 font-medium">{formatarDataBR(d.data)}</td>
+                    <td className="px-3 py-2">{d.horaInicio} - {d.horaFim}</td>
+                    <td className="px-3 py-2">{d.capacidade === 0 ? 'Ilimitado' : d.capacidade}</td>
+                    <td className="px-3 py-2">
+                      <span className={`text-xs px-2 py-0.5 rounded ${d.excluida ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                        {d.excluida ? 'Bloqueada' : 'Ativa'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => iniciarEdicao(d)}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleExcluida(d.id, d.excluida)}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        {d.excluida ? 'Desbloquear' : 'Bloquear'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExcluir(d.id)}
+                        className="text-xs text-destructive hover:text-destructive/80"
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
