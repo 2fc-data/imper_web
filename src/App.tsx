@@ -1,5 +1,5 @@
-import { Component, lazy, type ReactNode, Suspense, useState } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Component, lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { LandingLayout } from './components/landing/LandingLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
@@ -174,9 +174,25 @@ function ProtectedLayout({
 }
 
 function UsuariosRoute() {
+  const [searchParams] = useSearchParams();
+  const initialView =
+    (searchParams.get('view') as 'analises' | 'lista' | 'novo' | 'cargos') ||
+    'lista';
   const [viewAtiva, setViewAtiva] = useState<
     'analises' | 'lista' | 'novo' | 'cargos'
-  >('lista');
+  >(initialView);
+
+  useEffect(() => {
+    const v = searchParams.get('view') as
+      | 'analises'
+      | 'lista'
+      | 'novo'
+      | 'cargos'
+      | null;
+    if (v) {
+      setViewAtiva(v);
+    }
+  }, [searchParams]);
 
   return (
     <ProtectedLayout

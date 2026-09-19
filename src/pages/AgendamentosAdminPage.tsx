@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
@@ -599,9 +600,16 @@ export function NovoAgendamentoForm({
                     Buscando...
                   </p>
                 ) : sugestoes.length === 0 ? (
-                  <p className="px-3 py-2 text-sm text-muted-foreground">
-                    Nenhum cliente encontrado
-                  </p>
+                  <div className="px-3 py-2.5 text-sm text-muted-foreground space-y-1.5">
+                    <p>Nenhum cliente encontrado</p>
+                    <Link
+                      to="/usuarios?view=novo"
+                      onClick={() => setDropdownAberto(false)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      ➕ Ir para Cadastro de Usuário
+                    </Link>
+                  </div>
                 ) : (
                   <ul className="py-1">
                     {sugestoes.map((cliente) => (
