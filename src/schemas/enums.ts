@@ -1,3 +1,6 @@
+// SYNC: Keep in sync with imper_api/src/schemas/enums.ts
+// This file contains only the types used by the web frontend.
+// Unused types have been removed. If you need a type not here, check the API schemas.
 export type StatusAtendimento =
   | 'NOVO'
   | 'EM_ANDAMENTO'
@@ -5,10 +8,6 @@ export type StatusAtendimento =
   | 'INATIVO';
 
 export type CanalAtendimento = 'WHATSAPP' | 'FORMULARIO' | 'LOJA' | 'TELEFONE';
-
-export type MotivoAtendimento =
-  | 'DUVIDA'
-  | 'AGENDAR_AVALIACAO_ORCAMENTO';
 
 export type Urgencia = 'NORMAL' | 'URGENTE' | 'URGENTISSIMO';
 
@@ -48,8 +47,6 @@ export type ResultadoVisita =
   | 'OBRA_NECESSARIA'
   | 'CLIENTE_AUSENTE';
 
-export type StatusVisita = 'AGENDADA' | 'REALIZADA' | 'CANCELADA';
-
 export type StatusManutencao =
   | 'PENDENTE'
   | 'EM_ANDAMENTO'
@@ -58,52 +55,6 @@ export type StatusManutencao =
 
 export type TipoMaterial = 'MATERIAL' | 'EQUIPAMENTO';
 
-export type TipoCategoria = 'EQUIPAMENTO' | 'EPI';
-
 export type StatusMaterial = 'ATIVO' | 'INATIVO';
 
 export type TipoMovimento = 'ENTRADA' | 'SAIDA';
-
-export type EspecialidadeAtividade =
-  | 'IMPERMEABILIZACAO'
-  | 'PINTURA'
-  | 'ELETRICA'
-  | 'HIDRAULICA'
-  | 'CIVIL'
-  | 'LIMPEZA'
-  | 'OUTROS';
-
-export type EnumTipoRecursoAtividade =
-  | 'EQUIPAMENTO'
-  | 'EPI'
-  | 'MATERIAL';
-
-export type EnumStatusEquipe =
-  | 'PENDENTE'
-  | 'EM_EXECUCAO'
-  | 'CONCLUIDA';
-
-export type EnumStatusAtividadeOS =
-  | 'PENDENTE'
-  | 'EM_ANDAMENTO'
-  | 'CONCLUIDA'
-  | 'CANCELADA';
-
-export type EnumStatusChecklist =
-  | 'PENDENTE'
-  | 'CONCLUIDA'
-  | 'BLOQUEADA';
-
-export type EnumStatusSeparacaoNovo =
-  | 'SEPARACAO_PENDENTE'
-  | 'SEPARACAO_CONCLUIDA'
-  | 'EQUIPE_NOTIFICADA'
-  | 'RETIRADA_PENDENTE'
-  | 'RETIRADA_CONCLUIDA'
-  | 'DEVOLUCAO_PENDENTE'
-  | 'DEVOLUCAO_CONCLUIDA';
-
-export type EnumStatusEquipamento =
-  | 'EM_USO'
-  | 'DEVOLVIDO'
-  | 'EM_MANUTENCAO';

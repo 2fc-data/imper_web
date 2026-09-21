@@ -1,11 +1,9 @@
+// SYNC: Keep in sync with imper_api/src/schemas/common.ts
+// This file contains only the types used by the web frontend.
 export interface BaseLookup {
   id: number;
   nome: string;
   ativo: boolean;
-}
-
-export interface LookupItem extends BaseLookup {
-  descricao?: string | null;
 }
 
 export interface UnidadeMedida extends BaseLookup {
