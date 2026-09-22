@@ -44,6 +44,7 @@ export default defineConfig({
               cacheName: 'imper-publico',
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
               cacheableResponse: { statuses: [0, 200] },
+              fetchOptions: { method: 'GET' },
             },
           },
         ],

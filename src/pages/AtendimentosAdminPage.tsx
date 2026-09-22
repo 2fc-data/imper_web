@@ -1,5 +1,4 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { PhoneInput } from '../components/ui/phone-input';
 import { CepInput, type CepDados } from '../components/ui/cep-input';
 import { EmailInput } from '../components/ui/email-input';
@@ -158,7 +157,6 @@ export function AtendimentoList({
   const [logs, setLogs] = useState<AtendimentoLogItem[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [descricaoDraft, setDescricaoDraft] = useState('');
-  const [agendarData, setAgendarData] = useState('');
   const [statusDraft, setStatusDraft] = useState<StatusAtendimento | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -196,17 +194,8 @@ export function AtendimentoList({
       if (descricaoDraft.trim()) {
         await onRegistrarLog(atendimento.id, descricaoDraft.trim());
       }
-      if (agendarData && atendimento.cliente?.id) {
-        await criarAgendamento({
-          clienteId: atendimento.cliente.id,
-          atendimentoId: atendimento.id,
-          tipo: 'VISITA',
-          dataPrevista: new Date(agendarData).toISOString(),
-        });
-      }
       setLogs(await onCarregarLogs(atendimento.id));
       setDescricaoDraft('');
-      setAgendarData('');
       setStatusDraft(null);
       fecharExpandido();
     } catch (err) {
@@ -220,7 +209,6 @@ export function AtendimentoList({
     setExpandidoId(null);
     setLogs([]);
     setDescricaoDraft('');
-    setAgendarData('');
     setStatusDraft(null);
   };
 
@@ -467,19 +455,6 @@ export function AtendimentoList({
                               placeholder="Descreva o atendimento realizado..."
                               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
-                            {item.cliente?.id && (
-                              <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-foreground">
-                                  Agendar visita técnica para:
-                                </label>
-                                <input
-                                  type="datetime-local"
-                                  value={agendarData}
-                                  onChange={(e) => setAgendarData(e.target.value)}
-                                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                />
-                              </div>
-                            )}
                             <div className="space-y-1.5">
                               <label className="text-xs font-semibold text-foreground">
                                 Status
@@ -554,6 +529,7 @@ export function NovoAtendimentoForm({
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
   const [descricao, setDescricao] = useState('');
   const [canal, setCanal] = useState<CanalAtendimento | ''>('LOJA');
   const [urgencia, setUrgencia] = useState<Urgencia | ''>('NORMAL');
@@ -608,6 +584,7 @@ export function NovoAtendimentoForm({
     setNome(cliente.nome);
     if (cliente.telefone) setTelefone(cliente.telefone);
     if (cliente.email) setEmail(cliente.email);
+    if (cliente.cpfCnpj) setCpf(cliente.cpfCnpj);
     setDropdownAberto(false);
     setSugestoes([]);
   }
@@ -642,6 +619,7 @@ export function NovoAtendimentoForm({
         nome,
         telefone,
         email: email || undefined,
+        cpfCnpj: cpf || undefined,
         descricao: descricao || undefined,
         canal,
         urgencia,
@@ -715,15 +693,8 @@ export function NovoAtendimentoForm({
                       Buscando...
                     </p>
                   ) : sugestoes.length === 0 ? (
-                    <div className="px-3 py-2.5 text-sm text-muted-foreground space-y-1.5">
-                      <p>Nenhum cliente encontrado</p>
-                      <Link
-                        to="/usuarios?view=novo"
-                        onClick={() => setDropdownAberto(false)}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                      >
-                        ➕ Ir para Cadastro de Usuário
-                      </Link>
+                    <div className="px-3 py-2.5 text-sm text-muted-foreground">
+                      <p>Nenhum cliente encontrado. Preencha os campos abaixo para cadastrar.</p>
                     </div>
                   ) : (
                     <ul className="py-1">
@@ -775,6 +746,16 @@ export function NovoAtendimentoForm({
               className={campoInput}
             />
           </div>
+          <div className="space-y-1.5">
+            <label className={campoLabel}>CPF/CNPJ</label>
+            <input
+              type="text"
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              className={campoInput}
+              placeholder="000.000.000-00"
+            />
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -820,25 +801,46 @@ export function NovoAtendimentoForm({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label className={campoLabel}>CEP (Local da visita técnica)</label>
-          <CepInput
-            value={cep}
-            onChange={setCep}
-            onConsulta={(dados: CepDados) => {
-              setEndereco(dados.logradouro);
-              setBairro(dados.bairro);
-              setCidade(dados.cidade);
-              setEstado(dados.estado);
-              setCepValido(true);
+        <div className="flex items-center gap-2 pt-1">
+          <input
+            type="checkbox"
+            id="agendar-checkbox"
+            checked={agendar}
+            onChange={(e) => {
+              setAgendar(e.target.checked);
+              if (!e.target.checked) setAgendarSlot('');
             }}
-            onErro={() => setCepValido(false)}
+            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
           />
-          <p className="text-xs text-muted-foreground">
-            Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
-            automaticamente.
-          </p>
+          <label
+            htmlFor="agendar-checkbox"
+            className="text-sm font-medium text-foreground cursor-pointer select-none"
+          >
+            Agendar visita técnica
+          </label>
         </div>
+
+        {agendar && (
+          <div className="space-y-1.5">
+            <label className={campoLabel}>CEP (Local da visita técnica)</label>
+            <CepInput
+              value={cep}
+              onChange={setCep}
+              onConsulta={(dados: CepDados) => {
+                setEndereco(dados.logradouro);
+                setBairro(dados.bairro);
+                setCidade(dados.cidade);
+                setEstado(dados.estado);
+                setCepValido(true);
+              }}
+              onErro={() => setCepValido(false)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
+              automaticamente.
+            </p>
+          </div>
+        )}
 
         {cepValido && (
           <>
@@ -911,25 +913,6 @@ export function NovoAtendimentoForm({
           </>
         )}
 
-        <div className="flex items-center gap-2 pt-1">
-          <input
-            type="checkbox"
-            id="agendar-checkbox"
-            checked={agendar}
-            onChange={(e) => {
-              setAgendar(e.target.checked);
-              if (!e.target.checked) setAgendarSlot('');
-            }}
-            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-          />
-          <label
-            htmlFor="agendar-checkbox"
-            className="text-sm font-medium text-foreground cursor-pointer select-none"
-          >
-            Agendar visita técnica
-          </label>
-        </div>
-
         {agendar && (
           <div className="space-y-1.5 rounded-lg border bg-muted/30 p-4">
             <label className={campoLabel}>Horários Disponíveis</label>
@@ -941,6 +924,7 @@ export function NovoAtendimentoForm({
               onChange={setAgendarSlot}
               disabled={loading}
             />
+
             {agendarSlot && (
               <p className="text-xs text-success font-medium mt-2">
                 ✓ Agendamento selecionado: {new Date(agendarSlot).toLocaleString('pt-BR')}

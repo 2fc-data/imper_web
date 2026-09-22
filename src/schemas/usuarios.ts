@@ -15,6 +15,13 @@ export const atualizarUsuarioSchema = z.object({
   papelId: z.number().optional(),
   cargoId: z.number().nullable().optional(),
   ativo: z.boolean().optional(),
+  cep: z.string().optional(),
+  endereco: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  estado: z.string().optional(),
+  numero: z.string().optional(),
+  complemento: z.string().optional(),
 });
 
 export const resetarSenhaSchema = z.object({

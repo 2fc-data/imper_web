@@ -38,6 +38,7 @@ export interface CriarAtendimentoInput {
   nome?: string;
   telefone?: string;
   email?: string;
+  cpfCnpj?: string;
   canal: CanalAtendimento;
   urgencia?: Urgencia;
   descricao?: string;

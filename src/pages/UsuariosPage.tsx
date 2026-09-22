@@ -541,6 +541,20 @@ function ModalEditarUsuario({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [cep, setCep] = useState(usuario.endereco?.cep ?? '');
+  const [endereco, setEndereco] = useState(usuario.endereco?.logradouro ?? '');
+  const [bairro, setBairro] = useState(usuario.endereco?.bairro ?? '');
+  const [cidade, setCidade] = useState(usuario.endereco?.cidade ?? '');
+  const [estado, setEstado] = useState(usuario.endereco?.estado ?? '');
+  const [numero, setNumero] = useState(usuario.endereco?.numero ?? '');
+  const [complemento, setComplemento] = useState(
+    usuario.endereco?.complemento ?? '',
+  );
+  const [cepValido, setCepValido] = useState(!!usuario.endereco?.cep);
+  const [mostrarEndereco, setMostrarEndereco] = useState(
+    !!usuario.endereco?.cep,
+  );
+
   async function handleSalvar(e: FormEvent) {
     e.preventDefault();
     if (!papelId) return;
@@ -554,6 +568,15 @@ function ModalEditarUsuario({
         papelId,
         cargoId: cargoId ?? null,
         ativo,
+        ...(cep?.trim() && {
+          cep: cep.trim(),
+          endereco: endereco.trim() || undefined,
+          bairro: bairro.trim() || undefined,
+          cidade: cidade.trim() || undefined,
+          estado: estado.trim() || undefined,
+          numero: numero.trim() || undefined,
+          complemento: complemento.trim() || undefined,
+        }),
       });
       onSalvo();
       onFechar();
@@ -568,7 +591,7 @@ function ModalEditarUsuario({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <form
         onSubmit={handleSalvar}
-        className="w-full max-w-md space-y-4 rounded-xl bg-background p-6 shadow-xl border"
+        className="w-full max-w-lg space-y-4 rounded-xl bg-background p-6 shadow-xl border"
       >
         <h3 className="text-lg font-bold">Editar Usuário</h3>
         {err && (
@@ -642,6 +665,112 @@ function ModalEditarUsuario({
               </option>
             ))}
           </select>
+        </div>
+        <div className="border-t pt-3 space-y-2">
+          <button
+            type="button"
+            className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => setMostrarEndereco(!mostrarEndereco)}
+            disabled={saving}
+          >
+            {mostrarEndereco ? '▼' : '▶'} Endereço
+          </button>
+
+          {mostrarEndereco && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="edit-cep">CEP</Label>
+                <CepInput
+                  id="edit-cep"
+                  name="edit_cep"
+                  value={cep}
+                  onChange={setCep}
+                  onConsulta={(dados: CepDados) => {
+                    setEndereco(dados.logradouro);
+                    setBairro(dados.bairro);
+                    setCidade(dados.cidade);
+                    setEstado(dados.estado);
+                    setCepValido(true);
+                  }}
+                  disabled={saving}
+                />
+              </div>
+
+              {cepValido && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-endereco">Endereço</Label>
+                    <Input
+                      id="edit-endereco"
+                      autoComplete="street-address"
+                      placeholder="Rua, avenida..."
+                      value={endereco}
+                      onChange={(e) => setEndereco(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-bairro">Bairro</Label>
+                    <Input
+                      id="edit-bairro"
+                      autoComplete="address-level2"
+                      placeholder="Bairro"
+                      value={bairro}
+                      onChange={(e) => setBairro(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-cidade">Cidade</Label>
+                    <Input
+                      id="edit-cidade"
+                      autoComplete="address-level1"
+                      placeholder="Cidade"
+                      value={cidade}
+                      onChange={(e) => setCidade(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-estado">UF</Label>
+                    <Input
+                      id="edit-estado"
+                      autoComplete="address-level1"
+                      maxLength={2}
+                      placeholder="UF"
+                      value={estado}
+                      onChange={(e) =>
+                        setEstado(e.target.value.toUpperCase())
+                      }
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-numero">Número</Label>
+                    <Input
+                      id="edit-numero"
+                      inputMode="numeric"
+                      autoComplete="address-line1"
+                      placeholder="Número"
+                      value={numero}
+                      onChange={(e) => setNumero(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-complemento">Complemento</Label>
+                    <Input
+                      id="edit-complemento"
+                      placeholder="Apto, bloco..."
+                      value={complemento}
+                      onChange={(e) => setComplemento(e.target.value)}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <input

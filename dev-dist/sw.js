@@ -81,7 +81,7 @@ define(['./workbox-ba5aa63f'], (function (workbox) { 'use strict';
     "revision": "d41d8cd98f00b204e9800998ecf8427e"
   }, {
     "url": "/index.html",
-    "revision": "0.rtfb3j4tr5"
+    "revision": "0.e6m9jb0ehq"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/index.html"), {
@@ -103,6 +103,9 @@ define(['./workbox-ba5aa63f'], (function (workbox) { 'use strict';
     url
   }) => url.pathname.startsWith("/publico/"), new workbox.NetworkFirst({
     "cacheName": "imper-publico",
+    "fetchOptions": {
+      "method": "GET"
+    },
     plugins: [new workbox.ExpirationPlugin({
       maxEntries: 50,
       maxAgeSeconds: 86400
