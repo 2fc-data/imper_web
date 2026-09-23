@@ -108,10 +108,6 @@ export async function atualizarStatusAgendamento(
   });
 }
 
-export async function removerAgendamento(id: number): Promise<void> {
-  return api.del(`/agendamentos/${id}`);
-}
-
 export interface RotaAgendamento {
   disponivel: boolean;
   distanciaM: number | null;

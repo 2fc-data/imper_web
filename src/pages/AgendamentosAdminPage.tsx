@@ -13,7 +13,6 @@ import {
   listarLogsAtendimento,
   type MeuUser,
   type RotaAgendamento,
-  removerAgendamento,
   type StatusAgendamento,
   type TipoAgendamento,
 } from '../lib/api';
@@ -206,7 +205,6 @@ interface AgendamentoListProps {
   tipoFiltro: string;
   onTipoFiltroChange: (v: string) => void;
   onStatusChange: (id: number, status: StatusAgendamento) => void;
-  onRemover: (id: number) => void;
   onRecarregar: () => Promise<void>;
 }
 
@@ -218,7 +216,6 @@ export function AgendamentoList({
   tipoFiltro,
   onTipoFiltroChange,
   onStatusChange,
-  onRemover,
   onRecarregar,
 }: AgendamentoListProps) {
   const [expandidoId, setExpandidoId] = useState<number | null>(null);
@@ -326,7 +323,7 @@ export function AgendamentoList({
           onChange={(e) => onStatusFiltroChange(e.target.value)}
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <option value="">TODOS OS STATUS</option>
+          <option value="">ATIVOS (SEM CANCELADOS)</option>
           <option value="PENDENTE">PENDENTE</option>
           <option value="CONFIRMADO">CONFIRMADO</option>
           <option value="REALIZADO">REALIZADO</option>
@@ -461,7 +458,7 @@ export function AgendamentoList({
                             )}
                             <div className="space-y-2 pt-2">
                               <div className="font-semibold text-foreground text-sm">
-                                Observações do técnico
+                                Observações
                               </div>
                               <textarea
                                 value={obsDraft}
@@ -528,7 +525,7 @@ export function AgendamentoList({
                             )}
                             <div className="space-y-1 text-xs">
                               <div className="font-semibold text-foreground text-sm">
-                                Rota da sede
+                                Rota da sede - (Sem trânsito)
                               </div>
                               {extras?.loading && (
                                 <p className="text-muted-foreground">
@@ -616,15 +613,6 @@ export function AgendamentoList({
                               )}
                             </div>
                           )}
-                        </div>
-                        <div className="mt-4 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => onRemover(item.id)}
-                            className="rounded-md border border-destructive/40 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                          >
-                            Excluir agendamento
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -899,7 +887,10 @@ export function AgendamentosAdminPage({
         status: (statusFiltro || undefined) as StatusAgendamento | undefined,
         tipo: (tipoFiltro || undefined) as TipoAgendamento | undefined,
       });
-      setAgendamentos(data);
+      const visiveis = statusFiltro
+        ? data
+        : data.filter((a) => a.status !== 'CANCELADO');
+      setAgendamentos(visiveis);
     } catch (err) {
       console.error('Erro ao listar agendamentos:', err);
     } finally {
@@ -938,16 +929,6 @@ export function AgendamentosAdminPage({
     }
   };
 
-  const handleRemover = async (id: number) => {
-    if (!window.confirm('Excluir este agendamento?')) return;
-    try {
-      await removerAgendamento(id);
-      await Promise.all([carregarAgendamentos(), carregarTodosAgendamentos()]);
-    } catch (err) {
-      console.error('Erro ao excluir agendamento:', err);
-    }
-  };
-
   return (
     <div className="p-6">
       {initialView === 'analises' && (
@@ -962,7 +943,6 @@ export function AgendamentosAdminPage({
           tipoFiltro={tipoFiltro}
           onTipoFiltroChange={setTipoFiltro}
           onStatusChange={handleStatusInline}
-          onRemover={handleRemover}
           onRecarregar={async () => {
             await Promise.all([
               carregarAgendamentos(),

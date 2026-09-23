@@ -167,7 +167,6 @@ export {
   detalharAgendamento,
   atualizarAgendamento,
   atualizarStatusAgendamento,
-  removerAgendamento,
   getRotaAgendamento,
 } from './agendamentos.js';
 export type {
