@@ -162,9 +162,20 @@ export function AtendimentoList({
   const [descricaoDraft, setDescricaoDraft] = useState('');
   const [statusDraft, setStatusDraft] = useState<StatusAtendimento | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
   const agendarRef = useRef<AgendarVisitaHandle>(null);
 
+  const handleAgendarValidChange = useCallback(
+    (valid: boolean) => {
+      if (valid) {
+        setStatusDraft((prev) => (prev === null ? 'CONCLUIDO' : prev));
+      }
+    },
+    [],
+  );
+
   const alternarExpandido = async (id: number) => {
+    setErroSalvar(null);
     if (expandidoId === id) {
       setExpandidoId(null);
       setLogs([]);
@@ -187,26 +198,32 @@ export function AtendimentoList({
   };
 
   const salvarLog = async (atendimento: AtendimentoItem) => {
+    setErroSalvar(null);
+    const isAgendar = agendarRef.current?.isAgendar() ?? false;
+
+    if (isAgendar) {
+      const agendarOk = agendarRef.current?.tentarValidar() ?? false;
+      if (!agendarOk) {
+        setErroSalvar('Informe um CEP válido e selecione um horário disponível.');
+        return;
+      }
+    }
+
     const isValid = agendarRef.current?.isValid() ?? false;
-    console.log('[salvarLog] conditions:', {
-      hasDescricao: !!descricaoDraft.trim(),
-      hasStatusDraft: statusDraft !== null,
-      isAgendarValid: isValid,
-    });
     if (!descricaoDraft.trim() && statusDraft === null && !isValid) return;
+
     setSalvando(true);
     try {
-      if (statusDraft !== null && statusDraft !== atendimento.status) {
+      if (statusDraft !== null && statusDraft !== atendimento.status && !isValid) {
         await onStatusChange(atendimento.id, statusDraft);
       }
       if (descricaoDraft.trim()) {
         await onRegistrarLog(atendimento.id, descricaoDraft.trim());
       }
       const agendarDados = agendarRef.current?.getDados();
-      console.log('[salvarLog] agendarDados:', agendarDados);
       if (agendarDados && onAgendarVisita) {
-        console.log('[salvarLog] calling onAgendarVisita for atendimento:', atendimento.id);
         await onAgendarVisita(atendimento.id, agendarDados);
+        await onStatusChange(atendimento.id, 'CONCLUIDO');
       }
       setLogs(await onCarregarLogs(atendimento.id));
       setDescricaoDraft('');
@@ -214,6 +231,9 @@ export function AtendimentoList({
       fecharExpandido();
     } catch (err) {
       console.error('Erro ao registrar atendimento:', err);
+      setErroSalvar(
+        err instanceof Error ? err.message : 'Erro ao salvar atendimento.',
+      );
     } finally {
       setSalvando(false);
     }
@@ -224,6 +244,7 @@ export function AtendimentoList({
     setLogs([]);
     setDescricaoDraft('');
     setStatusDraft(null);
+    setErroSalvar(null);
   };
 
   return (
@@ -474,7 +495,13 @@ export function AtendimentoList({
                                 ref={agendarRef}
                                 disabled={salvando}
                                 titulo="Horários Disponíveis"
+                                onValidChange={handleAgendarValidChange}
                               />
+                            )}
+                            {erroSalvar && (
+                              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+                                {erroSalvar}
+                              </div>
                             )}
                             <div className="space-y-1.5">
                               <label className="text-xs font-semibold text-foreground">
@@ -923,14 +950,10 @@ export function AtendimentosAdminPage({
   };
 
   const handleAgendarVisita = async (atendimentoId: number, dados: AgendarDados) => {
-    console.log('[handleAgendarVisita] called with:', { atendimentoId, dados });
     const atendimento = atendimentos.find((a) => a.id === atendimentoId);
-    console.log('[handleAgendarVisita] atendimento found:', atendimento);
     const userId = atendimento?.user?.id ?? atendimento?.userId;
-    console.log('[handleAgendarVisita] resolved userId:', userId);
     if (!userId) {
-      alert('Atendimento sem cliente vinculado. Não é possível agendar.');
-      return;
+      throw new Error('Atendimento sem cliente vinculado. Não é possível agendar.');
     }
     try {
       const payload = {
@@ -948,14 +971,12 @@ export function AtendimentosAdminPage({
           cep: dados.cep || undefined,
         },
       };
-      console.log('[handleAgendarVisita] sending payload:', payload);
       await criarAgendamento(payload);
-      console.log('[handleAgendarVisita] agendamento created successfully');
       await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
-      alert('Agendamento criado com sucesso!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[handleAgendarVisita] error:', err);
-      alert(`Erro ao agendar: ${err?.message ?? 'erro desconhecido'}`);
+      if (err instanceof Error) throw err;
+      throw new Error('Erro ao agendar visita técnica.');
     }
   };
 

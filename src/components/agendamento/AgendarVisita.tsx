@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { CepInput, type CepDados } from '../ui/cep-input';
 import { SlotPicker } from '../disponibilidade/SlotPicker';
 
@@ -16,11 +16,15 @@ export interface AgendarDados {
 export interface AgendarVisitaHandle {
   getDados: () => AgendarDados | null;
   isValid: () => boolean;
+  isAgendar: () => boolean;
+  getErros: () => { cep?: string; slot?: string };
+  tentarValidar: () => boolean;
 }
 
 interface AgendarVisitaProps {
   disabled?: boolean;
   titulo?: string;
+  onValidChange?: (valid: boolean, isAgendar: boolean) => void;
 }
 
 const campoInput =
@@ -28,7 +32,7 @@ const campoInput =
 const campoLabel = 'text-xs font-semibold text-foreground';
 
 export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>(
-  function AgendarVisita({ disabled = false, titulo = 'Horários Disponíveis' }, ref) {
+  function AgendarVisita({ disabled = false, titulo = 'Horários Disponíveis', onValidChange }, ref) {
     const [agendar, setAgendar] = useState(false);
     const [agendarSlot, setAgendarSlot] = useState('');
     const [cep, setCep] = useState('');
@@ -39,23 +43,38 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
     const [numero, setNumero] = useState('');
     const [complemento, setComplemento] = useState('');
     const [cepValido, setCepValido] = useState(false);
+    const [mostrarErros, setMostrarErros] = useState(false);
+
+    useEffect(() => {
+      const valid = agendar ? !!agendarSlot && cepValido : false;
+      onValidChange?.(valid, agendar);
+      if (valid || !agendar) setMostrarErros(false);
+    }, [agendar, cepValido, agendarSlot, onValidChange]);
 
     useImperativeHandle(ref, () => ({
       getDados: () => {
-        const result = { cep, endereco, bairro, cidade, estado, numero, complemento, slotIso: agendarSlot };
-        console.log('[AgendarVisita] getDados called:', { agendar, agendarSlot, cepValido, result });
         if (!agendar || !agendarSlot || !cepValido) return null;
-        return result;
+        return { cep, endereco, bairro, cidade, estado, numero, complemento, slotIso: agendarSlot };
       },
-      isValid: () => {
-        const valid = agendar && !!agendarSlot && cepValido;
-        console.log('[AgendarVisita] isValid called:', { agendar, agendarSlot, cepValido, valid });
+      isValid: () => agendar && !!agendarSlot && cepValido,
+      isAgendar: () => agendar,
+      getErros: () => {
+        const erros: { cep?: string; slot?: string } = {};
+        if (agendar && !cepValido) erros.cep = 'Informe um CEP válido';
+        if (agendar && !agendarSlot) erros.slot = 'Selecione um horário disponível';
+        return erros;
+      },
+      tentarValidar: () => {
+        if (!agendar) return true;
+        const valid = !!agendarSlot && cepValido;
+        setMostrarErros(!valid);
         return valid;
       },
     }));
 
     function handleCheckboxChange(checked: boolean) {
       setAgendar(checked);
+      setMostrarErros(false);
       if (!checked) {
         setAgendarSlot('');
         setCep('');
@@ -95,7 +114,6 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
               value={cep}
               onChange={setCep}
               onConsulta={(dados: CepDados) => {
-                console.log('[AgendarVisita] onConsulta fired:', dados);
                 setEndereco(dados.logradouro);
                 setBairro(dados.bairro);
                 setCidade(dados.cidade);
@@ -104,6 +122,9 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
               }}
               onErro={() => setCepValido(false)}
             />
+            {mostrarErros && !cepValido && (
+              <p className="text-xs text-destructive">Informe um CEP válido</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
               automaticamente.
@@ -192,6 +213,11 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
               value={agendarSlot}
               onChange={setAgendarSlot}
               disabled={disabled}
+              erro={
+                mostrarErros && !agendarSlot
+                  ? 'Selecione um horário disponível'
+                  : undefined
+              }
             />
             {agendarSlot && (
               <p className="text-xs text-success font-medium mt-2">
