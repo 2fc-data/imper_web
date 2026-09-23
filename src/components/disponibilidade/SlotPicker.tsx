@@ -77,7 +77,7 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
     onChange(iso);
   }
 
-  const valorSelecionado = value ? value.substring(0, 16) : '';
+  const valorSelecionado = value || '';
 
   const MESES = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',

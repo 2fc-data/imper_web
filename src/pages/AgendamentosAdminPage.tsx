@@ -4,15 +4,13 @@ import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
   atualizarStatusAgendamento,
-  buscarClientes,
+  buscarUsuarios,
   criarAgendamento,
   listarAgendamentos,
-  listarUsuarios,
-  type MeuCliente,
+  type MeuUser,
   removerAgendamento,
   type StatusAgendamento,
   type TipoAgendamento,
-  type Usuario,
 } from '../lib/api';
 import { SlotPicker } from '../components/disponibilidade/SlotPicker';
 
@@ -217,9 +215,8 @@ export function AgendamentoList({
   const filtrados = agendamentos.filter((item) => {
     if (!busca.trim()) return true;
     const alvo = [
-      item.cliente?.nome ?? '',
-      item.atendimento?.descricao ?? '',
       item.user?.nome ?? '',
+      item.atendimento?.descricao ?? '',
       item.observacoes ?? '',
       item.endereco?.logradouro ?? '',
       item.endereco?.bairro ?? item.endereco?.cidade ?? '',
@@ -314,11 +311,11 @@ export function AgendamentoList({
                   <tr className="hover:bg-primary/10 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium text-foreground">
-                        {item.cliente?.nome ?? `Agendamento #${item.id}`}
+                        {item.user?.nome ?? `Agendamento #${item.id}`}
                       </div>
-                      {item.cliente?.telefone && (
+                      {item.user?.telefone && (
                         <div className="text-xs text-muted-foreground">
-                          {item.cliente.telefone}
+                          {item.user.telefone}
                         </div>
                       )}
                     </td>
@@ -326,7 +323,7 @@ export function AgendamentoList({
                       {rotulosTipo[item.tipo] ?? item.tipo}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {item.user?.nome ?? '—'}
+                      {item.criadoPor?.nome ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {formatarData(item.dataPrevista)}
@@ -460,18 +457,16 @@ export function NovoAgendamentoForm({
   onSuccess,
   onCancel,
 }: NovoAgendamentoFormProps) {
-  const [nomeCliente, setNomeCliente] = useState('');
-  const [clienteIdSelecionado, setClienteIdSelecionado] = useState<
+  const [nomeUsuario, setNomeUsuario] = useState('');
+  const [userIdSelecionado, setUserIdSelecionado] = useState<
     number | null
   >(null);
-  const [userId, setUserId] = useState('');
   const [tipo, setTipo] = useState<TipoAgendamento>('VISITA');
   const [dataPrevista, setDataPrevista] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [sugestoes, setSugestoes] = useState<MeuCliente[]>([]);
-  const [buscandoClientes, setBuscandoClientes] = useState(false);
+  const [sugestoes, setSugestoes] = useState<MeuUser[]>([]);
+  const [buscandoUsuarios, setBuscandoUsuarios] = useState(false);
   const [dropdownAberto, setDropdownAberto] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nomeContainerRef = useRef<HTMLDivElement | null>(null);
@@ -479,19 +474,7 @@ export function NovoAgendamentoForm({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    listarUsuarios()
-      .then((data) => {
-        const papeisValidos = ['ADMIN', 'SUPERVISOR', 'ATENDENTE', 'TECNICO'];
-        const profissionais = data.filter((u) =>
-          papeisValidos.includes(u.papel),
-        );
-        setUsuarios(profissionais);
-      })
-      .catch((err) => console.error('Erro ao listar usuários:', err));
-  }, []);
-
-  async function buscarClientesPorNome(valor: string) {
+  async function buscarUsuariosPorNome(valor: string) {
     const q = valor.trim();
     if (q.length < 3) {
       setDropdownAberto(false);
@@ -500,22 +483,22 @@ export function NovoAgendamentoForm({
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      setBuscandoClientes(true);
+      setBuscandoUsuarios(true);
       setDropdownAberto(true);
       try {
-        const data = await buscarClientes(q);
+        const data = await buscarUsuarios(q);
         setSugestoes(data);
       } catch {
         setSugestoes([]);
       } finally {
-        setBuscandoClientes(false);
+        setBuscandoUsuarios(false);
       }
     }, 300);
   }
 
-  function selecionarCliente(cliente: MeuCliente) {
-    setClienteIdSelecionado(cliente.id);
-    setNomeCliente(cliente.nome);
+  function selecionarUsuario(usuario: MeuUser) {
+    setUserIdSelecionado(usuario.id);
+    setNomeUsuario(usuario.nome);
     setDropdownAberto(false);
     setSugestoes([]);
   }
@@ -541,12 +524,11 @@ export function NovoAgendamentoForm({
     setLoading(true);
     setErro(null);
     try {
-      if (!clienteIdSelecionado) {
+      if (!userIdSelecionado) {
         throw new Error('Selecione um cliente cadastrado.');
       }
       await criarAgendamento({
-        clienteId: clienteIdSelecionado,
-        userId: userId ? Number(userId) : undefined,
+        userId: userIdSelecionado,
         tipo,
         dataPrevista: new Date(dataPrevista).toISOString(),
         observacoes: observacoes || undefined,
@@ -584,18 +566,18 @@ export function NovoAgendamentoForm({
             <input
               type="text"
               required
-              value={nomeCliente}
+              value={nomeUsuario}
               onChange={(e) => {
-                setNomeCliente(e.target.value);
-                setClienteIdSelecionado(null);
-                buscarClientesPorNome(e.target.value);
+                setNomeUsuario(e.target.value);
+                setUserIdSelecionado(null);
+                buscarUsuariosPorNome(e.target.value);
               }}
               className={campoInput}
               placeholder="Nome do cliente"
             />
             {dropdownAberto && (
               <div className="absolute z-20 mt-1 w-full rounded-lg border bg-background shadow-md">
-                {buscandoClientes ? (
+                {buscandoUsuarios ? (
                   <p className="px-3 py-2 text-sm text-muted-foreground">
                     Buscando...
                   </p>
@@ -612,18 +594,18 @@ export function NovoAgendamentoForm({
                   </div>
                 ) : (
                   <ul className="py-1">
-                    {sugestoes.map((cliente) => (
-                      <li key={cliente.id}>
+                    {sugestoes.map((usuario) => (
+                      <li key={usuario.id}>
                         <button
                           type="button"
-                          onClick={() => selecionarCliente(cliente)}
+                          onClick={() => selecionarUsuario(usuario)}
                           className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10 hover:text-primary transition-colors"
                         >
-                          <div className="font-medium">{cliente.nome}</div>
+                          <div className="font-medium">{usuario.nome}</div>
                           <div className="text-xs text-muted-foreground">
-                            {cliente.telefone ||
-                              cliente.email ||
-                              cliente.cpfCnpj ||
+                            {usuario.telefone ||
+                              usuario.email ||
+                              usuario.cpfCnpj ||
                               'Sem contato'}
                           </div>
                         </button>
@@ -639,36 +621,18 @@ export function NovoAgendamentoForm({
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <label className={campoLabel}>Tipo</label>
-            <select
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value as TipoAgendamento)}
-              className={campoInput}
-            >
-              <option value="VISITA">Visita</option>
-              <option value="ORCAMENTO">Orçamento</option>
-              <option value="RETORNO">Retorno</option>
-              <option value="REUNIAO">Reunião</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className={campoLabel}>Profissional responsável</label>
-            <select
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className={campoInput}
-            >
-              <option value="">Não definido</option>
-              {usuarios.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.nome}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="space-y-1.5">
+          <label className={campoLabel}>Tipo</label>
+          <select
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value as TipoAgendamento)}
+            className={campoInput}
+          >
+            <option value="VISITA">Visita</option>
+            <option value="ORCAMENTO">Orçamento</option>
+            <option value="RETORNO">Retorno</option>
+            <option value="REUNIAO">Reunião</option>
+          </select>
         </div>
 
         <div className="space-y-1.5">

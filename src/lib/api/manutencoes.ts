@@ -1,5 +1,5 @@
 import { api } from './core.js';
-import type { StatusManutencao } from '../schemas/index.js';
+import type { StatusManutencao } from '../../schemas/index.js';
 import type { LookupItem } from './lookups.js';
 
 export interface ManutencaoItem {

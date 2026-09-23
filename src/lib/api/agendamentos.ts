@@ -3,7 +3,8 @@ import type {
   TipoAgendamento,
   StatusAgendamento,
   Urgencia,
-} from '../schemas/index.js';
+  DadosEndereco,
+} from '../../schemas/index.js';
 
 export interface EnderecoItem {
   id: number;
@@ -20,10 +21,9 @@ export interface EnderecoItem {
 
 export interface AgendamentoItem {
   id: number;
-  clienteId: number;
+  userId: number;
   atendimentoId: number | null;
   enderecoId: number | null;
-  userId: number | null;
   tipo: TipoAgendamento;
   status: StatusAgendamento;
   dataPrevista: string;
@@ -32,8 +32,7 @@ export interface AgendamentoItem {
   criadoPorId: number | null;
   createdAt: string;
   updatedAt: string;
-  cliente?: { id: number; nome: string; telefone: string | null } | null;
-  user?: { id: number; nome: string } | null;
+  user?: { id: number; nome: string; telefone: string | null } | null;
   criadoPor?: { id: number; nome: string } | null;
   endereco?: EnderecoItem | null;
   atendimento?: {
@@ -44,21 +43,20 @@ export interface AgendamentoItem {
 }
 
 export interface CriarAgendamentoInput {
-  clienteId: number;
+  userId: number;
   atendimentoId?: number | null;
   enderecoId?: number | null;
-  userId?: number | null;
   tipo?: TipoAgendamento;
   status?: StatusAgendamento;
   dataPrevista: string;
   dataRealizada?: string | null;
   observacoes?: string;
+  enderecoNovo?: DadosEndereco;
 }
 
 export interface ListarAgendamentosParams {
   status?: StatusAgendamento;
   tipo?: TipoAgendamento;
-  clienteId?: number;
   userId?: number;
   dataDe?: string;
   dataAte?: string;
@@ -70,9 +68,8 @@ export async function listarAgendamentos(
   const searchParams = new URLSearchParams();
   if (params?.status) searchParams.set('status', params.status);
   if (params?.tipo) searchParams.set('tipo', params.tipo);
-  if (params?.clienteId)
-    searchParams.set('clienteId', String(params.clienteId));
-  if (params?.userId) searchParams.set('userId', String(params.userId));
+  if (params?.userId)
+    searchParams.set('userId', String(params.userId));
   if (params?.dataDe) searchParams.set('dataDe', params.dataDe);
   if (params?.dataAte) searchParams.set('dataAte', params.dataAte);
   const queryStr = searchParams.toString();

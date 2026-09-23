@@ -266,14 +266,6 @@ export function EpisSidebar({
   );
 }
 
-export function ClienteSidebar() {
-  return (
-    <SidebarNote>
-      Portal do cliente: acompanhe seus dados e ordens de serviço.
-    </SidebarNote>
-  );
-}
-
 export function EmBreveSidebar({ texto }: { texto: string }) {
   return <SidebarNote>{texto}</SidebarNote>;
 }

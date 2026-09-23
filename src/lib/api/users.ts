@@ -1,6 +1,6 @@
 import { api } from './core.js';
 
-export interface MeuCliente {
+export interface MeuUser {
   id: number;
   nome: string;
   cpfCnpj: string | null;
@@ -28,6 +28,6 @@ export interface MinhaConta {
   } | null;
 }
 
-export async function buscarClientes(q: string): Promise<MeuCliente[]> {
-  return api.get<MeuCliente[]>(`/usuarios/buscar?q=${encodeURIComponent(q)}`);
+export async function buscarUsuarios(q: string): Promise<MeuUser[]> {
+  return api.get<MeuUser[]>(`/usuarios/buscar?q=${encodeURIComponent(q)}`);
 }

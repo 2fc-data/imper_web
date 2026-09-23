@@ -60,7 +60,7 @@ export function CepInput({
         onErro?.();
       }
     },
-    [onConsulta],
+    [onConsulta, onErro],
   );
 
   return (
@@ -76,11 +76,13 @@ export function CepInput({
         onChange={(e) => {
           const valor = formatarCep(e.target.value);
           onChange(valor);
-          if (valor.replace(/\D/g, '').length === 8) {
+          const digitos = valor.replace(/\D/g, '');
+          if (digitos.length === 8) {
             setStatus('idle');
-            buscarCep(valor.replace(/\D/g, ''));
+            buscarCep(digitos);
           } else {
             setStatus('idle');
+            onErro?.();
           }
         }}
       />
