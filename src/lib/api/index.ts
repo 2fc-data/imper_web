@@ -167,13 +167,14 @@ export {
   detalharAgendamento,
   atualizarAgendamento,
   atualizarStatusAgendamento,
-  removerAgendamento,
+  getRotaAgendamento,
 } from './agendamentos.js';
 export type {
   EnderecoItem,
   AgendamentoItem,
   CriarAgendamentoInput,
   ListarAgendamentosParams,
+  RotaAgendamento,
 } from './agendamentos.js';
 
 // Equipamentos
