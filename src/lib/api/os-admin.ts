@@ -2,13 +2,13 @@ import { api } from './core.js';
 import type {
   Urgencia,
   StatusOS,
-} from '../schemas/index.js';
+} from '../../schemas/index.js';
 
 export interface OrdemServicoAdminItem {
   id: number;
   codigo: string;
   orcamentoId: number;
-  clienteId: number | null;
+  userId: number | null;
   atendimentoId: number | null;
   urgencia: Urgencia;
   status: StatusOS;
@@ -18,7 +18,7 @@ export interface OrdemServicoAdminItem {
   tecnicoResponsavelId: number | null;
   createdAt: string;
   updatedAt: string;
-  cliente?: { id: number; nome: string } | null;
+  user?: { id: number; nome: string } | null;
   atendimento?: { id: number } | null;
   tecnicoResponsavel?: { id: number; nome: string } | null;
   _count?: { fases: number; compras: number };

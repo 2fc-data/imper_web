@@ -1,19 +1,18 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { PhoneInput } from '../components/ui/phone-input';
-import { CepInput, type CepDados } from '../components/ui/cep-input';
 import { EmailInput } from '../components/ui/email-input';
-import { SlotPicker } from '../components/disponibilidade/SlotPicker';
+import { AgendarVisita, type AgendarDados, type AgendarVisitaHandle } from '../components/agendamento/AgendarVisita';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
   atualizarStatusAtendimento,
-  buscarClientes,
+  buscarUsuarios,
   type CanalAtendimento,
   criarAgendamento,
   criarAtendimento,
   listarAtendimentos,
   listarLogsAtendimento,
-  type MeuCliente,
+  type MeuUser,
   registrarLogAtendimento,
   type StatusAtendimento,
   type Urgencia,
@@ -132,6 +131,8 @@ interface AtendimentoListProps {
   onStatusChange: (id: number, status: StatusAtendimento) => void;
   onCarregarLogs: (id: number) => Promise<AtendimentoLogItem[]>;
   onRegistrarLog: (id: number, descricao: string) => Promise<void>;
+  podeAgendar?: boolean;
+  onAgendarVisita?: (atendimentoId: number, dados: AgendarDados) => Promise<void>;
 }
 
 export function AtendimentoList({
@@ -152,6 +153,8 @@ export function AtendimentoList({
   onStatusChange,
   onCarregarLogs,
   onRegistrarLog,
+  podeAgendar = false,
+  onAgendarVisita,
 }: AtendimentoListProps) {
   const [expandidoId, setExpandidoId] = useState<number | null>(null);
   const [logs, setLogs] = useState<AtendimentoLogItem[]>([]);
@@ -159,19 +162,18 @@ export function AtendimentoList({
   const [descricaoDraft, setDescricaoDraft] = useState('');
   const [statusDraft, setStatusDraft] = useState<StatusAtendimento | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const agendarRef = useRef<AgendarVisitaHandle>(null);
 
   const alternarExpandido = async (id: number) => {
     if (expandidoId === id) {
       setExpandidoId(null);
       setLogs([]);
       setDescricaoDraft('');
-      setAgendarData('');
       setStatusDraft(null);
       return;
     }
     setExpandidoId(id);
     setDescricaoDraft('');
-    setAgendarData('');
     setStatusDraft(null);
     setLogsLoading(true);
     setLogs([]);
@@ -185,7 +187,13 @@ export function AtendimentoList({
   };
 
   const salvarLog = async (atendimento: AtendimentoItem) => {
-    if (!descricaoDraft.trim() && statusDraft === null) return;
+    const isValid = agendarRef.current?.isValid() ?? false;
+    console.log('[salvarLog] conditions:', {
+      hasDescricao: !!descricaoDraft.trim(),
+      hasStatusDraft: statusDraft !== null,
+      isAgendarValid: isValid,
+    });
+    if (!descricaoDraft.trim() && statusDraft === null && !isValid) return;
     setSalvando(true);
     try {
       if (statusDraft !== null && statusDraft !== atendimento.status) {
@@ -193,6 +201,12 @@ export function AtendimentoList({
       }
       if (descricaoDraft.trim()) {
         await onRegistrarLog(atendimento.id, descricaoDraft.trim());
+      }
+      const agendarDados = agendarRef.current?.getDados();
+      console.log('[salvarLog] agendarDados:', agendarDados);
+      if (agendarDados && onAgendarVisita) {
+        console.log('[salvarLog] calling onAgendarVisita for atendimento:', atendimento.id);
+        await onAgendarVisita(atendimento.id, agendarDados);
       }
       setLogs(await onCarregarLogs(atendimento.id));
       setDescricaoDraft('');
@@ -328,7 +342,7 @@ export function AtendimentoList({
                   <tr className="hover:bg-primary/10 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium text-foreground">
-                        {item.cliente?.nome ?? `Atendimento #${item.id}`}
+                        {item.user?.nome ?? `Atendimento #${item.id}`}
                       </div>
                       {item.atendente && (
                         <div className="text-xs text-muted-foreground">
@@ -337,7 +351,7 @@ export function AtendimentoList({
                       )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {item.cliente?.telefone ?? '—'}
+                      {item.user?.telefone ?? '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -455,6 +469,13 @@ export function AtendimentoList({
                               placeholder="Descreva o atendimento realizado..."
                               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
+                            {podeAgendar && onAgendarVisita && (
+                              <AgendarVisita
+                                ref={agendarRef}
+                                disabled={salvando}
+                                titulo="Horários Disponíveis"
+                              />
+                            )}
                             <div className="space-y-1.5">
                               <label className="text-xs font-semibold text-foreground">
                                 Status
@@ -492,7 +513,7 @@ export function AtendimentoList({
                               <button
                                 type="button"
                                 onClick={() => salvarLog(item)}
-                                disabled={salvando || (!descricaoDraft.trim() && statusDraft === null)}
+                                disabled={salvando}
                                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors disabled:opacity-50"
                               >
                                 {salvando ? 'Salvando...' : 'Salvar'}
@@ -533,29 +554,20 @@ export function NovoAtendimentoForm({
   const [descricao, setDescricao] = useState('');
   const [canal, setCanal] = useState<CanalAtendimento | ''>('LOJA');
   const [urgencia, setUrgencia] = useState<Urgencia | ''>('NORMAL');
-  const [cep, setCep] = useState('');
-  const [endereco, setEndereco] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [estado, setEstado] = useState('');
-  const [numero, setNumero] = useState('');
-  const [complemento, setComplemento] = useState('');
-  const [cepValido, setCepValido] = useState(false);
-  const [agendar, setAgendar] = useState(false);
-  const [agendarSlot, setAgendarSlot] = useState('');
+  const agendarFormRef = useRef<AgendarVisitaHandle>(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const [sugestoes, setSugestoes] = useState<MeuCliente[]>([]);
-  const [buscandoClientes, setBuscandoClientes] = useState(false);
+  const [sugestoes, setSugestoes] = useState<MeuUser[]>([]);
+  const [buscandoUsuarios, setBuscandoUsuarios] = useState(false);
   const [dropdownAberto, setDropdownAberto] = useState(false);
-  const [clienteIdSelecionado, setClienteIdSelecionado] = useState<
+  const [userIdSelecionado, setUserIdSelecionado] = useState<
     number | null
   >(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nomeContainerRef = useRef<HTMLDivElement | null>(null);
 
-  async function buscarClientesPorNome(valor: string) {
+  async function buscarUsuariosPorNome(valor: string) {
     const q = valor.trim();
     if (q.length < 3) {
       setDropdownAberto(false);
@@ -564,27 +576,27 @@ export function NovoAtendimentoForm({
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      setBuscandoClientes(true);
+      setBuscandoUsuarios(true);
       setDropdownAberto(true);
       try {
-        const data = await buscarClientes(q);
-        console.log('buscarClientes:', q, '→', data.length, 'resultados', data);
+        const data = await buscarUsuarios(q);
+        console.log('buscarUsuarios:', q, '→', data.length, 'resultados', data);
         setSugestoes(data);
       } catch (err) {
-        console.error('Erro ao buscar clientes:', err);
+        console.error('Erro ao buscar usuarios:', err);
         setSugestoes([]);
       } finally {
-        setBuscandoClientes(false);
+        setBuscandoUsuarios(false);
       }
     }, 300);
   }
 
-  function selecionarCliente(cliente: MeuCliente) {
-    setClienteIdSelecionado(cliente.id);
-    setNome(cliente.nome);
-    if (cliente.telefone) setTelefone(cliente.telefone);
-    if (cliente.email) setEmail(cliente.email);
-    if (cliente.cpfCnpj) setCpf(cliente.cpfCnpj);
+  function selecionarUsuario(usuario: MeuUser) {
+    setUserIdSelecionado(usuario.id);
+    setNome(usuario.nome);
+    if (usuario.telefone) setTelefone(usuario.telefone);
+    if (usuario.email) setEmail(usuario.email);
+    if (usuario.cpfCnpj) setCpf(usuario.cpfCnpj);
     setDropdownAberto(false);
     setSugestoes([]);
   }
@@ -615,32 +627,37 @@ export function NovoAtendimentoForm({
     setErro(null);
     try {
       const atendimentoCriado = await criarAtendimento({
-        clienteId: clienteIdSelecionado ?? undefined,
-        nome,
-        telefone,
-        email: email || undefined,
-        cpfCnpj: cpf || undefined,
+        userId: userIdSelecionado ?? undefined,
+        userName: nome,
+        userTelefone: telefone,
+        userEmail: email || undefined,
+        userCpfCnpj: cpf || undefined,
         descricao: descricao || undefined,
         canal,
         urgencia,
-        enderecoNovo: {
-          logradouro: endereco || undefined,
-          numero: numero || undefined,
-          complemento: complemento || undefined,
-          bairro: bairro || undefined,
-          cidade: cidade || undefined,
-          estado: estado || undefined,
-          cep: cep || undefined,
-        },
       });
 
-      if (agendar && agendarSlot) {
-        await criarAgendamento({
-          clienteId: atendimentoCriado.cliente?.id ?? clienteIdSelecionado ?? 0,
+      const agendarDados = agendarFormRef.current?.getDados();
+      console.log('[NovoAtendimentoForm] agendarDados:', agendarDados);
+      if (agendarDados) {
+        const payload = {
+          userId: atendimentoCriado.user?.id ?? userIdSelecionado ?? 0,
           atendimentoId: atendimentoCriado.id,
-          tipo: 'VISITA',
-          dataPrevista: new Date(agendarSlot).toISOString(),
-        });
+          tipo: 'VISITA' as const,
+          dataPrevista: new Date(agendarDados.slotIso).toISOString(),
+          enderecoNovo: {
+            logradouro: agendarDados.endereco || undefined,
+            numero: agendarDados.numero || undefined,
+            complemento: agendarDados.complemento || undefined,
+            bairro: agendarDados.bairro || undefined,
+            cidade: agendarDados.cidade || undefined,
+            estado: agendarDados.estado || undefined,
+            cep: agendarDados.cep || undefined,
+          },
+        };
+        console.log('[NovoAtendimentoForm] sending agendamento payload:', payload);
+        await criarAgendamento(payload);
+        console.log('[NovoAtendimentoForm] agendamento created');
       }
 
       onSuccess();
@@ -680,15 +697,15 @@ export function NovoAtendimentoForm({
                 value={nome}
                 onChange={(e) => {
                   setNome(e.target.value);
-                  setClienteIdSelecionado(null);
-                  buscarClientesPorNome(e.target.value);
+                  setUserIdSelecionado(null);
+                  buscarUsuariosPorNome(e.target.value);
                 }}
                 className={campoInput}
                 placeholder="Nome do cliente"
               />
               {dropdownAberto && (
                 <div className="absolute z-20 mt-1 w-full rounded-lg border bg-background shadow-md">
-                  {buscandoClientes ? (
+                  {buscandoUsuarios ? (
                     <p className="px-3 py-2 text-sm text-muted-foreground">
                       Buscando...
                     </p>
@@ -698,18 +715,18 @@ export function NovoAtendimentoForm({
                     </div>
                   ) : (
                     <ul className="py-1">
-                      {sugestoes.map((cliente) => (
-                        <li key={cliente.id}>
+                      {sugestoes.map((usuario) => (
+                        <li key={usuario.id}>
                           <button
                             type="button"
-                            onClick={() => selecionarCliente(cliente)}
+                            onClick={() => selecionarUsuario(usuario)}
                             className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10 hover:text-primary transition-colors"
                           >
-                            <div className="font-medium">{cliente.nome}</div>
+                            <div className="font-medium">{usuario.nome}</div>
                             <div className="text-xs text-muted-foreground">
-                              {cliente.telefone ||
-                                cliente.email ||
-                                cliente.cpfCnpj ||
+                              {usuario.telefone ||
+                                usuario.email ||
+                                usuario.cpfCnpj ||
                                 'Sem contato'}
                             </div>
                           </button>
@@ -801,137 +818,12 @@ export function NovoAtendimentoForm({
           />
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
-          <input
-            type="checkbox"
-            id="agendar-checkbox"
-            checked={agendar}
-            onChange={(e) => {
-              setAgendar(e.target.checked);
-              if (!e.target.checked) setAgendarSlot('');
-            }}
-            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+        <div className="pt-1">
+          <AgendarVisita
+            ref={agendarFormRef}
+            disabled={loading}
           />
-          <label
-            htmlFor="agendar-checkbox"
-            className="text-sm font-medium text-foreground cursor-pointer select-none"
-          >
-            Agendar visita técnica
-          </label>
         </div>
-
-        {agendar && (
-          <div className="space-y-1.5">
-            <label className={campoLabel}>CEP (Local da visita técnica)</label>
-            <CepInput
-              value={cep}
-              onChange={setCep}
-              onConsulta={(dados: CepDados) => {
-                setEndereco(dados.logradouro);
-                setBairro(dados.bairro);
-                setCidade(dados.cidade);
-                setEstado(dados.estado);
-                setCepValido(true);
-              }}
-              onErro={() => setCepValido(false)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
-              automaticamente.
-            </p>
-          </div>
-        )}
-
-        {cepValido && (
-          <>
-            <div className="space-y-1.5">
-              <label className={campoLabel}>Endereço</label>
-              <input
-                type="text"
-                value={endereco}
-                onChange={(e) => setEndereco(e.target.value)}
-                className={campoInput}
-                placeholder="Rua, avenida..."
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-[1fr_1fr_120px]">
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Bairro</label>
-                <input
-                  type="text"
-                  value={bairro}
-                  onChange={(e) => setBairro(e.target.value)}
-                  className={campoInput}
-                  placeholder="Bairro"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Cidade</label>
-                <input
-                  type="text"
-                  value={cidade}
-                  onChange={(e) => setCidade(e.target.value)}
-                  className={campoInput}
-                  placeholder="Cidade"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className={campoLabel}>UF</label>
-                <input
-                  type="text"
-                  maxLength={2}
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value.toUpperCase())}
-                  className={campoInput}
-                  placeholder="UF"
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Número</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={numero}
-                  onChange={(e) => setNumero(e.target.value)}
-                  className={campoInput}
-                  placeholder="Número"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Complemento</label>
-                <input
-                  type="text"
-                  value={complemento}
-                  onChange={(e) => setComplemento(e.target.value)}
-                  className={campoInput}
-                  placeholder="Apto, bloco..."
-                />
-              </div>
-            </div>
-          </>
-        )}
-
-        {agendar && (
-          <div className="space-y-1.5 rounded-lg border bg-muted/30 p-4">
-            <label className={campoLabel}>Horários Disponíveis</label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Selecione uma data e horário disponível para a visita técnica.
-            </p>
-            <SlotPicker
-              value={agendarSlot}
-              onChange={setAgendarSlot}
-              disabled={loading}
-            />
-
-            {agendarSlot && (
-              <p className="text-xs text-success font-medium mt-2">
-                ✓ Agendamento selecionado: {new Date(agendarSlot).toLocaleString('pt-BR')}
-              </p>
-            )}
-          </div>
-        )}
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
             type="button"
@@ -1030,6 +922,43 @@ export function AtendimentosAdminPage({
     await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
   };
 
+  const handleAgendarVisita = async (atendimentoId: number, dados: AgendarDados) => {
+    console.log('[handleAgendarVisita] called with:', { atendimentoId, dados });
+    const atendimento = atendimentos.find((a) => a.id === atendimentoId);
+    console.log('[handleAgendarVisita] atendimento found:', atendimento);
+    const userId = atendimento?.user?.id ?? atendimento?.userId;
+    console.log('[handleAgendarVisita] resolved userId:', userId);
+    if (!userId) {
+      alert('Atendimento sem cliente vinculado. Não é possível agendar.');
+      return;
+    }
+    try {
+      const payload = {
+        userId,
+        atendimentoId,
+        tipo: 'VISITA' as const,
+        dataPrevista: new Date(dados.slotIso).toISOString(),
+        enderecoNovo: {
+          logradouro: dados.endereco || undefined,
+          numero: dados.numero || undefined,
+          complemento: dados.complemento || undefined,
+          bairro: dados.bairro || undefined,
+          cidade: dados.cidade || undefined,
+          estado: dados.estado || undefined,
+          cep: dados.cep || undefined,
+        },
+      };
+      console.log('[handleAgendarVisita] sending payload:', payload);
+      await criarAgendamento(payload);
+      console.log('[handleAgendarVisita] agendamento created successfully');
+      await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+      alert('Agendamento criado com sucesso!');
+    } catch (err: any) {
+      console.error('[handleAgendarVisita] error:', err);
+      alert(`Erro ao agendar: ${err?.message ?? 'erro desconhecido'}`);
+    }
+  };
+
   return (
     <div className="p-6">
       {initialView === 'analises' && (
@@ -1054,6 +983,8 @@ export function AtendimentosAdminPage({
           onStatusChange={handleStatusInline}
           onCarregarLogs={handleCarregarLogs}
           onRegistrarLog={handleRegistrarLog}
+          podeAgendar
+          onAgendarVisita={handleAgendarVisita}
         />
       )}
       {initialView === 'novo' && (

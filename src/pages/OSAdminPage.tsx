@@ -205,7 +205,7 @@ export function OSList({
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-foreground">
-                      {item.cliente?.nome || 'N/A'}
+                      {item.user?.nome || 'N/A'}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-medium">
@@ -444,7 +444,7 @@ export function OSAdminPage({
             <div className="text-sm space-y-2 text-muted-foreground">
               <p>
                 <strong className="text-foreground">Cliente:</strong>{' '}
-                {osSelecionada.cliente?.nome || 'N/A'}
+                {osSelecionada.user?.nome || 'N/A'}
               </p>
               <p>
                 <strong className="text-foreground">Status:</strong>{' '}

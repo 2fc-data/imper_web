@@ -35,14 +35,14 @@ export type {
   Cargo,
 } from './usuarios.js';
 
-// Clientes
+// Users
 export {
-  buscarClientes,
-} from './clientes.js';
+  buscarUsuarios,
+} from './users.js';
 export type {
-  MeuCliente,
+  MeuUser,
   MinhaConta,
-} from './clientes.js';
+} from './users.js';
 
 // Servicos
 export {

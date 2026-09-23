@@ -1,5 +1,5 @@
 import { api } from './core.js';
-import type { UnidadeMedida } from '../schemas/index.js';
+import type { UnidadeMedida } from '../../schemas/index.js';
 import type { LookupItem, SubcategoriaItem } from './lookups.js';
 
 export interface RetiradaEquipamentoItem {

@@ -3,7 +3,7 @@ import type {
   TipoItemServico,
   Urgencia,
   StatusOrcamento,
-} from '../schemas/index.js';
+} from '../../schemas/index.js';
 
 export interface ItemOrcamentoInput {
   servicoItemId?: number | null;
@@ -26,12 +26,12 @@ export interface OrcamentoAdminItem {
   criadoPorId: number;
   aprovadoPorId: number | null;
   aprovadoEm: string | null;
-  confirmadoPorCliente: boolean;
+  confirmadoPorUser: boolean;
   dataConfirmacao: string | null;
   createdAt: string;
   updatedAt: string;
-  atendimento?: { id: number; cliente: { id: number; nome: string } | null };
-  cliente?: { id: number; nome: string } | null;
+  atendimento?: { id: number; user: { id: number; nome: string } | null };
+  user?: { id: number; nome: string } | null;
   ordemServico?: { id: number; codigo: string; status: string } | null;
   _count?: { itens: number };
 }

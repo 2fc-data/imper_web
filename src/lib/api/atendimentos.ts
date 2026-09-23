@@ -4,7 +4,7 @@ import type {
   DadosEndereco,
   StatusAtendimento,
   Urgencia,
-} from '../schemas/index.js';
+} from '../../schemas/index.js';
 
 export interface AtendimentoItem {
   id: number;
@@ -12,8 +12,8 @@ export interface AtendimentoItem {
   urgencia: Urgencia | null;
   status: StatusAtendimento;
   descricao: string | null;
-  clienteId: number | null;
-  cliente?: { id: number; nome: string; telefone: string | null } | null;
+  userId: number | null;
+  user?: { id: number; nome: string; telefone: string | null } | null;
   atendenteId: number | null;
   atendente?: { id: number; nome: string } | null;
   createdAt: string;
@@ -34,11 +34,11 @@ export interface AtendimentoLogItem {
 }
 
 export interface CriarAtendimentoInput {
-  clienteId?: number | null;
-  nome?: string;
-  telefone?: string;
-  email?: string;
-  cpfCnpj?: string;
+  userId?: number | null;
+  userName?: string;
+  userTelefone?: string;
+  userEmail?: string;
+  userCpfCnpj?: string;
   canal: CanalAtendimento;
   urgencia?: Urgencia;
   descricao?: string;

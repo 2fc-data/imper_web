@@ -4,7 +4,7 @@ import type {
   TipoMovimento,
   StatusMaterial,
   UnidadeMedida,
-} from '../schemas/index.js';
+} from '../../schemas/index.js';
 import type { LookupItem, SubcategoriaItem, FornecedorItem } from './lookups.js';
 
 export interface MaterialSaldo {

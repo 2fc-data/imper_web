@@ -190,8 +190,8 @@ export function OrcamentoList({
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-medium text-foreground">
-                      {item.atendimento?.cliente?.nome ||
-                        item.cliente?.nome ||
+                      {item.atendimento?.user?.nome ||
+                        item.user?.nome ||
                         'N/A'}
                     </div>
                   </td>
@@ -565,8 +565,8 @@ export function OrcamentosAdminPage({
             <div className="text-sm space-y-2 text-muted-foreground">
               <p>
                 <strong className="text-foreground">Atendimento:</strong>{' '}
-                {orcamentoSelecionado.atendimento?.cliente?.nome ||
-                  orcamentoSelecionado.cliente?.nome ||
+                {orcamentoSelecionado.atendimento?.user?.nome ||
+                  orcamentoSelecionado.user?.nome ||
                   'N/A'}
               </p>
               <p>

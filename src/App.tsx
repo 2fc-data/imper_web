@@ -9,7 +9,6 @@ import {
   AtendimentosSidebar,
   CalendarioSidebar,
   CatalogoAtividadesSidebar,
-  ClienteSidebar,
   DashboardSidebar,
   EpisSidebar,
   EquipamentosSidebar,
@@ -636,7 +635,7 @@ export default function App() {
         <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
         <Route
           element={
-            <ProtectedLayout onlyNoPermissions sidebar={<ClienteSidebar />}>
+            <ProtectedLayout onlyNoPermissions>
               <MinhaContaPage />
             </ProtectedLayout>
           }

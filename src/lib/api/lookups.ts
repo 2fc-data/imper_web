@@ -2,7 +2,7 @@ import { api } from './core.js';
 import type {
   BaseLookup,
   UnidadeMedida,
-} from '../schemas/index.js';
+} from '../../schemas/index.js';
 
 export type {
   BaseLookup,
@@ -21,7 +21,7 @@ export type {
   TipoMovimento,
   UnidadeMedida,
   Urgencia,
-} from '../schemas/index.js';
+} from '../../schemas/index.js';
 
 export interface LookupItem extends BaseLookup {
   descricao: string | null;

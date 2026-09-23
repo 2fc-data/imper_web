@@ -229,8 +229,8 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
     ]).then(([papeisResult, cargosResult]) => {
       if (papeisResult) {
         setPapeis(papeisResult);
-        const cliente = papeisResult.find((p) => p.nome === 'CLIENTE');
-        if (cliente) setPapelId(cliente.id);
+        const papelCliente = papeisResult.find((p) => p.nome === 'CLIENTE');
+        if (papelCliente) setPapelId(papelCliente.id);
       }
       if (cargosResult) setCargos(cargosResult);
     });
