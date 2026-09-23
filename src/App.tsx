@@ -259,9 +259,17 @@ function CalendarioRoute() {
 }
 
 function OrcamentosRoute() {
+  const [searchParams] = useSearchParams();
+  const initialView =
+    (searchParams.get('view') as 'analises' | 'lista' | 'novo') || 'lista';
   const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    'lista',
+    initialView,
   );
+
+  useEffect(() => {
+    const v = searchParams.get('view') as 'analises' | 'lista' | 'novo' | null;
+    if (v) setViewAtiva(v);
+  }, [searchParams]);
 
   return (
     <ProtectedLayout

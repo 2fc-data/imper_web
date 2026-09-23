@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
@@ -225,7 +225,10 @@ export function AgendamentoList({
   const [obsSaving, setObsSaving] = useState(false);
   const [obsError, setObsError] = useState<string | null>(null);
   const [obsSalvo, setObsSalvo] = useState(false);
+  const [planejando, setPlanejando] = useState(false);
+  const [planejarError, setPlanejarError] = useState<string | null>(null);
   const expandidoIdRef = useRef<number | null>(null);
+  const navigate = useNavigate();
 
   const alternarExpandido = async (id: number) => {
     if (expandidoId === id) {
@@ -239,6 +242,8 @@ export function AgendamentoList({
     setExtras(null);
     setObsError(null);
     setObsSalvo(false);
+    setPlanejando(false);
+    setPlanejarError(null);
     const item = agendamentos.find((a) => a.id === id);
     setObsDraft(item?.observacoes ?? '');
     setExtras({
@@ -278,6 +283,29 @@ export function AgendamentoList({
       setObsError(e instanceof Error ? e.message : 'Erro ao salvar');
     } finally {
       setObsSaving(false);
+    }
+  };
+
+  const handlePlanejarOrcamento = async (item: AgendamentoItem) => {
+    if (planejando) return;
+    setPlanejando(true);
+    setPlanejarError(null);
+    try {
+      const dataRealizada =
+        item.status !== 'REALIZADO' && !item.dataRealizada
+          ? new Date().toISOString()
+          : undefined;
+      await atualizarStatusAgendamento(item.id, 'REALIZADO', dataRealizada);
+      await onRecarregar();
+      const qs = item.atendimentoId
+        ? `?view=novo&atendimentoId=${item.atendimentoId}`
+        : '?view=novo';
+      navigate(`/orcamentos${qs}`);
+    } catch (e) {
+      setPlanejarError(
+        e instanceof Error ? e.message : 'Erro ao planejar orçamento',
+      );
+      setPlanejando(false);
     }
   };
 
@@ -496,6 +524,44 @@ export function AgendamentoList({
                                 </span>
                               </div>
                             </div>
+                            {item.status !== 'CANCELADO' && (
+                              <div className="space-y-2 pt-2">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`planejar-orcamento-${item.id}`}
+                                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                                    checked={false}
+                                    disabled={planejando}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        void handlePlanejarOrcamento(item);
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={`planejar-orcamento-${item.id}`}
+                                    className="text-sm font-medium text-foreground cursor-pointer select-none"
+                                  >
+                                    Planejar orçamento
+                                  </label>
+                                </div>
+                                <p className="text-muted-foreground text-[11px]">
+                                  Marca o agendamento como REALIZADO e abre o
+                                  formulário de Novo Orçamento.
+                                </p>
+                                {planejando && (
+                                  <p className="text-muted-foreground text-[11px]">
+                                    Abrindo…
+                                  </p>
+                                )}
+                                {planejarError && (
+                                  <p className="text-xs text-destructive">
+                                    {planejarError}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <div className="space-y-4 text-xs">
                             {item.endereco && (

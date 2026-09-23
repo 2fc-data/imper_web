@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   criarOrcamentoAdmin,
   enviarOrcamentoAdmin,
@@ -261,7 +262,10 @@ export function NovoOrcamentoForm({
   onSuccess,
   onCancel,
 }: NovoOrcamentoFormProps) {
-  const [atendimentoId, setAtendimentoId] = useState('');
+  const [searchParams] = useSearchParams();
+  const [atendimentoId, setAtendimentoId] = useState(
+    () => searchParams.get('atendimentoId') ?? '',
+  );
   const [observacoes, setObservacoes] = useState('');
   const [itens, setItens] = useState<ItemOrcamentoInput[]>([
     {
