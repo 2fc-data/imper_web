@@ -526,43 +526,6 @@ export function AgendamentoList({
                             </div>
                           </div>
                           <div className="space-y-4 text-xs">
-                            {item.status !== 'CANCELADO' && (
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    id={`planejar-orcamento-${item.id}`}
-                                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                                    checked={false}
-                                    disabled={planejando}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        void handlePlanejarOrcamento(item);
-                                      }
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={`planejar-orcamento-${item.id}`}
-                                    className="text-sm font-medium text-foreground cursor-pointer select-none"
-                                  >
-                                    Planejar orçamento
-                                  </label>
-                                </div>
-                                <p className="text-muted-foreground text-[11px]">
-                                  Marca como REALIZADO e abre o Novo Orçamento.
-                                </p>
-                                {planejando && (
-                                  <p className="text-muted-foreground text-[11px]">
-                                    Abrindo…
-                                  </p>
-                                )}
-                                {planejarError && (
-                                  <p className="text-xs text-destructive">
-                                    {planejarError}
-                                  </p>
-                                )}
-                              </div>
-                            )}
                             {item.endereco && (
                               <div className="space-y-2">
                                 <div className="font-semibold text-foreground text-sm">
@@ -624,6 +587,43 @@ export function AgendamentoList({
                                 </p>
                               )}
                             </div>
+                            {item.status !== 'CANCELADO' && (
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`planejar-orcamento-${item.id}`}
+                                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                                    checked={false}
+                                    disabled={planejando}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        void handlePlanejarOrcamento(item);
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={`planejar-orcamento-${item.id}`}
+                                    className="text-sm font-medium text-foreground cursor-pointer select-none"
+                                  >
+                                    Planejar orçamento
+                                  </label>
+                                </div>
+                                <p className="text-muted-foreground text-[11px]">
+                                  Marca como REALIZADO e abre o Novo Orçamento.
+                                </p>
+                                {planejando && (
+                                  <p className="text-muted-foreground text-[11px]">
+                                    Abrindo…
+                                  </p>
+                                )}
+                                {planejarError && (
+                                  <p className="text-xs text-destructive">
+                                    {planejarError}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                           {item.atendimentoId && (
                             <div className="sm:col-span-2 space-y-1 text-xs">
