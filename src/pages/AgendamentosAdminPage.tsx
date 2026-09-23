@@ -3,16 +3,22 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
+  type AtendimentoLogItem,
+  atualizarAgendamento,
   atualizarStatusAgendamento,
   buscarUsuarios,
   criarAgendamento,
+  getRotaAgendamento,
   listarAgendamentos,
+  listarLogsAtendimento,
   type MeuUser,
+  type RotaAgendamento,
   removerAgendamento,
   type StatusAgendamento,
   type TipoAgendamento,
 } from '../lib/api';
 import { SlotPicker } from '../components/disponibilidade/SlotPicker';
+import { formatarDistancia, formatarDuracao } from '../lib/formato';
 
 const rotulosTipo: Record<TipoAgendamento, string> = {
   VISITA: 'Visita',
@@ -184,6 +190,14 @@ export function AgendamentosAnalises({
   );
 }
 
+interface DetalhesExtras {
+  logs: AtendimentoLogItem[] | null;
+  logsError: string | null;
+  rota: RotaAgendamento | null;
+  rotaError: string | null;
+  loading: boolean;
+}
+
 interface AgendamentoListProps {
   agendamentos: AgendamentoItem[];
   loading: boolean;
@@ -193,6 +207,7 @@ interface AgendamentoListProps {
   onTipoFiltroChange: (v: string) => void;
   onStatusChange: (id: number, status: StatusAgendamento) => void;
   onRemover: (id: number) => void;
+  onRecarregar: () => Promise<void>;
 }
 
 export function AgendamentoList({
@@ -204,12 +219,69 @@ export function AgendamentoList({
   onTipoFiltroChange,
   onStatusChange,
   onRemover,
+  onRecarregar,
 }: AgendamentoListProps) {
   const [expandidoId, setExpandidoId] = useState<number | null>(null);
   const [busca, setBusca] = useState('');
+  const [extras, setExtras] = useState<DetalhesExtras | null>(null);
+  const [obsDraft, setObsDraft] = useState('');
+  const [obsSaving, setObsSaving] = useState(false);
+  const [obsError, setObsError] = useState<string | null>(null);
+  const [obsSalvo, setObsSalvo] = useState(false);
+  const expandidoIdRef = useRef<number | null>(null);
 
-  const alternarExpandido = (id: number) => {
-    setExpandidoId(expandidoId === id ? null : id);
+  const alternarExpandido = async (id: number) => {
+    if (expandidoId === id) {
+      expandidoIdRef.current = null;
+      setExpandidoId(null);
+      setExtras(null);
+      return;
+    }
+    expandidoIdRef.current = id;
+    setExpandidoId(id);
+    setExtras(null);
+    setObsError(null);
+    setObsSalvo(false);
+    const item = agendamentos.find((a) => a.id === id);
+    setObsDraft(item?.observacoes ?? '');
+    setExtras({
+      logs: null,
+      logsError: null,
+      rota: null,
+      rotaError: null,
+      loading: true,
+    });
+    const [logsRes, rotaRes] = await Promise.allSettled([
+      item?.atendimentoId
+        ? listarLogsAtendimento(item.atendimentoId)
+        : Promise.resolve([]),
+      getRotaAgendamento(id),
+    ]);
+    if (expandidoIdRef.current !== id) return;
+    setExtras({
+      logs: logsRes.status === 'fulfilled' ? logsRes.value : null,
+      logsError:
+        logsRes.status === 'rejected' ? 'Falha ao carregar histórico' : null,
+      rota: rotaRes.status === 'fulfilled' ? rotaRes.value : null,
+      rotaError:
+        rotaRes.status === 'rejected' ? 'Falha ao calcular rota' : null,
+      loading: false,
+    });
+  };
+
+  const handleSalvarObs = async (id: number) => {
+    setObsSaving(true);
+    setObsError(null);
+    setObsSalvo(false);
+    try {
+      await atualizarAgendamento(id, { observacoes: obsDraft });
+      setObsSalvo(true);
+      await onRecarregar();
+    } catch (e) {
+      setObsError(e instanceof Error ? e.message : 'Erro ao salvar');
+    } finally {
+      setObsSaving(false);
+    }
   };
 
   const filtrados = agendamentos.filter((item) => {
@@ -387,38 +459,161 @@ export function AgendamentoList({
                                 {item.atendimento.descricao}
                               </p>
                             )}
-                            {item.observacoes && (
-                              <p className="text-muted-foreground whitespace-pre-wrap">
-                                <span className="font-medium text-foreground">
-                                  Observações:
-                                </span>{' '}
-                                {item.observacoes}
-                              </p>
-                            )}
-                          </div>
-                          {item.endereco && (
-                            <div className="space-y-2 text-xs">
+                            <div className="space-y-2 pt-2">
                               <div className="font-semibold text-foreground text-sm">
-                                Endereço
+                                Observações do técnico
                               </div>
-                              <p className="text-muted-foreground">
-                                {item.endereco.logradouro}
-                                {item.endereco.numero
-                                  ? `, ${item.endereco.numero}`
-                                  : ''}
-                              </p>
-                              {(item.endereco.bairro ||
-                                item.endereco.cidade) && (
-                                  <p className="text-muted-foreground">
-                                    {[
-                                      item.endereco.bairro,
-                                      item.endereco.cidade,
-                                      item.endereco.estado,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(' — ')}
-                                  </p>
+                              <textarea
+                                value={obsDraft}
+                                onChange={(e) => {
+                                  setObsDraft(e.target.value);
+                                  setObsSalvo(false);
+                                }}
+                                maxLength={1000}
+                                rows={4}
+                                className="w-full rounded-md border bg-background px-2 py-1.5 text-xs text-foreground"
+                                placeholder="Registrar observações deste atendimento..."
+                                disabled={obsSaving}
+                              />
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  disabled={obsSaving}
+                                  onClick={() => handleSalvarObs(item.id)}
+                                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                                >
+                                  {obsSaving ? 'Salvando…' : 'Salvar'}
+                                </button>
+                                {obsSalvo && (
+                                  <span className="text-xs text-success">
+                                    Salvo.
+                                  </span>
                                 )}
+                                {obsError && (
+                                  <span className="text-xs text-destructive">
+                                    {obsError}
+                                  </span>
+                                )}
+                                <span className="ml-auto text-[10px] text-muted-foreground">
+                                  {obsDraft.length}/1000
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-4 text-xs">
+                            {item.endereco && (
+                              <div className="space-y-2">
+                                <div className="font-semibold text-foreground text-sm">
+                                  Endereço
+                                </div>
+                                <p className="text-muted-foreground">
+                                  {item.endereco.logradouro}
+                                  {item.endereco.numero
+                                    ? `, ${item.endereco.numero}`
+                                    : ''}
+                                </p>
+                                {(item.endereco.bairro ||
+                                  item.endereco.cidade) && (
+                                    <p className="text-muted-foreground">
+                                      {[
+                                        item.endereco.bairro,
+                                        item.endereco.cidade,
+                                        item.endereco.estado,
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' — ')}
+                                    </p>
+                                  )}
+                              </div>
+                            )}
+                            <div className="space-y-1 text-xs">
+                              <div className="font-semibold text-foreground text-sm">
+                                Rota da sede
+                              </div>
+                              {extras?.loading && (
+                                <p className="text-muted-foreground">
+                                  Calculando…
+                                </p>
+                              )}
+                              {extras?.rotaError && (
+                                <p className="text-destructive">
+                                  {extras.rotaError}
+                                </p>
+                              )}
+                              {extras?.rota && !extras.rota.disponivel && (
+                                <p className="text-muted-foreground">
+                                  {extras.rota.aviso ??
+                                    'Rota indisponível para este endereço.'}
+                                </p>
+                              )}
+                              {extras?.rota?.disponivel && (
+                                <p className="text-foreground">
+                                  <span className="font-medium">
+                                    {formatarDistancia(extras.rota.distanciaM)}
+                                  </span>
+                                  {' · '}
+                                  <span className="font-medium">
+                                    {formatarDuracao(extras.rota.duracaoSeg)}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {' '}
+                                    ({extras.rota.fonte})
+                                  </span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {item.atendimentoId && (
+                            <div className="sm:col-span-2 space-y-1 text-xs">
+                              <div className="font-semibold text-foreground text-sm">
+                                Registrar atendimento (histórico)
+                              </div>
+                              {extras?.loading && (
+                                <p className="text-muted-foreground">
+                                  Carregando histórico…
+                                </p>
+                              )}
+                              {extras?.logsError && (
+                                <p className="text-destructive">
+                                  {extras.logsError}
+                                </p>
+                              )}
+                              {extras?.logs && extras.logs.length === 0 && (
+                                <p className="text-muted-foreground">
+                                  Nenhum registro ainda.
+                                </p>
+                              )}
+                              {extras?.logs && extras.logs.length > 0 && (
+                                <ul className="max-h-40 space-y-1.5 overflow-y-auto">
+                                  {extras.logs.map((log) => (
+                                    <li
+                                      key={log.id}
+                                      className="rounded border border-border/60 bg-background/60 px-2 py-1.5"
+                                    >
+                                      <div className="flex justify-between gap-2 text-muted-foreground">
+                                        <span>
+                                          {formatarData(log.createdAt)}
+                                        </span>
+                                        <span className="font-medium text-foreground">
+                                          {log.tipo === 'STATUS'
+                                            ? `Status: ${log.statusDe ?? '—'} → ${log.statusPara ?? '—'}`
+                                            : 'Texto'}
+                                        </span>
+                                      </div>
+                                      {log.descricao && (
+                                        <p className="mt-0.5 text-foreground">
+                                          {log.descricao}
+                                        </p>
+                                      )}
+                                      {log.atendente && (
+                                        <p className="text-[10px] text-muted-foreground">
+                                          Por {log.atendente.nome}
+                                        </p>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
                             </div>
                           )}
                         </div>
@@ -768,6 +963,12 @@ export function AgendamentosAdminPage({
           onTipoFiltroChange={setTipoFiltro}
           onStatusChange={handleStatusInline}
           onRemover={handleRemover}
+          onRecarregar={async () => {
+            await Promise.all([
+              carregarAgendamentos(),
+              carregarTodosAgendamentos(),
+            ]);
+          }}
         />
       )}
       {initialView === 'novo' && (
