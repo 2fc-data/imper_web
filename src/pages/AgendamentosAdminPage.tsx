@@ -524,8 +524,10 @@ export function AgendamentoList({
                                 </span>
                               </div>
                             </div>
+                          </div>
+                          <div className="space-y-4 text-xs">
                             {item.status !== 'CANCELADO' && (
-                              <div className="space-y-2 pt-2">
+                              <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <input
                                     type="checkbox"
@@ -547,8 +549,7 @@ export function AgendamentoList({
                                   </label>
                                 </div>
                                 <p className="text-muted-foreground text-[11px]">
-                                  Marca o agendamento como REALIZADO e abre o
-                                  formulário de Novo Orçamento.
+                                  Marca como REALIZADO e abre o Novo Orçamento.
                                 </p>
                                 {planejando && (
                                   <p className="text-muted-foreground text-[11px]">
@@ -562,8 +563,6 @@ export function AgendamentoList({
                                 )}
                               </div>
                             )}
-                          </div>
-                          <div className="space-y-4 text-xs">
                             {item.endereco && (
                               <div className="space-y-2">
                                 <div className="font-semibold text-foreground text-sm">
