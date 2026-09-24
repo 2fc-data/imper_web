@@ -562,7 +562,7 @@ function PlanejarExecucaoModal({
     try {
       await planificarAtividades({
         osId: os.id,
-        faseOSId: os.id,
+        etapaOSId: os.id,
         atividades: atividadesSelecionadas,
       });
       onPlanejado();

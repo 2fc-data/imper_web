@@ -6,7 +6,7 @@ import type { ChecklistItem } from './checklist.js';
 export interface AtividadeOSItem {
   id: string;
   osId: number;
-  faseOSId: number | null;
+  etapaOSId: number | null;
   catalogoAtividadeId: string;
   catalogoId?: string;
   equipeId: string | null;
@@ -14,7 +14,7 @@ export interface AtividadeOSItem {
   dataPrevisao: string | null;
   criadoEm: string;
   os?: { id: number; codigo: string; numero?: string };
-  faseOS?: { id: number; nome: string };
+  etapaOS?: { id: number; nome: string };
   catalogoAtividade?: CatalogoAtividadeItem;
   catalogo?: CatalogoAtividadeItem;
   equipe?: EquipeItem;
@@ -23,12 +23,12 @@ export interface AtividadeOSItem {
 
 export async function listarAtividadesOS(params?: {
   osId?: number;
-  faseOSId?: number;
+  etapaOSId?: number;
   status?: string;
 }): Promise<AtividadeOSItem[]> {
   const searchParams = new URLSearchParams();
   if (params?.osId) searchParams.set('osId', String(params.osId));
-  if (params?.faseOSId) searchParams.set('faseOSId', String(params.faseOSId));
+  if (params?.etapaOSId) searchParams.set('etapaOSId', String(params.etapaOSId));
   if (params?.status) searchParams.set('status', params.status);
   const queryStr = searchParams.toString();
   return api.get<AtividadeOSItem[]>(
@@ -38,7 +38,7 @@ export async function listarAtividadesOS(params?: {
 
 export async function planificarAtividades(input: {
   osId: number;
-  faseOSId: number;
+  etapaOSId: number;
   atividades: {
     catalogoAtividadeId: string;
     equipeId?: string;

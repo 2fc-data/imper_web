@@ -21,7 +21,7 @@ export interface OrdemServicoAdminItem {
   user?: { id: number; nome: string } | null;
   atendimento?: { id: number } | null;
   tecnicoResponsavel?: { id: number; nome: string } | null;
-  _count?: { fases: number; compras: number };
+  _count?: { etapas: number; compras: number };
 }
 
 export async function listarOSAdmin(params?: {
