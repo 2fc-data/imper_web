@@ -45,10 +45,10 @@ export function Hero() {
           className="mt-10 flex flex-wrap items-center justify-center gap-4"
         >
           <Link
-            to="/orcamento"
+            to="/contato"
             className="rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]"
           >
-            Solicitar Orçamento
+            Entrar em Contato
           </Link>
           <Link
             to="/servicos"

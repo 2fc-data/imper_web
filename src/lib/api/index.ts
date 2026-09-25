@@ -57,16 +57,19 @@ export type {
   ServicoMarketingInput,
 } from './servicos.js';
 
-// Orcamento Publico
+// Contato / Orcamento Publico
 export {
   listarCidades,
+  enviarContato,
   solicitarOrcamento,
-} from './orcamento-publico.js';
+} from './contato-publico.js';
 export type {
   CidadeAtendida,
+  ContatoInput,
+  ContatoResult,
   OrcamentoInput,
   OrcamentoResult,
-} from './orcamento-publico.js';
+} from './contato-publico.js';
 
 // Lookups (re-exports from schemas + lookup types/functions)
 export type {

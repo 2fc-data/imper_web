@@ -164,9 +164,9 @@ export default function ContatoPage() {
             <div className="mt-4 flex flex-col items-stretch gap-3">
               <div className="grid grid-cols-4 justify-items-center gap-3">
                 <Link
-                  to="/orcamento"
-                  aria-label="Solicitar orçamento"
-                  title="Solicitar orçamento"
+                  to="/contato"
+                  aria-label="Formulário de contato"
+                  title="Formulário de contato"
                   className={cn(
                     'inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
                   )}

@@ -10,6 +10,7 @@ import {
   type CanalAtendimento,
   criarAgendamento,
   criarAtendimento,
+  criarOrcamentoAdmin,
   listarAtendimentos,
   listarLogsAtendimento,
   type MeuUser,
@@ -971,7 +972,24 @@ export function AtendimentosAdminPage({
           cep: dados.cep || undefined,
         },
       };
-      await criarAgendamento(payload);
+      const agendamento = await criarAgendamento(payload);
+      await atualizarStatusAtendimento(atendimentoId, 'CONCLUIDO');
+
+      try {
+        await criarOrcamentoAdmin({
+          atendimentoId,
+          visitaId: agendamento.id,
+          enderecoId: agendamento.enderecoId ?? undefined,
+          urgencia: atendimento?.urgencia ?? 'NORMAL',
+          observacoes: atendimento?.descricao
+            ? `Gerado a partir do atendimento #${atendimentoId}: ${atendimento.descricao}`
+            : `Gerado a partir do atendimento #${atendimentoId}`,
+          atividades: [],
+        });
+      } catch (oErr) {
+        console.warn('[handleAgendarVisita] Falha ao criar orçamento em rascunho:', oErr);
+      }
+
       await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
     } catch (err: unknown) {
       console.error('[handleAgendarVisita] error:', err);
