@@ -45,8 +45,7 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
     return () => { cancelado = true; };
   }, [mesAtual, anoAtual]);
 
-  const slotsDisponiveis = slots.filter((s) => s.disponivel);
-  const slotsPorData = slotsDisponiveis.reduce<Record<string, DisponibilidadeSlot[]>>((acc, slot) => {
+  const slotsPorData = slots.reduce<Record<string, DisponibilidadeSlot[]>>((acc, slot) => {
     if (!acc[slot.data]) acc[slot.data] = [];
     acc[slot.data].push(slot);
     return acc;
@@ -117,7 +116,7 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
 
       {!carregando && !erroFetch && datasOrdenadas.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Nenhum horário disponível neste mês.
+          Nenhum horário cadastrado neste mês.
         </p>
       )}
 
@@ -132,24 +131,30 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
                 {slotsPorData[data].map((slot) => {
                   const slotIso = `${slot.data}T${slot.horaInicio}:00`;
                   const selecionado = valorSelecionado === slotIso;
+                  const disponivel = slot.disponivel;
+                  const vagas = slot.capacidade > 0 ? slot.capacidade - slot.ocupados : null;
+
                   return (
                     <button
                       key={`${slot.data}-${slot.horaInicio}`}
                       type="button"
-                      disabled={disabled}
-                      onClick={() => selecionarSlot(slot)}
-                      className={`text-xs px-2 py-1 rounded border transition-colors ${
-                        selecionado
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-background hover:bg-muted border-border'
+                      disabled={disabled || !disponivel}
+                      onClick={() => disponivel && selecionarSlot(slot)}
+                      title={!disponivel ? 'Horário lotado' : undefined}
+                      className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                        !disponivel
+                          ? 'bg-muted/60 text-muted-foreground border-border/80 cursor-not-allowed opacity-75'
+                          : selecionado
+                          ? 'bg-primary text-primary-foreground border-primary font-medium'
+                          : 'bg-background hover:bg-muted border-border text-foreground'
                       }`}
                     >
                       {slot.horaInicio}-{slot.horaFim}
-                      {slot.capacidade > 0 && (
-                        <span className="ml-1 opacity-70">
-                          ({slot.capacidade - slot.ocupados}v)
-                        </span>
-                      )}
+                      {!disponivel ? (
+                        <span className="ml-1.5 text-[10px] font-semibold text-destructive/90">(Lotado)</span>
+                      ) : vagas !== null ? (
+                        <span className="ml-1 opacity-70">({vagas}v)</span>
+                      ) : null}
                     </button>
                   );
                 })}

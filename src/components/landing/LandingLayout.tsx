@@ -209,11 +209,11 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                   ))}
                   <li className="pt-3 border-t border-border/60 flex flex-col gap-2.5 mt-2">
                     <Link
-                      to="/orcamento"
+                      to="/contato"
                       onClick={() => setMenuOpen(false)}
                       className="block text-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-all"
                     >
-                      Solicitar Orçamento
+                      Contato
                     </Link>
                     <Link
                       to="/login"

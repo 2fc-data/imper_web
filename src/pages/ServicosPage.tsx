@@ -129,9 +129,9 @@ export default function ServicosPage() {
                         </p>
                         <div className="mt-3 flex justify-end items-center gap-2">
                           <Link
-                            to={`/orcamento?servico=${encodeURIComponent(servico.titulo)}`}
-                            aria-label={`Solicitar orçamento para ${servico.titulo}`}
-                            title="Solicitar Orçamento"
+                            to={`/contato?servico=${encodeURIComponent(servico.titulo)}`}
+                            aria-label={`Solicitar atendimento/contato para ${servico.titulo}`}
+                            title="Solicitar Contato"
                             className={cn(
                               'inline-flex h-6 w-6 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
                             )}

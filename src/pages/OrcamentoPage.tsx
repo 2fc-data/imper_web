@@ -15,7 +15,7 @@ import { Label } from '../components/ui/label';
 import { PhoneInput } from '../components/ui/phone-input';
 import { CepInput, type CepDados } from '../components/ui/cep-input';
 import { EmailInput } from '../components/ui/email-input';
-import { solicitarOrcamento } from '../lib/api';
+import { enviarContato } from '../lib/api';
 import { fadeUp, stagger, VIEWPORT } from '../lib/motion';
 import { cn } from '../lib/utils';
 
@@ -58,7 +58,7 @@ export default function OrcamentoPage() {
     }
     setLoading(true);
     try {
-      await solicitarOrcamento({
+      await enviarContato({
         nome,
         telefone,
         email: email || undefined,
@@ -77,7 +77,7 @@ export default function OrcamentoPage() {
       setError(
         err instanceof Error
           ? err.message
-          : 'Falha ao enviar pedido de orçamento',
+          : 'Falha ao enviar mensagem de contato',
       );
     } finally {
       setLoading(false);
@@ -135,7 +135,7 @@ export default function OrcamentoPage() {
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="text-xl">
-                  Formulário para atendimento
+                  Formulário para Contato
                 </CardTitle>
                 <CardDescription>
                   Os campos marcados com * são obrigatórios.

@@ -621,17 +621,13 @@ export default function App() {
         <Route
           element={
             <LandingLayout>
-              <LandingContent />
+              <OrcamentoPage />
             </LandingLayout>
           }
           path="/contato"
         />
         <Route
-          element={
-            <LandingLayout>
-              <OrcamentoPage />
-            </LandingLayout>
-          }
+          element={<Navigate to="/contato" replace />}
           path="/orcamento"
         />
         <Route
