@@ -52,7 +52,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       try {
         const body = await res.json();
         if (typeof body?.message === 'string') message = body.message;
-        details = body?.details;
+        // Backends que devolvem o payload direto (ex.: HttpException com
+        // {codigo, pendencias}) não trazem `details`; usa o corpo inteiro.
+        details =
+          body?.details ??
+          (typeof body === 'object' && body !== null ? body : undefined);
       } catch {
         /* corpo não-JSON */
       }
@@ -80,8 +84,25 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 }
 
+export type QueryParams = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
+
+function montarQuery(params?: QueryParams): string {
+  if (!params) return '';
+  const sp = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(params)) {
+    if (valor === undefined || valor === null) continue;
+    sp.set(chave, String(valor));
+  }
+  const qs = sp.toString();
+  return qs ? `?${qs}` : '';
+}
+
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, params?: QueryParams) =>
+    request<T>(`${path}${montarQuery(params)}`),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: 'POST',

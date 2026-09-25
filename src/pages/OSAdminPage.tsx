@@ -2,16 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button } from '../components/ui/button';
 import {
   aprovarOSAdmin,
-  type CatalogoAtividadeItem,
+  atribuirEquipe,
   cancelarOSAdmin,
   concluirOSAdmin,
   type EquipeItem,
   iniciarOSAdmin,
-  listarCatalogoAtividades,
+  listarAtividadesOS,
+  type AtividadeOSItem,
   listarEquipes,
   listarOSAdmin,
   type OrdemServicoAdminItem,
-  planificarAtividades,
 } from '../lib/api';
 
 interface OSAnalisesProps {
@@ -511,69 +511,90 @@ function PlanejarExecucaoModal({
   onClose,
   onPlanejado,
 }: PlanejarExecucaoModalProps) {
-  const [catalogo, setCatalogo] = useState<CatalogoAtividadeItem[]>([]);
+  const [atividades, setAtividades] = useState<AtividadeOSItem[]>([]);
   const [equipes, setEquipes] = useState<EquipeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const [atividadesSelecionadas, setAtividadesSelecionadas] = useState<
-    { catalogoAtividadeId: string; equipeId: string }[]
-  >([]);
+  const [atribuicoes, setAtribuicoes] = useState<
+    Record<string, { equipeId: string; dataPrevisao: string }>
+  >({});
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([listarCatalogoAtividades(), listarEquipes()])
-      .then(([cat, eq]) => {
-        setCatalogo(cat);
-        setEquipes(eq);
+    Promise.all([listarAtividadesOS({ osId: os.id }), listarEquipes()])
+      .then(([ats, eqs]) => {
+        setAtividades(ats);
+        setEquipes(eqs);
+        const inicial: Record<string, { equipeId: string; dataPrevisao: string }> = {};
+        for (const a of ats) {
+          inicial[a.id] = {
+            equipeId: a.equipeId ?? '',
+            dataPrevisao: a.dataPrevisao ? a.dataPrevisao.slice(0, 10) : '',
+          };
+        }
+        setAtribuicoes(inicial);
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  function toggleAtividade(catalogoAtividadeId: string) {
-    setAtividadesSelecionadas((prev) => {
-      const exists = prev.find(
-        (a) => a.catalogoAtividadeId === catalogoAtividadeId,
-      );
-      if (exists) {
-        return prev.filter(
-          (a) => a.catalogoAtividadeId !== catalogoAtividadeId,
+      .catch((err) => {
+        setErro(
+          err instanceof Error
+            ? err.message
+            : 'Erro ao carregar atividades da OS.',
         );
-      }
-      return [...prev, { catalogoAtividadeId, equipeId: '' }];
-    });
-  }
+      })
+      .finally(() => setLoading(false));
+  }, [os.id]);
 
-  function setEquipeParaAtividade(
-    catalogoAtividadeId: string,
-    equipeId: string,
+  function setAtribuicao(
+    atividadeId: string,
+    campo: { equipeId?: string; dataPrevisao?: string },
   ) {
-    setAtividadesSelecionadas((prev) =>
-      prev.map((a) =>
-        a.catalogoAtividadeId === catalogoAtividadeId ? { ...a, equipeId } : a,
-      ),
-    );
+    setAtribuicoes((prev) => ({
+      ...prev,
+      [atividadeId]: { ...prev[atividadeId], ...campo },
+    }));
   }
 
   async function handleSalvar() {
-    if (atividadesSelecionadas.length === 0) return;
+    const linhasComEquipe = atividades.filter(
+      (a) => atribuicoes[a.id]?.equipeId,
+    );
+    if (linhasComEquipe.length === 0) return;
     setSalvando(true);
+    setErro(null);
     try {
-      await planificarAtividades({
-        osId: os.id,
-        etapaOSId: os.id,
-        atividades: atividadesSelecionadas,
-      });
+      await Promise.all(
+        linhasComEquipe.map((a) => {
+          const att = atribuicoes[a.id];
+          const dataPrevisao = att.dataPrevisao
+            ? new Date(`${att.dataPrevisao}T12:00:00`).toISOString()
+            : null;
+          return atribuirEquipe(a.id, {
+            equipeId: att.equipeId,
+            dataPrevisao,
+          });
+        }),
+      );
       onPlanejado();
     } catch (err) {
-      console.error('Erro ao planificar atividades:', err);
+      setErro(
+        err instanceof Error ? err.message : 'Erro ao atribuir equipes.',
+      );
     } finally {
       setSalvando(false);
     }
   }
 
-  const atividadesComEquipe = atividadesSelecionadas.filter((a) => a.equipeId);
+  const porEtapa = new Map<string, AtividadeOSItem[]>();
+  for (const a of atividades) {
+    const chave = a.etapaOS?.nome ?? 'Sem etapa';
+    const lista = porEtapa.get(chave);
+    if (lista) lista.push(a);
+    else porEtapa.set(chave, [a]);
+  }
+
+  const comEquipe = Object.values(atribuicoes).filter((a) => a.equipeId).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
@@ -582,69 +603,45 @@ function PlanejarExecucaoModal({
           Planejar Execução — OS #{os.codigo}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Selecione as atividades do catálogo e atribua equipes para planejar a
-          execução desta OS.
+          Atribua equipes e datas de previsão às atividades geradas desta OS.
         </p>
 
         {loading ? (
           <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : erro ? (
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {erro}
+          </p>
+        ) : atividades.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Nenhuma atividade gerada nesta OS. Aprove um orçamento para gerar
+            as atividades.
+          </p>
         ) : (
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium">Atividades Disponíveis</h4>
-            {catalogo.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                Nenhuma atividade no catálogo.
-              </p>
-            ) : (
-              catalogo.map((cat) => {
-                const selecionada = atividadesSelecionadas.some(
-                  (a) => a.catalogoAtividadeId === cat.id,
-                );
-                const atribuicao = atividadesSelecionadas.find(
-                  (a) => a.catalogoAtividadeId === cat.id,
-                );
-                return (
-                  <div
-                    key={cat.id}
-                    className={`rounded-lg border p-3 transition-colors ${
-                      selecionada
-                        ? 'border-primary/50 bg-primary/5'
-                        : 'border-border'
-                    }`}
-                  >
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selecionada}
-                        onChange={() => toggleAtividade(cat.id)}
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{cat.nome}</div>
-                        {cat.descricao && (
-                          <div className="text-xs text-muted-foreground">
-                            {cat.descricao}
-                          </div>
-                        )}
-                        <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
-                          {cat.tempoEstimadoMinutos && (
-                            <span>~{cat.tempoEstimadoMinutos}min</span>
-                          )}
-                          {cat.subSteps && (
-                            <span>{cat.subSteps.length} etapas</span>
-                          )}
-                          {cat.recursos && (
-                            <span>{cat.recursos.length} recursos</span>
-                          )}
-                        </div>
+          <div className="space-y-4">
+            {[...porEtapa.entries()].map(([nomeEtapa, linhas]) => (
+              <div key={nomeEtapa} className="space-y-2">
+                <h4 className="text-sm font-medium">{nomeEtapa}</h4>
+                {linhas.map((a) => {
+                  const atribuicao = atribuicoes[a.id] ?? {
+                    equipeId: '',
+                    dataPrevisao: '',
+                  };
+                  return (
+                    <div key={a.id} className="rounded-lg border p-3">
+                      <div className="text-sm font-medium">
+                        {a.catalogoAtividade?.nome || a.catalogoAtividadeId}
                       </div>
-                    </label>
-                    {selecionada && (
-                      <div className="mt-2 ml-6">
+                      {a.catalogoAtividade?.descricao && (
+                        <div className="text-xs text-muted-foreground">
+                          {a.catalogoAtividade.descricao}
+                        </div>
+                      )}
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
                         <select
-                          value={atribuicao?.equipeId || ''}
+                          value={atribuicao.equipeId}
                           onChange={(e) =>
-                            setEquipeParaAtividade(cat.id, e.target.value)
+                            setAtribuicao(a.id, { equipeId: e.target.value })
                           }
                           className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
                         >
@@ -655,18 +652,29 @@ function PlanejarExecucaoModal({
                             </option>
                           ))}
                         </select>
+                        <input
+                          type="date"
+                          value={atribuicao.dataPrevisao}
+                          onChange={(e) =>
+                            setAtribuicao(a.id, {
+                              dataPrevisao: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
+                        />
                       </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         )}
 
         <div className="flex items-center justify-between pt-3 border-t">
           <span className="text-xs text-muted-foreground">
-            {atividadesComEquipe.length} atividade(s) com equipe atribuída
+            {comEquipe} de {atividades.length} atividade(s) com equipe
+            atribuída
           </span>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} disabled={salvando}>
@@ -674,9 +682,9 @@ function PlanejarExecucaoModal({
             </Button>
             <Button
               onClick={handleSalvar}
-              disabled={salvando || atividadesComEquipe.length === 0}
+              disabled={salvando || comEquipe === 0}
             >
-              {salvando ? 'Salvando...' : 'Planejar Execução'}
+              {salvando ? 'Salvando...' : 'Atribuir Equipes'}
             </Button>
           </div>
         </div>

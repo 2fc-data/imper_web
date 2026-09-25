@@ -47,3 +47,13 @@ export async function planificarAtividades(input: {
 }): Promise<AtividadeOSItem[]> {
   return api.post<AtividadeOSItem[]>('/atividades-os/planificar', input);
 }
+
+export async function atribuirEquipe(
+  atividadeId: string,
+  input: { equipeId: string; dataPrevisao?: string | null },
+): Promise<AtividadeOSItem> {
+  return api.put<AtividadeOSItem>(
+    `/atividades-os/${atividadeId}/equipe`,
+    input,
+  );
+}

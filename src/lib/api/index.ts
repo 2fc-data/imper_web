@@ -139,14 +139,51 @@ export type {
 // Orcamentos Admin
 export {
   listarOrcamentosAdmin,
+  obterOrcamentoAdmin,
+  obterOrcamentoAdminDetalhe,
   criarOrcamentoAdmin,
+  editarOrcamentoAdmin,
+  excluirOrcamentoAdmin,
   enviarOrcamentoAdmin,
+  aprovarOrcamentoAdmin,
+  recusarOrcamentoAdmin,
 } from './orcamentos-admin.js';
 export type {
   ItemOrcamentoInput,
+  MaterialLinha,
+  LinhaInput,
+  AtividadeInput,
+  FichaInput,
   OrcamentoAdminItem,
+  OrcamentoAdminDetalhe,
+  OrcamentoAtividadeRow,
+  OrcamentoAtividadeMaterialRow,
+  OrcamentoObraFichaDetalhe,
   CriarOrcamentoInput,
+  CriarOrcamentoInputLegado,
 } from './orcamentos-admin.js';
+
+// Vocabulario (etapas, termos, sub-servicos, cascata, combos)
+export {
+  listarEtapas,
+  listarTermos,
+  listarSubServicos,
+  getCascata,
+  criarTermo,
+  criarSubServico,
+  criarCombosLote,
+  excluirCombo,
+} from './vocabulario.js';
+export type {
+  DimensaoVocabulario,
+  Termo,
+  Etapa,
+  SubServico,
+  OpcaoCascata,
+  Cascata,
+  FiltrosCascata,
+  ComboInput,
+} from './vocabulario.js';
 
 // OS Admin
 export {
@@ -253,6 +290,7 @@ export {
 } from './catalogo-atividades.js';
 export type {
   CatalogoAtividadeItem,
+  CriarCatalogoAtividadeInput,
   SubStepItem,
   RecursoAtividadeItem,
 } from './catalogo-atividades.js';
@@ -271,6 +309,7 @@ export type {
 export {
   listarAtividadesOS,
   planificarAtividades,
+  atribuirEquipe,
 } from './atividades-os.js';
 export type {
   AtividadeOSItem,

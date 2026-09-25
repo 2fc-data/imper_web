@@ -259,7 +259,12 @@ function CalendarioRoute() {
 }
 
 function OrcamentosRoute() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [atendimentoInicial] = useState<number | null>(() => {
+    const raw = searchParams.get('atendimentoId');
+    const n = raw ? Number(raw) : Number.NaN;
+    return Number.isFinite(n) && n > 0 ? n : null;
+  });
   const initialView =
     (searchParams.get('view') as 'analises' | 'lista' | 'novo') || 'lista';
   const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
@@ -271,6 +276,17 @@ function OrcamentosRoute() {
     if (v) setViewAtiva(v);
   }, [searchParams]);
 
+  // consome os params de origem (ex.: "Planejar orçamento" do agendamento)
+  // uma única vez, para reabrir o wizard pela sidebar sem dados presos.
+  useEffect(() => {
+    if (searchParams.has('view') || searchParams.has('atendimentoId')) {
+      const resto = new URLSearchParams(searchParams);
+      resto.delete('view');
+      resto.delete('atendimentoId');
+      setSearchParams(resto, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   return (
     <ProtectedLayout
       requiredPermissions={['aprovar_compra', 'ver_financeiro']}
@@ -278,7 +294,11 @@ function OrcamentosRoute() {
         <OrcamentosSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
       }
     >
-      <OrcamentosAdminPage initialView={viewAtiva} onNavegar={setViewAtiva} />
+      <OrcamentosAdminPage
+        initialView={viewAtiva}
+        onNavegar={setViewAtiva}
+        atendimentoInicial={atendimentoInicial}
+      />
     </ProtectedLayout>
   );
 }

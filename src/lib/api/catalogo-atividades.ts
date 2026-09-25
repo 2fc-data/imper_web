@@ -7,6 +7,8 @@ export interface CatalogoAtividadeItem {
   especialidadeNecessaria: string;
   tempoEstimadoHoras: number | null;
   tempoEstimadoMinutos?: number | null;
+  etapaId?: number | null;
+  subServicoId?: number | null;
   ativo: boolean;
   criadoEm: string;
   subSteps: SubStepItem[];
@@ -27,22 +29,33 @@ export interface RecursoAtividadeItem {
   quantidade: number;
 }
 
+export interface CriarCatalogoAtividadeInput {
+  nome: string;
+  descricao: string | null;
+  especialidadeNecessaria: string;
+  tempoEstimadoHoras: number | null;
+  etapaId?: number | null;
+  subServicoId?: number | null;
+  subSteps: SubStepItem[];
+  recursos: RecursoAtividadeItem[];
+}
+
 export async function listarCatalogoAtividades(params?: {
   q?: string;
   especialidade?: string;
+  etapaId?: number;
+  subServicoId?: number;
 }): Promise<CatalogoAtividadeItem[]> {
-  const searchParams = new URLSearchParams();
-  if (params?.q) searchParams.set('q', params.q);
-  if (params?.especialidade)
-    searchParams.set('especialidade', params.especialidade);
-  const queryStr = searchParams.toString();
-  return api.get<CatalogoAtividadeItem[]>(
-    `/catalogo-atividades${queryStr ? `?${queryStr}` : ''}`,
-  );
+  return api.get<CatalogoAtividadeItem[]>('/catalogo-atividades', {
+    q: params?.q,
+    especialidade: params?.especialidade,
+    etapaId: params?.etapaId,
+    subServicoId: params?.subServicoId,
+  });
 }
 
 export async function criarCatalogoAtividade(
-  input: Omit<CatalogoAtividadeItem, 'id' | 'ativo' | 'criadoEm'>,
+  input: CriarCatalogoAtividadeInput,
 ): Promise<CatalogoAtividadeItem> {
   return api.post<CatalogoAtividadeItem>('/catalogo-atividades', input);
 }
