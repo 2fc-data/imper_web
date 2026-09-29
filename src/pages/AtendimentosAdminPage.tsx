@@ -5,6 +5,9 @@ import { EmailInput } from '../components/ui/email-input';
 import { AgendarVisita, type AgendarDados, type AgendarVisitaHandle } from '../components/agendamento/AgendarVisita';
 import { CORES_STATUS, ROTULOS_STATUS } from '../lib/atendimento-status';
 import { acaoPresente, montarAcoesAtendimento, type AcaoUI } from '../lib/proximas-acoes';
+import { PipelineKanban } from '../components/atendimento-flow/PipelineKanban';
+import { ProcessDetailModal } from '../components/atendimento-flow/ProcessDetailModal';
+import { ProcessFilters } from '../components/ui/ProcessFilters';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
@@ -51,42 +54,84 @@ export function AtendimentosAnalises({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold tracking-tight">
-          Análises de Atendimentos
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          Análises & Métricas Operacionais
         </h2>
         <p className="text-sm text-muted-foreground">
-          Visão geral do volume, status e canais dos atendimentos.
+          Visão geral da taxa de conversão, volume por estágio e canais de entrada.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">
-            Total de Atendimentos
-          </p>
-          <p className="mt-2 text-2xl font-bold">{total}</p>
+        <div className="rounded-2xl border border-border/80 bg-card/70 backdrop-blur-md p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Total Geral
+            </span>
+            <span className="p-1.5 rounded-lg bg-muted text-foreground">
+              📊
+            </span>
+          </div>
+          <p className="text-3xl font-extrabold tracking-tight text-foreground">{total}</p>
+          <p className="text-[11px] text-muted-foreground">Oportunidades em carteira</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-info">Novos</p>
-          <p className="mt-2 text-2xl font-bold">{novos}</p>
+
+        <div className="rounded-2xl border border-info/30 bg-info/5 backdrop-blur-md p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-info">
+              Novos Leads
+            </span>
+            <span className="p-1.5 rounded-lg bg-info/10 text-info">
+              🆕
+            </span>
+          </div>
+          <p className="text-3xl font-extrabold tracking-tight text-info">{novos}</p>
+          <p className="text-[11px] text-info/80">Aguardando 1º contato</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-primary">Em Andamento</p>
-          <p className="mt-2 text-2xl font-bold">{emAndamento}</p>
+
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 backdrop-blur-md p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary">
+              Em Atendimento
+            </span>
+            <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              ⚡
+            </span>
+          </div>
+          <p className="text-3xl font-extrabold tracking-tight text-primary">{emAndamento}</p>
+          <p className="text-[11px] text-primary/80">Visitas ou orçamentos</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-success">Concluídos</p>
-          <p className="mt-2 text-2xl font-bold">{concluidos}</p>
+
+        <div className="rounded-2xl border border-success/30 bg-success/5 backdrop-blur-md p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-success">
+              Concluídos
+            </span>
+            <span className="p-1.5 rounded-lg bg-success/10 text-success">
+              ✅
+            </span>
+          </div>
+          <p className="text-3xl font-extrabold tracking-tight text-success">{concluidos}</p>
+          <p className="text-[11px] text-success/80">Obras e serviços entregues</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-destructive">Inativos</p>
-          <p className="mt-2 text-2xl font-bold">{inativos}</p>
+
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 backdrop-blur-md p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-destructive">
+              Inativos
+            </span>
+            <span className="p-1.5 rounded-lg bg-destructive/10 text-destructive">
+              ⏸
+            </span>
+          </div>
+          <p className="text-3xl font-extrabold tracking-tight text-destructive">{inativos}</p>
+          <p className="text-[11px] text-destructive/80">Cancelados ou arquivados</p>
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-        <h3 className="font-semibold text-base">Distribuição por Canal</h3>
-        <div className="space-y-2">
+      <div className="rounded-2xl border border-border/80 bg-card/70 backdrop-blur-md p-6 shadow-sm space-y-4">
+        <h3 className="font-bold text-base text-foreground tracking-tight">Distribuição por Canal de Atendimento</h3>
+        <div className="space-y-3">
           {Object.entries(porCanal).length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nenhum dado registrado.
@@ -95,16 +140,16 @@ export function AtendimentosAnalises({
             Object.entries(porCanal).map(([canal, qtd]) => {
               const perc = total ? Math.round((qtd / total) * 100) : 0;
               return (
-                <div key={canal} className="space-y-1">
-                  <div className="flex justify-between text-xs font-medium">
+                <div key={canal} className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-bold text-foreground">
                     <span>{canal}</span>
                     <span>
                       {qtd} ({perc}%)
                     </span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
+                  <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
                     <div
-                      className="h-full bg-primary transition-all"
+                      className="h-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500 rounded-full"
                       style={{ width: `${perc}%` }}
                     />
                   </div>
@@ -727,7 +772,7 @@ export function NovoAtendimentoForm({
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full max-w-5xl space-y-6">
       <div>
         <h2 className="text-xl font-bold tracking-tight">Novo Atendimento</h2>
         <p className="text-sm text-muted-foreground">
@@ -913,17 +958,22 @@ export function AtendimentosAdminPage({
   onNavegar,
 }: AtendimentosAdminPageProps) {
   const navigate = useNavigate();
+  const [modoVisao, setModoVisao] = useState<'kanban' | 'tabela'>('kanban');
   const [atendimentos, setAtendimentos] = useState<AtendimentoItem[]>([]);
   const [atendimentosTodos, setAtendimentosTodos] = useState<AtendimentoItem[]>(
     [],
   );
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
-  const [statusFiltro, setStatusFiltro] = useState('NOVO');
+  const [statusFiltro, setStatusFiltro] = useState('');
   const [criadoDe, setCriadoDe] = useState('');
   const [criadoAte, setCriadoAte] = useState('');
   const [atualizadoDe, setAtualizadoDe] = useState('');
   const [atualizadoAte, setAtualizadoAte] = useState('');
+  const [itemSelecionadoModal, setItemSelecionadoModal] =
+    useState<AtendimentoItem | null>(null);
+  const [logsModal, setLogsModal] = useState<AtendimentoLogItem[]>([]);
+  const [logsModalLoading, setLogsModalLoading] = useState(false);
 
   const mudarView = (novaView: 'analises' | 'lista' | 'novo') => {
     if (onNavegar) onNavegar(novaView);
@@ -1027,35 +1077,112 @@ export function AtendimentosAdminPage({
     }
   };
 
+  const handleAbrirModal = async (item: AtendimentoItem) => {
+    setItemSelecionadoModal(item);
+    setLogsModalLoading(true);
+    try {
+      const logsData = await handleCarregarLogs(item.id);
+      setLogsModal(logsData);
+    } catch (err) {
+      console.error('Erro ao carregar logs:', err);
+    } finally {
+      setLogsModalLoading(false);
+    }
+  };
+
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       {initialView === 'analises' && (
         <AtendimentosAnalises atendimentos={atendimentosTodos} />
       )}
       {initialView === 'lista' && (
-        <AtendimentoList
-          atendimentos={atendimentos}
-          loading={loading}
-          busca={busca}
-          onBuscaChange={setBusca}
-          statusFiltro={statusFiltro}
-          onStatusFiltroChange={setStatusFiltro}
-          criadoDe={criadoDe}
-          onCriadoDeChange={setCriadoDe}
-          criadoAte={criadoAte}
-          onCriadoAteChange={setCriadoAte}
-          atualizadoDe={atualizadoDe}
-          onAtualizadoDeChange={setAtualizadoDe}
-          atualizadoAte={atualizadoAte}
-          onAtualizadoAteChange={setAtualizadoAte}
-          onStatusChange={handleStatusInline}
-          onCarregarLogs={handleCarregarLogs}
-          onRegistrarLog={handleRegistrarLog}
-          onAgendarVisita={handleAgendarVisita}
-          onEncaminhar={handleEncaminhar}
-          onToggleVisitaSolicitada={handleToggleVisita}
-          onCriarOrcamento={handleCriarOrcamento}
-        />
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">
+                Funil Operacional de Atendimento
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Gerenciamento unificado de leads, visitas, orçamentos e ordens de serviço.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1 rounded-lg border bg-muted p-1">
+              <button
+                type="button"
+                onClick={() => setModoVisao('kanban')}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  modoVisao === 'kanban'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Kanban (Funil)
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoVisao('tabela')}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  modoVisao === 'tabela'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Tabela
+              </button>
+            </div>
+          </div>
+
+          <ProcessFilters
+            busca={busca}
+            onBuscaChange={setBusca}
+            statusFiltro={statusFiltro}
+            onStatusFiltroChange={setStatusFiltro}
+            opcoesStatus={[
+              { value: 'NOVO', label: 'NOVO' },
+              { value: 'EM_ANDAMENTO', label: 'EM ANDAMENTO' },
+              { value: 'ORCAMENTAMENTO', label: 'EM ORÇAMENTO' },
+              { value: 'CONCLUIDO', label: 'CONCLUÍDO' },
+              { value: 'INATIVO', label: 'INATIVO' },
+            ]}
+            dataDe={criadoDe}
+            onDataDeChange={setCriadoDe}
+            dataAte={criadoAte}
+            onDataAteChange={setCriadoAte}
+          />
+
+          {modoVisao === 'kanban' ? (
+            <PipelineKanban
+              items={statusFiltro ? atendimentos : atendimentosTodos}
+              loading={loading}
+              onSelectCard={handleAbrirModal}
+            />
+          ) : (
+            <AtendimentoList
+              atendimentos={atendimentos}
+              loading={loading}
+              busca={busca}
+              onBuscaChange={setBusca}
+              statusFiltro={statusFiltro}
+              onStatusFiltroChange={setStatusFiltro}
+              criadoDe={criadoDe}
+              onCriadoDeChange={setCriadoDe}
+              criadoAte={criadoAte}
+              onCriadoAteChange={setCriadoAte}
+              atualizadoDe={atualizadoDe}
+              onAtualizadoDeChange={setAtualizadoDe}
+              atualizadoAte={atualizadoAte}
+              onAtualizadoAteChange={setAtualizadoAte}
+              onStatusChange={handleStatusInline}
+              onCarregarLogs={handleCarregarLogs}
+              onRegistrarLog={handleRegistrarLog}
+              onAgendarVisita={handleAgendarVisita}
+              onEncaminhar={handleEncaminhar}
+              onToggleVisitaSolicitada={handleToggleVisita}
+              onCriarOrcamento={handleCriarOrcamento}
+            />
+          )}
+        </div>
       )}
       {initialView === 'novo' && (
         <NovoAtendimentoForm
@@ -1064,6 +1191,19 @@ export function AtendimentosAdminPage({
             Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
           }}
           onCancel={() => mudarView('lista')}
+        />
+      )}
+
+      {itemSelecionadoModal && (
+        <ProcessDetailModal
+          item={itemSelecionadoModal}
+          logs={logsModal}
+          logsLoading={logsModalLoading}
+          onClose={() => setItemSelecionadoModal(null)}
+          onStatusChange={handleStatusInline}
+          onRegistrarLog={handleRegistrarLog}
+          onAgendarVisita={handleAgendarVisita}
+          onCriarOrcamento={handleCriarOrcamento}
         />
       )}
     </div>

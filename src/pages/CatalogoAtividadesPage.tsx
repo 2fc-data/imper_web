@@ -318,7 +318,7 @@ function FormularioNovo({
   }
 
   return (
-    <Card className="max-w-2xl">
+    <Card className="w-full max-w-5xl">
       <CardHeader>
         <CardTitle>Nova Atividade no Catálogo</CardTitle>
       </CardHeader>

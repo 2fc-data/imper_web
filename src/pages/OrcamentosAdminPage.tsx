@@ -476,7 +476,7 @@ export function OrcamentosAdminPage({
         />
       )}
       {initialView === 'novo' && (
-        <div className="max-w-3xl space-y-6">
+        <div className="w-full max-w-5xl space-y-6">
           <div>
             <h2 className="text-xl font-bold tracking-tight">
               {orcamentoEdicao
@@ -506,7 +506,7 @@ export function OrcamentosAdminPage({
       {/* Modal de Visualização */}
       {orcamentoSelecionado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-card p-5 shadow-lg space-y-4 border">
+          <div className="w-full max-w-4xl rounded-xl bg-card p-5 shadow-lg space-y-4 border">
             <h3 className="text-lg font-bold">
               Orçamento #{orcamentoSelecionado.codigo}
             </h3>

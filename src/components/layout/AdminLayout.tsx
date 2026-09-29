@@ -34,7 +34,7 @@ export function AdminLayout({ children, sidebar }: AdminLayoutProps) {
           onClose={() => setSidebarOpen(false)}
           onLogout={handleLogout}
         />
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 md:px-6 lg:pr-8">
+        <main className="w-full flex-1 px-4 py-6 md:px-6 lg:px-8 xl:px-10">
           {sidebar && (
             <div className="mb-6 flex flex-wrap items-center gap-3">
               {sidebar}

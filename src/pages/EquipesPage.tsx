@@ -304,7 +304,7 @@ function FormularioNovo({
   }
 
   return (
-    <Card className="max-w-lg">
+    <Card className="w-full max-w-5xl">
       <CardHeader>
         <CardTitle>Nova Equipe</CardTitle>
       </CardHeader>

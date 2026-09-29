@@ -1106,7 +1106,7 @@ export function NovoAgendamentoForm({
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="w-full max-w-5xl space-y-6">
       <div>
         <h2 className="text-xl font-bold tracking-tight">Novo Agendamento</h2>
         <p className="text-sm text-muted-foreground">

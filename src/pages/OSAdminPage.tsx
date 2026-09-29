@@ -313,7 +313,7 @@ interface NovaOSInfoProps {
 
 export function NovaOSInfo({ onGoToOrcamentos }: NovaOSInfoProps) {
   return (
-    <div className="max-w-xl space-y-4 rounded-xl border bg-card p-6 shadow-sm">
+    <div className="w-full max-w-5xl space-y-4 rounded-xl border bg-card p-6 shadow-sm">
       <h2 className="text-xl font-bold tracking-tight">
         Nova Ordem de Serviço
       </h2>
@@ -437,7 +437,7 @@ export function OSAdminPage({
       {/* Modal de Detalhes da OS */}
       {osSelecionada && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-card p-5 shadow-lg space-y-4 border">
+          <div className="w-full max-w-4xl rounded-xl bg-card p-5 shadow-lg space-y-4 border">
             <h3 className="text-lg font-bold">
               Ordem de Serviço #{osSelecionada.codigo}
             </h3>
@@ -598,7 +598,7 @@ function PlanejarExecucaoModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
-      <div className="w-full max-w-2xl rounded-xl bg-card p-5 shadow-lg space-y-4 border max-h-[80vh] overflow-y-auto">
+      <div className="w-full max-w-5xl rounded-xl bg-card p-5 shadow-lg space-y-4 border max-h-[80vh] overflow-y-auto">
         <h3 className="text-lg font-bold">
           Planejar Execução — OS #{os.codigo}
         </h3>
