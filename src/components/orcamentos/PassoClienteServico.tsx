@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   listarAtendimentos,
   listarServicos,
+  listarVisitas,
   obterAtendimento,
   type AtendimentoItem,
   type ServicoMarketing,
@@ -20,6 +21,8 @@ interface Props {
   set: AtualizarEstado;
   /** Informa ao wizard que não há opções disponíveis (agendamento não realizado). */
   onListaVaziaChange?: (vazio: boolean) => void;
+  /** Em edição a hidratação própria define visita/agendamento — não ligar aqui. */
+  edicao?: boolean;
 }
 
 const URGENCIAS: { valor: Urgencia; rotulo: string }[] = [
@@ -33,6 +36,7 @@ export function PassoClienteServico({
   state,
   set,
   onListaVaziaChange,
+  edicao,
 }: Props) {
   const [atendimentos, setAtendimentos] = useState<AtendimentoItem[]>([]);
   const [servicos, setServicos] = useState<ServicoMarketing[]>([]);
@@ -85,6 +89,36 @@ export function PassoClienteServico({
   useEffect(() => {
     onListaVaziaChange?.(listaVazia);
   }, [listaVazia, onListaVaziaChange]);
+
+  // Wiring best-effort (T13): anexa a visita REALIZADA + agendamento do
+  // atendimento escolhido. O gate 4 do backend exige essa coerência quando a
+  // flag visitaSolicitada está true; sem visita realizada, limpa para null.
+  useEffect(() => {
+    if (edicao) return;
+    const id = state.atendimentoId;
+    if (!id) return;
+    let cancelado = false;
+    void Promise.all([obterAtendimento(id), listarVisitas({ atendimentoId: id })])
+      .then(([item, visitas]) => {
+        if (cancelado) return;
+        const realizada = visitas.find(
+          (v) => v.status === 'REALIZADA' && v.agendamentoId != null,
+        );
+        const proximaVisita = item.visitaSolicitada && realizada ? realizada.id : null;
+        const proximoAgendamento =
+          item.visitaSolicitada && realizada ? realizada.agendamentoId : null;
+        set(
+          (s) =>
+            s.visitaId === proximaVisita && s.agendamentoId === proximoAgendamento
+              ? s
+              : { ...s, visitaId: proximaVisita, agendamentoId: proximoAgendamento },
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, [state.atendimentoId, edicao, set]);
 
   return (
     <div className="flex flex-col gap-4">

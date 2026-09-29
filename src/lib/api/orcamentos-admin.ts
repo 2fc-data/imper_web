@@ -68,6 +68,7 @@ export interface FichaInput {
 export interface CriarOrcamentoInput {
   atendimentoId: number;
   visitaId?: number | null;
+  agendamentoId?: number | null;
   enderecoId?: number | null;
   servicoMarketingId?: number | null;
   urgencia?: Urgencia;
@@ -96,6 +97,7 @@ export interface OrcamentoAdminItem {
   id: number;
   codigo: string;
   atendimentoId: number;
+  agendamentoId: number | null;
   urgencia: Urgencia;
   status: StatusOrcamento;
   valorTotal: string | number;

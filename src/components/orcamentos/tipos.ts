@@ -65,6 +65,7 @@ export interface WizardState {
   passo: PassoWizard;
   atendimentoId: number | null;
   visitaId: number | null;
+  agendamentoId: number | null;
   enderecoId: number | null;
   servicoMarketingId: number | null;
   urgencia: Urgencia;
@@ -125,6 +126,7 @@ export function estadoInicialWizard(
     passo: 1,
     atendimentoId: null,
     visitaId: null,
+    agendamentoId: null,
     enderecoId: null,
     servicoMarketingId: null,
     urgencia: 'NORMAL',
@@ -325,6 +327,7 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
   const input: CriarOrcamentoInput = {
     atendimentoId: state.atendimentoId,
     visitaId: state.visitaId,
+    agendamentoId: state.agendamentoId,
     enderecoId: state.enderecoId,
     servicoMarketingId: state.servicoMarketingId,
     urgencia: state.urgencia,
@@ -488,6 +491,7 @@ export function estadoDeEdicao(
   return estadoInicialWizard({
     atendimentoId: det.atendimentoId,
     visitaId: det.visitaId ?? null,
+    agendamentoId: det.agendamentoId ?? null,
     enderecoId: det.enderecoId ?? null,
     servicoMarketingId:
       det.servicoMarketingId ?? det.servicoMarketing?.id ?? null,

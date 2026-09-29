@@ -340,6 +340,7 @@ export function NovoOrcamentoWizard({
             state={state}
             set={set}
             onListaVaziaChange={aoMudarListaVazia}
+            edicao={orcamentoEdicao != null}
           />
         ) : null}
         {state.passo === 2 ? <PassoCobertura state={state} set={set} /> : null}

@@ -97,6 +97,7 @@ function detalhe(parcial: Partial<OrcamentoAdminDetalhe> = {}): OrcamentoAdminDe
     id: 1,
     codigo: 'ORC-0001',
     atendimentoId: 10,
+    agendamentoId: null,
     urgencia: 'URGENTE',
     status: 'RASCUNHO',
     valorTotal: '918',
@@ -400,6 +401,13 @@ describe('totais', () => {
 });
 
 describe('estadoDeEdicao', () => {
+  it('hidrata visitaId e agendamentoId da visita vinculada', () => {
+    const s = estadoDeEdicao(detalhe({ visitaId: 5, agendamentoId: 3 }));
+    expect(s.visitaId).toBe(5);
+    expect(s.agendamentoId).toBe(3);
+    expect(estadoDeEdicao(detalhe()).agendamentoId).toBeNull();
+  });
+
   it('regroupa linhas pela chave preservando a ordem', () => {
     const det = detalhe({
       atividades: [
