@@ -46,18 +46,45 @@ export const NAV_ITEMS: NavItem[] = [
     requiredPermissions: ['gerenciar_os', 'criar_os', 'iniciar_os'],
   },
   {
-    to: '/atendimentos',
-    label: 'Atendimentos',
+    label: 'Atendimento',
     icon: <Icon d="M12 3a3 3 0 100 6 3 3 0 000-6zM8 21v-2a4 4 0 018 0v2" />,
-    requiredPermissions: ['criar_atendimento', 'editar_atendimento'],
-  },
-  {
-    to: '/agendamentos',
-    label: 'Agendamentos',
-    icon: (
-      <Icon d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v13a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-    ),
-    requiredPermissions: ['criar_atendimento', 'editar_atendimento'],
+    children: [
+      {
+        to: '/atendimentos',
+        label: 'Atendimentos',
+        icon: <Icon d="M12 3a3 3 0 100 6 3 3 0 000-6zM8 21v-2a4 4 0 018 0v2" />,
+        requiredPermissions: ['criar_atendimento', 'editar_atendimento'],
+      },
+      {
+        to: '/agendamentos',
+        label: 'Agendamentos',
+        icon: (
+          <Icon d="M8 7V3m8 4V3M3 11h18M5 5h14a2 2 0 012 2v13a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
+        ),
+        requiredPermissions: ['criar_atendimento', 'editar_atendimento'],
+      },
+      {
+        to: '/orcamentos',
+        label: 'Orçamentos',
+        icon: (
+          <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        ),
+        requiredPermissions: ['aprovar_compra', 'ver_financeiro'],
+      },
+      {
+        to: '/os',
+        label: 'OS',
+        icon: <Icon d="M9 12h6M9 16h6M8 8h8M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />,
+        requiredPermissions: [
+          'criar_os',
+          'editar_os',
+          'iniciar_os',
+          'concluir_os',
+          'aprovar_os',
+          'entregar_os',
+        ],
+      },
+    ],
   },
   {
     to: '/calendario',
@@ -66,27 +93,6 @@ export const NAV_ITEMS: NavItem[] = [
       <Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     ),
     requiredPermissions: ['criar_atendimento', 'editar_atendimento'],
-  },
-  {
-    to: '/orcamentos',
-    label: 'Orçamentos',
-    icon: (
-      <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-    ),
-    requiredPermissions: ['aprovar_compra', 'ver_financeiro'],
-  },
-  {
-    to: '/os',
-    label: 'OS',
-    icon: <Icon d="M9 12h6M9 16h6M8 8h8M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />,
-    requiredPermissions: [
-      'criar_os',
-      'editar_os',
-      'iniciar_os',
-      'concluir_os',
-      'aprovar_os',
-      'entregar_os',
-    ],
   },
   {
     label: 'Insumos',

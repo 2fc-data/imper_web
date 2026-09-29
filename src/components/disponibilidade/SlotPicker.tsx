@@ -18,6 +18,29 @@ function formatarDataBR(data: string): string {
   return `${diaSemana}, ${dia}/${mes}/${ano}`;
 }
 
+/**
+ * Returns the minimum allowed date for scheduling (2 business days from today).
+ * Skips Sat/Sun when counting.
+ */
+function calcularDataMinima(): Date {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const DIAS_UTEIS_MINIMOS = 2;
+  let diasContados = 0;
+  const cursor = new Date(hoje);
+
+  while (diasContados < DIAS_UTEIS_MINIMOS) {
+    cursor.setDate(cursor.getDate() + 1);
+    const dow = cursor.getDay();
+    if (dow !== 0 && dow !== 6) {
+      diasContados++;
+    }
+  }
+
+  return cursor;
+}
+
 export function SlotPicker({ value, onChange, className, disabled, erro }: SlotPickerProps) {
   const now = new Date();
   const [mesAtual, setMesAtual] = useState(now.getMonth() + 1);
@@ -45,13 +68,22 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
     return () => { cancelado = true; };
   }, [mesAtual, anoAtual]);
 
-  const slotsPorData = slots.reduce<Record<string, DisponibilidadeSlot[]>>((acc, slot) => {
+  // Client-side enforcement of 2 business-day minimum
+  const dataMinima = calcularDataMinima();
+  const dataMinimaStr = dataMinima.toISOString().split('T')[0];
+
+  const slotsFiltrados = slots.filter((slot) => slot.data >= dataMinimaStr);
+
+  const slotsPorData = slotsFiltrados.reduce<Record<string, DisponibilidadeSlot[]>>((acc, slot) => {
     if (!acc[slot.data]) acc[slot.data] = [];
     acc[slot.data].push(slot);
     return acc;
   }, {});
 
   const datasOrdenadas = Object.keys(slotsPorData).sort();
+
+  // Check if any slots were filtered out by the 2-day rule
+  const slotsRemovidos = slots.length > slotsFiltrados.length;
 
   function voltarMes() {
     if (mesAtual === 1) {
@@ -83,6 +115,8 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
 
+  const dataMinimaFormatada = dataMinima.toLocaleDateString('pt-BR');
+
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-3">
@@ -107,6 +141,13 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
         </button>
       </div>
 
+      {slotsRemovidos && (
+        <p className="text-xs text-info bg-info/10 border border-info/20 rounded-md px-3 py-2 mb-3">
+          ℹ️ Agendamentos devem ser feitos com no mínimo 2 dias úteis de antecedência.
+          Próxima data disponível: <strong>{dataMinimaFormatada}</strong>
+        </p>
+      )}
+
       {carregando && (
         <p className="text-sm text-muted-foreground text-center py-4">Carregando horários...</p>
       )}
@@ -116,7 +157,7 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
 
       {!carregando && !erroFetch && datasOrdenadas.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          Nenhum horário cadastrado neste mês.
+          Nenhum horário disponível neste mês.
         </p>
       )}
 
@@ -168,3 +209,4 @@ export function SlotPicker({ value, onChange, className, disabled, erro }: SlotP
     </div>
   );
 }
+
