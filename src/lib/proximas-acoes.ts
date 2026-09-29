@@ -25,7 +25,10 @@ export function montarAcoesAtendimento(item: AtendimentoItem): AcaoUI[] {
     switch (acao) {
       case 'MUDAR_STATUS:EM_ANDAMENTO':
         acoes.push({
-          label: 'Iniciar atendimento',
+          label:
+            item.status === 'ORCAMENTAMENTO'
+              ? 'Atendimento em andamento'
+              : 'Iniciar atendimento',
           status: 'EM_ANDAMENTO',
           tone: 'primary',
         });

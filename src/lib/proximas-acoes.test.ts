@@ -69,7 +69,7 @@ describe('montarAcoesAtendimento', () => {
     });
   });
 
-  it('ORCAMENTAMENTO → Iniciar atendimento + Criar orçamento + Encerrar', () => {
+  it('ORCAMENTAMENTO → Atendimento em andamento + Criar orçamento + Encerrar', () => {
     const acoes = montarAcoesAtendimento(
       item({
         status: 'ORCAMENTAMENTO',
@@ -81,7 +81,7 @@ describe('montarAcoesAtendimento', () => {
       }),
     );
     expect(acoes.map((a) => a.label)).toEqual([
-      'Iniciar atendimento',
+      'Atendimento em andamento',
       'Criar orçamento',
       'Concluir',
       'Inativar',
