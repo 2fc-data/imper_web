@@ -1,16 +1,20 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PhoneInput } from '../components/ui/phone-input';
 import { EmailInput } from '../components/ui/email-input';
 import { AgendarVisita, type AgendarDados, type AgendarVisitaHandle } from '../components/agendamento/AgendarVisita';
+import { CORES_STATUS, ROTULOS_STATUS } from '../lib/atendimento-status';
+import { acaoPresente, montarAcoesAtendimento, type AcaoUI } from '../lib/proximas-acoes';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
+  atualizarAtendimento,
   atualizarStatusAtendimento,
   buscarUsuarios,
   type CanalAtendimento,
   criarAgendamento,
   criarAtendimento,
-  criarOrcamentoAdmin,
+  encaminharParaOrcamento,
   listarAtendimentos,
   listarLogsAtendimento,
   type MeuUser,
@@ -129,11 +133,19 @@ interface AtendimentoListProps {
   onAtualizadoDeChange: (v: string) => void;
   atualizadoAte: string;
   onAtualizadoAteChange: (v: string) => void;
-  onStatusChange: (id: number, status: StatusAtendimento) => void;
+  onStatusChange: (
+    id: number,
+    status: StatusAtendimento,
+  ) => Promise<void> | void;
   onCarregarLogs: (id: number) => Promise<AtendimentoLogItem[]>;
   onRegistrarLog: (id: number, descricao: string) => Promise<void>;
-  podeAgendar?: boolean;
   onAgendarVisita?: (atendimentoId: number, dados: AgendarDados) => Promise<void>;
+  onEncaminhar?: (id: number) => Promise<void> | void;
+  onToggleVisitaSolicitada?: (
+    id: number,
+    visitaSolicitada: boolean,
+  ) => Promise<void> | void;
+  onCriarOrcamento?: (id: number) => void;
 }
 
 export function AtendimentoList({
@@ -154,26 +166,49 @@ export function AtendimentoList({
   onStatusChange,
   onCarregarLogs,
   onRegistrarLog,
-  podeAgendar = false,
   onAgendarVisita,
+  onEncaminhar,
+  onToggleVisitaSolicitada,
+  onCriarOrcamento,
 }: AtendimentoListProps) {
   const [expandidoId, setExpandidoId] = useState<number | null>(null);
   const [logs, setLogs] = useState<AtendimentoLogItem[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [descricaoDraft, setDescricaoDraft] = useState('');
-  const [statusDraft, setStatusDraft] = useState<StatusAtendimento | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erroSalvar, setErroSalvar] = useState<string | null>(null);
   const agendarRef = useRef<AgendarVisitaHandle>(null);
 
-  const handleAgendarValidChange = useCallback(
-    (valid: boolean) => {
-      if (valid) {
-        setStatusDraft((prev) => (prev === null ? 'CONCLUIDO' : prev));
+  const classesBotaoAcao = (tone: AcaoUI['tone']) =>
+    ({
+      primary:
+        'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+      outline:
+        'border text-foreground hover:bg-primary/10 hover:text-primary',
+      success: 'bg-success text-success-foreground hover:bg-success/90',
+      destructive:
+        'border border-destructive/40 text-destructive hover:bg-destructive/10',
+      muted: 'border text-muted-foreground hover:bg-primary/10',
+    })[tone];
+
+  const executarAcao = async (item: AtendimentoItem, acao: AcaoUI) => {
+    if (acao.nota) return;
+    setErroSalvar(null);
+    try {
+      if (acao.status) {
+        await onStatusChange(item.id, acao.status);
+      } else if (acao.encaminhar) {
+        await onEncaminhar?.(item.id);
+      } else if (acao.criarOrcamento) {
+        onCriarOrcamento?.(item.id);
       }
-    },
-    [],
-  );
+    } catch (err) {
+      console.error('Erro ao executar ação do atendimento:', err);
+      setErroSalvar(
+        err instanceof Error ? err.message : 'Erro ao executar ação.',
+      );
+    }
+  };
 
   const alternarExpandido = async (id: number) => {
     setErroSalvar(null);
@@ -181,12 +216,10 @@ export function AtendimentoList({
       setExpandidoId(null);
       setLogs([]);
       setDescricaoDraft('');
-      setStatusDraft(null);
       return;
     }
     setExpandidoId(id);
     setDescricaoDraft('');
-    setStatusDraft(null);
     setLogsLoading(true);
     setLogs([]);
     try {
@@ -211,24 +244,19 @@ export function AtendimentoList({
     }
 
     const isValid = agendarRef.current?.isValid() ?? false;
-    if (!descricaoDraft.trim() && statusDraft === null && !isValid) return;
+    if (!descricaoDraft.trim() && !isValid) return;
 
     setSalvando(true);
     try {
-      if (statusDraft !== null && statusDraft !== atendimento.status && !isValid) {
-        await onStatusChange(atendimento.id, statusDraft);
-      }
       if (descricaoDraft.trim()) {
         await onRegistrarLog(atendimento.id, descricaoDraft.trim());
       }
       const agendarDados = agendarRef.current?.getDados();
       if (agendarDados && onAgendarVisita) {
         await onAgendarVisita(atendimento.id, agendarDados);
-        await onStatusChange(atendimento.id, 'CONCLUIDO');
       }
       setLogs(await onCarregarLogs(atendimento.id));
       setDescricaoDraft('');
-      setStatusDraft(null);
       fecharExpandido();
     } catch (err) {
       console.error('Erro ao registrar atendimento:', err);
@@ -244,7 +272,6 @@ export function AtendimentoList({
     setExpandidoId(null);
     setLogs([]);
     setDescricaoDraft('');
-    setStatusDraft(null);
     setErroSalvar(null);
   };
 
@@ -281,6 +308,7 @@ export function AtendimentoList({
             <option value="">TODOS</option>
             <option value="NOVO">NOVO</option>
             <option value="EM_ANDAMENTO">EM ANDAMENTO</option>
+            <option value="ORCAMENTAMENTO">ORÇAMENTO</option>
             <option value="CONCLUIDO">CONCLUÍDO</option>
             <option value="INATIVO">INATIVO</option>
           </select>
@@ -389,20 +417,9 @@ export function AtendimentoList({
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${item.status === 'NOVO'
-                          ? 'bg-info/15 text-info'
-                          : item.status === 'EM_ANDAMENTO'
-                            ? 'bg-primary/15 text-primary'
-                            : item.status === 'CONCLUIDO'
-                              ? 'bg-success/15 text-success'
-                              : 'bg-destructive/15 text-destructive'
-                          }`}
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${CORES_STATUS[item.status] ?? CORES_STATUS.INATIVO}`}
                       >
-                        {item.status === 'EM_ANDAMENTO'
-                          ? 'EM ANDAMENTO'
-                          : item.status === 'CONCLUIDO'
-                            ? 'CONCLUÍDO'
-                            : item.status}
+                        {ROTULOS_STATUS[item.status] ?? item.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
@@ -430,6 +447,32 @@ export function AtendimentoList({
                               </span>
                             </div>
                           )}
+                          <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={item.visitaSolicitada}
+                              disabled={salvando}
+                              onChange={(e) => {
+                                const novo = e.target.checked;
+                                setErroSalvar(null);
+                                Promise.resolve(
+                                  onToggleVisitaSolicitada?.(item.id, novo),
+                                ).catch((err: unknown) => {
+                                  console.error(
+                                    'Erro ao atualizar visita solicitada:',
+                                    err,
+                                  );
+                                  setErroSalvar(
+                                    err instanceof Error
+                                      ? err.message
+                                      : 'Erro ao atualizar visita solicitada.',
+                                  );
+                                });
+                              }}
+                              className="h-3.5 w-3.5 rounded border-input"
+                            />
+                            Visita solicitada
+                          </label>
                           <div className="text-sm font-semibold text-foreground">
                             Histórico de Atendimento
                           </div>
@@ -491,14 +534,14 @@ export function AtendimentoList({
                               placeholder="Descreva o atendimento realizado..."
                               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             />
-                            {podeAgendar && onAgendarVisita && (
-                              <AgendarVisita
-                                ref={agendarRef}
-                                disabled={salvando}
-                                titulo="Horários Disponíveis"
-                                onValidChange={handleAgendarValidChange}
-                              />
-                            )}
+                            {acaoPresente(item, 'CRIAR_AGENDAMENTO') &&
+                              onAgendarVisita && (
+                                <AgendarVisita
+                                  ref={agendarRef}
+                                  disabled={salvando}
+                                  titulo="Horários Disponíveis"
+                                />
+                              )}
                             {erroSalvar && (
                               <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
                                 {erroSalvar}
@@ -506,28 +549,25 @@ export function AtendimentoList({
                             )}
                             <div className="space-y-1.5">
                               <label className="text-xs font-semibold text-foreground">
-                                Status
+                                Próximas ações
                               </label>
-                              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                {(['NOVO', 'EM_ANDAMENTO', 'CONCLUIDO', 'INATIVO'] as StatusAtendimento[]).map((s) => {
-                                  const selected = statusDraft !== null ? statusDraft === s : item.status === s;
-                                  return (
-                                    <label key={s} className="flex items-center gap-2 text-xs font-medium cursor-pointer text-foreground">
-                                      <span className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition-colors ${selected ? 'border-primary' : 'border-muted-foreground/50'}`}>
-                                        {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
-                                      </span>
-                                      <input
-                                        type="radio"
-                                        name={`status-${item.id}`}
-                                        value={s}
-                                        checked={selected}
-                                        onChange={() => setStatusDraft(s)}
-                                        className="sr-only"
-                                      />
-                                      {s === 'EM_ANDAMENTO' ? 'EM ANDAMENTO' : s === 'CONCLUIDO' ? 'CONCLUÍDO' : s}
-                                    </label>
-                                  );
-                                })}
+                              <div className="flex flex-wrap gap-2">
+                                {montarAcoesAtendimento(item).map((acao) => (
+                                  <button
+                                    key={acao.label}
+                                    type="button"
+                                    disabled={acao.nota || salvando}
+                                    title={
+                                      acao.nota
+                                        ? 'Registrar visita a partir do agendamento'
+                                        : undefined
+                                    }
+                                    onClick={() => void executarAcao(item, acao)}
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${classesBotaoAcao(acao.tone)}`}
+                                  >
+                                    {acao.label}
+                                  </button>
+                                ))}
                               </div>
                             </div>
                             <div className="flex items-center justify-end gap-2">
@@ -654,6 +694,7 @@ export function NovoAtendimentoForm({
     setLoading(true);
     setErro(null);
     try {
+      const agendarDados = agendarFormRef.current?.getDados();
       const atendimentoCriado = await criarAtendimento({
         userId: userIdSelecionado ?? undefined,
         userName: nome,
@@ -663,12 +704,11 @@ export function NovoAtendimentoForm({
         descricao: descricao || undefined,
         canal,
         urgencia,
+        visitaSolicitada: agendarDados != null,
       });
 
-      const agendarDados = agendarFormRef.current?.getDados();
-      console.log('[NovoAtendimentoForm] agendarDados:', agendarDados);
       if (agendarDados) {
-        const payload = {
+        await criarAgendamento({
           userId: atendimentoCriado.user?.id ?? userIdSelecionado ?? 0,
           atendimentoId: atendimentoCriado.id,
           tipo: 'VISITA' as const,
@@ -682,10 +722,7 @@ export function NovoAtendimentoForm({
             estado: agendarDados.estado || undefined,
             cep: agendarDados.cep || undefined,
           },
-        };
-        console.log('[NovoAtendimentoForm] sending agendamento payload:', payload);
-        await criarAgendamento(payload);
-        console.log('[NovoAtendimentoForm] agendamento created');
+        });
       }
 
       onSuccess();
@@ -882,6 +919,7 @@ export function AtendimentosAdminPage({
   initialView = 'lista',
   onNavegar,
 }: AtendimentosAdminPageProps) {
+  const navigate = useNavigate();
   const [atendimentos, setAtendimentos] = useState<AtendimentoItem[]>([]);
   const [atendimentosTodos, setAtendimentosTodos] = useState<AtendimentoItem[]>(
     [],
@@ -940,7 +978,22 @@ export function AtendimentosAdminPage({
       await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
     } catch (err) {
       console.error('Erro ao atualizar status do atendimento:', err);
+      throw err;
     }
+  };
+
+  const handleEncaminhar = async (id: number) => {
+    await encaminharParaOrcamento(id);
+    await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+  };
+
+  const handleToggleVisita = async (id: number, visitaSolicitada: boolean) => {
+    await atualizarAtendimento(id, { visitaSolicitada });
+    await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+  };
+
+  const handleCriarOrcamento = (id: number) => {
+    navigate(`/orcamentos?view=novo&atendimentoId=${id}`);
   };
 
   const handleCarregarLogs = (id: number) => listarLogsAtendimento(id);
@@ -972,24 +1025,7 @@ export function AtendimentosAdminPage({
           cep: dados.cep || undefined,
         },
       };
-      const agendamento = await criarAgendamento(payload);
-      await atualizarStatusAtendimento(atendimentoId, 'CONCLUIDO');
-
-      try {
-        await criarOrcamentoAdmin({
-          atendimentoId,
-          visitaId: agendamento.id,
-          enderecoId: agendamento.enderecoId ?? undefined,
-          urgencia: atendimento?.urgencia ?? 'NORMAL',
-          observacoes: atendimento?.descricao
-            ? `Gerado a partir do atendimento #${atendimentoId}: ${atendimento.descricao}`
-            : `Gerado a partir do atendimento #${atendimentoId}`,
-          atividades: [],
-        });
-      } catch (oErr) {
-        console.warn('[handleAgendarVisita] Falha ao criar orçamento em rascunho:', oErr);
-      }
-
+      await criarAgendamento(payload);
       await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
     } catch (err: unknown) {
       console.error('[handleAgendarVisita] error:', err);
@@ -1022,8 +1058,10 @@ export function AtendimentosAdminPage({
           onStatusChange={handleStatusInline}
           onCarregarLogs={handleCarregarLogs}
           onRegistrarLog={handleRegistrarLog}
-          podeAgendar
           onAgendarVisita={handleAgendarVisita}
+          onEncaminhar={handleEncaminhar}
+          onToggleVisitaSolicitada={handleToggleVisita}
+          onCriarOrcamento={handleCriarOrcamento}
         />
       )}
       {initialView === 'novo' && (
