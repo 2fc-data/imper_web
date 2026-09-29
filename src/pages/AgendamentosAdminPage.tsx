@@ -6,15 +6,21 @@ import {
   type AtendimentoItem,
   type AtendimentoLogItem,
   atualizarAgendamento,
+  atualizarAtendimento,
   atualizarStatusAgendamento,
+  atualizarVisita,
+  type AtualizarVisitaInput,
   buscarUsuarios,
   criarAgendamento,
-  criarAtendimento,
+  criarVisita,
+  encaminharParaOrcamento,
   getRotaAgendamento,
   listarAgendamentos,
   listarAtendimentos,
   listarLogsAtendimento,
+  listarVisitas,
   type MeuUser,
+  type ResultadoVisita,
   type RotaAgendamento,
   type StatusAgendamento,
   type TipoAgendamento,
@@ -43,6 +49,13 @@ const corStatus: Record<StatusAgendamento, string> = {
   REALIZADO: 'border-success/40 text-success',
   CANCELADO: 'border-destructive/40 text-destructive',
   NAO_COMPARECEU: 'border-destructive/40 text-destructive',
+};
+
+const rotulosResultado: Record<ResultadoVisita, string> = {
+  SEM_ACAO: 'Sem ação',
+  ORCAMENTO_NECESSARIO: 'Orçamento necessário',
+  OBRA_NECESSARIA: 'Obra necessária',
+  CLIENTE_AUSENTE: 'Cliente ausente',
 };
 
 function formatarData(iso: string | null | undefined): string {
@@ -230,6 +243,21 @@ export function AgendamentoList({
   const [obsSalvo, setObsSalvo] = useState(false);
   const [planejando, setPlanejando] = useState(false);
   const [planejarError, setPlanejarError] = useState<string | null>(null);
+  const [visitaEdit, setVisitaEdit] = useState<{
+    agendamentoId: number;
+    visitaId: number | null;
+  } | null>(null);
+  const [visitaStatus, setVisitaStatus] = useState<'REALIZADA' | 'CANCELADA'>(
+    'REALIZADA',
+  );
+  const [visitaResultado, setVisitaResultado] =
+    useState<ResultadoVisita>('SEM_ACAO');
+  const [visitaConstatacao, setVisitaConstatacao] = useState('');
+  const [visitaRelatorio, setVisitaRelatorio] = useState('');
+  const [necessitaOrcamento, setNecessitaOrcamento] = useState(false);
+  const [necessitaObra, setNecessitaObra] = useState(false);
+  const [visitaSaving, setVisitaSaving] = useState(false);
+  const [visitaErro, setVisitaErro] = useState<string | null>(null);
   const expandidoIdRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
@@ -247,6 +275,8 @@ export function AgendamentoList({
     setObsSalvo(false);
     setPlanejando(false);
     setPlanejarError(null);
+    setVisitaEdit(null);
+    setVisitaErro(null);
     const item = agendamentos.find((a) => a.id === id);
     setObsDraft(item?.observacoes ?? '');
     setExtras({
@@ -291,31 +321,25 @@ export function AgendamentoList({
 
   const handlePlanejarOrcamento = async (item: AgendamentoItem) => {
     if (planejando) return;
+    if (!item.atendimentoId) {
+      setPlanejarError('Agendamento sem atendimento vinculado');
+      return;
+    }
+    const atendimentoId = item.atendimentoId;
     setPlanejando(true);
     setPlanejarError(null);
     try {
-      // "Novo Agendamento" nunca envia atendimentoId: cria e vincula um
-      // atendimento do cliente antes de abrir o wizard (dropdown depende do vínculo).
-      let atendimentoId = item.atendimentoId;
-      if (!atendimentoId) {
-        if (!item.userId) {
-          throw new Error('Agendamento sem cliente vinculado.');
-        }
-        const atendimento = await criarAtendimento({
-          userId: item.userId,
-          canal: 'LOJA',
-          descricao: `Criado ao planejar orçamento do agendamento #${item.id} (${rotulosTipo[item.tipo] ?? item.tipo}).`,
-        });
-        await atualizarAgendamento(item.id, {
-          atendimentoId: atendimento.id,
-        });
-        atendimentoId = atendimento.id;
-      }
       const dataRealizada =
         item.status !== 'REALIZADO' && !item.dataRealizada
           ? new Date().toISOString()
           : undefined;
       await atualizarStatusAgendamento(item.id, 'REALIZADO', dataRealizada);
+      // Gate 3: sem visita realizada, zera a flag para não travar o funil.
+      const visitas = await listarVisitas({ atendimentoId });
+      if (!visitas.some((v) => v.status === 'REALIZADA')) {
+        await atualizarAtendimento(atendimentoId, { visitaSolicitada: false });
+      }
+      await encaminharParaOrcamento(atendimentoId);
       await onRecarregar();
       navigate(`/orcamentos?view=novo&atendimentoId=${atendimentoId}`);
     } catch (e) {
@@ -323,6 +347,51 @@ export function AgendamentoList({
         e instanceof Error ? e.message : 'Erro ao planejar orçamento',
       );
       setPlanejando(false);
+    }
+  };
+
+  const abrirVisita = (item: AgendamentoItem) => {
+    const visita = item.visita;
+    setVisitaErro(null);
+    setVisitaStatus('REALIZADA');
+    setVisitaResultado(visita?.resultado ?? 'SEM_ACAO');
+    setVisitaConstatacao(visita?.constatacao ?? '');
+    setVisitaRelatorio(visita?.relatorio ?? '');
+    setNecessitaOrcamento(visita?.necessitaOrcamento ?? false);
+    setNecessitaObra(visita?.necessitaObra ?? false);
+    setVisitaEdit({
+      agendamentoId: item.id,
+      visitaId: visita?.id ?? null,
+    });
+  };
+
+  const confirmarVisita = async () => {
+    if (!visitaEdit || visitaSaving) return;
+    setVisitaSaving(true);
+    setVisitaErro(null);
+    try {
+      let visitaId = visitaEdit.visitaId;
+      if (visitaId == null) {
+        const visita = await criarVisita({
+          agendamentoId: visitaEdit.agendamentoId,
+        });
+        visitaId = visita.id;
+      }
+      const patch: AtualizarVisitaInput = { status: visitaStatus };
+      if (visitaStatus === 'REALIZADA') {
+        patch.resultado = visitaResultado;
+        patch.constatacao = visitaConstatacao;
+        patch.relatorio = visitaRelatorio;
+        patch.necessitaOrcamento = necessitaOrcamento;
+        patch.necessitaObra = necessitaObra;
+      }
+      await atualizarVisita(visitaId, patch);
+      setVisitaEdit(null);
+      await onRecarregar();
+    } catch (e) {
+      setVisitaErro(e instanceof Error ? e.message : 'Erro ao registrar visita');
+    } finally {
+      setVisitaSaving(false);
     }
   };
 
@@ -638,6 +707,191 @@ export function AgendamentoList({
                                   <p className="text-xs text-destructive">
                                     {planejarError}
                                   </p>
+                                )}
+                              </div>
+                            )}
+                            {item.status !== 'CANCELADO' && (
+                              <div className="space-y-1">
+                                <div className="font-semibold text-foreground text-sm">
+                                  Visita técnica
+                                </div>
+                                {item.visita &&
+                                item.visita.status !== 'AGENDADA' ? (
+                                  <div className="space-y-0.5 text-muted-foreground">
+                                    <p>
+                                      <span className="font-medium text-foreground">
+                                        Status:
+                                      </span>{' '}
+                                      {item.visita.status === 'REALIZADA'
+                                        ? 'Realizada'
+                                        : 'Cancelada'}
+                                      {item.visita.dataRealizada
+                                        ? ` em ${formatarData(item.visita.dataRealizada)}`
+                                        : ''}
+                                    </p>
+                                    {item.visita.resultado && (
+                                      <p>
+                                        Resultado:{' '}
+                                        {
+                                          rotulosResultado[
+                                            item.visita.resultado
+                                          ]
+                                        }
+                                      </p>
+                                    )}
+                                    {item.visita.constatacao && (
+                                      <p>{item.visita.constatacao}</p>
+                                    )}
+                                  </div>
+                                ) : visitaEdit?.agendamentoId === item.id ? (
+                                  <div className="space-y-1.5 rounded border border-border/60 bg-background/60 p-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <label className="text-[11px] font-medium text-foreground">
+                                        Situação
+                                      </label>
+                                      <select
+                                        value={visitaStatus}
+                                        onChange={(e) =>
+                                          setVisitaStatus(
+                                            e.target.value as
+                                              | 'REALIZADA'
+                                              | 'CANCELADA',
+                                          )
+                                        }
+                                        disabled={visitaSaving}
+                                        className="rounded border border-input bg-background px-1.5 py-1 text-xs"
+                                      >
+                                        <option value="REALIZADA">
+                                          Visita realizada
+                                        </option>
+                                        <option value="CANCELADA">
+                                          Visita cancelada
+                                        </option>
+                                      </select>
+                                    </div>
+                                    {visitaStatus === 'REALIZADA' && (
+                                      <>
+                                        <select
+                                          value={visitaResultado}
+                                          onChange={(e) =>
+                                            setVisitaResultado(
+                                              e.target.value as ResultadoVisita,
+                                            )
+                                          }
+                                          disabled={visitaSaving}
+                                          className="w-full rounded border border-input bg-background px-1.5 py-1 text-xs"
+                                        >
+                                          {(
+                                            Object.entries(
+                                              rotulosResultado,
+                                            ) as [ResultadoVisita, string][]
+                                          ).map(([valor, rotulo]) => (
+                                            <option key={valor} value={valor}>
+                                              {rotulo}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <textarea
+                                          rows={2}
+                                          value={visitaConstatacao}
+                                          onChange={(e) =>
+                                            setVisitaConstatacao(
+                                              e.target.value,
+                                            )
+                                          }
+                                          maxLength={1000}
+                                          disabled={visitaSaving}
+                                          placeholder="Constatação..."
+                                          className="w-full rounded border bg-background px-2 py-1.5 text-xs text-foreground"
+                                        />
+                                        <textarea
+                                          rows={2}
+                                          value={visitaRelatorio}
+                                          onChange={(e) =>
+                                            setVisitaRelatorio(e.target.value)
+                                          }
+                                          maxLength={2000}
+                                          disabled={visitaSaving}
+                                          placeholder="Relatório..."
+                                          className="w-full rounded border bg-background px-2 py-1.5 text-xs text-foreground"
+                                        />
+                                        <div className="flex flex-wrap gap-3">
+                                          <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                            <input
+                                              type="checkbox"
+                                              checked={necessitaOrcamento}
+                                              onChange={(e) =>
+                                                setNecessitaOrcamento(
+                                                  e.target.checked,
+                                                )
+                                              }
+                                              disabled={visitaSaving}
+                                              className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
+                                            />
+                                            Orçamento necessário
+                                          </label>
+                                          <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                                            <input
+                                              type="checkbox"
+                                              checked={necessitaObra}
+                                              onChange={(e) =>
+                                                setNecessitaObra(
+                                                  e.target.checked,
+                                                )
+                                              }
+                                              disabled={visitaSaving}
+                                              className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-primary"
+                                            />
+                                            Obra necessária
+                                          </label>
+                                        </div>
+                                      </>
+                                    )}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => void confirmarVisita()}
+                                        disabled={visitaSaving}
+                                        className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                                      >
+                                        {visitaSaving
+                                          ? 'Salvando…'
+                                          : visitaEdit.visitaId == null
+                                            ? 'Confirmar visita'
+                                            : 'Salvar resultado'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setVisitaEdit(null)}
+                                        disabled={visitaSaving}
+                                        className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                                      >
+                                        Cancelar
+                                      </button>
+                                      {visitaErro && (
+                                        <span className="text-xs text-destructive">
+                                          {visitaErro}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => abrirVisita(item)}
+                                      className="rounded-md border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                                    >
+                                      {item.visita
+                                        ? 'Atualizar resultado'
+                                        : 'Registrar visita'}
+                                    </button>
+                                    <p className="text-muted-foreground text-[11px]">
+                                      {item.visita
+                                        ? 'Aguardando resultado da visita agendada.'
+                                        : 'Cria a visita e registra o resultado.'}
+                                    </p>
+                                  </div>
                                 )}
                               </div>
                             )}
