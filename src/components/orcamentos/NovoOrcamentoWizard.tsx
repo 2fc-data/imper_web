@@ -79,8 +79,20 @@ export function mensagemDeErro(err: unknown): string {
 }
 
 /** Wizard de 4 passos para criar/editar orçamentos (T14/T15). */
-export function NovoOrcamentoWizard({ onSalvo, onCancel, orcamentoEdicao }: Props) {
-  const [state, setState] = useState<WizardState>(() => estadoInicialWizard());
+export function NovoOrcamentoWizard({
+  onSalvo,
+  onCancel,
+  orcamentoEdicao,
+  atendimentoTravado,
+}: Props) {
+  const [state, setState] = useState<WizardState>(() =>
+    estadoInicialWizard(
+      atendimentoTravado != null && !orcamentoEdicao
+        ? { atendimentoId: atendimentoTravado }
+        : undefined,
+    ),
+  );
+  const [listaAtendimentosVazia, setListaAtendimentosVazia] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -94,6 +106,16 @@ export function NovoOrcamentoWizard({ onSalvo, onCancel, orcamentoEdicao }: Prop
     (fn) => setState((s) => fn(s)),
     [],
   );
+
+  const aoMudarListaVazia = useCallback((vazio: boolean) => {
+    setListaAtendimentosVazia(vazio);
+  }, []);
+
+  // Sem agendamento realizado não há opções de atendimento para escolher.
+  const erroSemAtendimento = () =>
+    state.passo === 1 && listaAtendimentosVazia
+      ? 'Nenhum atendimento disponível. Atualize o status do agendamento para "Realizado" (checkbox Planejar orçamento) para liberar a criação do orçamento.'
+      : null;
 
   const status = orcamentoEdicao?.status ?? null;
   const podeEditar = status === null || status === 'RASCUNHO' || status === 'ENVIADO';
@@ -182,6 +204,11 @@ export function NovoOrcamentoWizard({ onSalvo, onCancel, orcamentoEdicao }: Prop
       setState((s) => ({ ...s, passo: destino }));
       return;
     }
+    const erroBloqueio = erroSemAtendimento();
+    if (erroBloqueio) {
+      setErro(erroBloqueio);
+      return;
+    }
     const erroAte = validarAte(state, destino);
     if (erroAte) {
       setErro(erroAte);
@@ -192,6 +219,11 @@ export function NovoOrcamentoWizard({ onSalvo, onCancel, orcamentoEdicao }: Prop
   };
 
   const proximo = () => {
+    const erroBloqueio = erroSemAtendimento();
+    if (erroBloqueio) {
+      setErro(erroBloqueio);
+      return;
+    }
     const erroAte = validarAte(state, (state.passo + 1) as PassoWizard);
     if (erroAte) {
       setErro(erroAte);
@@ -304,7 +336,11 @@ export function NovoOrcamentoWizard({ onSalvo, onCancel, orcamentoEdicao }: Prop
       {/* passo ativo */}
       <div>
         {state.passo === 1 ? (
-          <PassoClienteServico state={state} set={set} />
+          <PassoClienteServico
+            state={state}
+            set={set}
+            onListaVaziaChange={aoMudarListaVazia}
+          />
         ) : null}
         {state.passo === 2 ? <PassoCobertura state={state} set={set} /> : null}
         {state.passo === 3 ? (
