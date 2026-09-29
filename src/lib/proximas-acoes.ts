@@ -24,14 +24,13 @@ export function montarAcoesAtendimento(item: AtendimentoItem): AcaoUI[] {
   for (const acao of item.proximasAcoes ?? []) {
     switch (acao) {
       case 'MUDAR_STATUS:EM_ANDAMENTO':
-        acoes.push({
-          label:
-            item.status === 'ORCAMENTAMENTO'
-              ? 'Atendimento em andamento'
-              : 'Iniciar atendimento',
-          status: 'EM_ANDAMENTO',
-          tone: 'primary',
-        });
+        if (item.status === 'ORCAMENTAMENTO') {
+          acoes.push({
+            label: 'Atendimento em andamento',
+            status: 'EM_ANDAMENTO',
+            tone: 'primary',
+          });
+        }
         break;
       case 'MUDAR_STATUS:ORCAMENTAMENTO':
         if (item.status === 'NOVO') {

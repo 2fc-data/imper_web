@@ -25,21 +25,16 @@ function item(partial: Partial<AtendimentoItem>): AtendimentoItem {
 }
 
 describe('montarAcoesAtendimento', () => {
-  it('NOVO → Iniciar atendimento + Concluir + Inativar', () => {
+  it('NOVO → sem botão de iniciar, só Concluir + Inativar', () => {
     const acoes = montarAcoesAtendimento(
       item({
         status: 'NOVO',
         proximasAcoes: ['MUDAR_STATUS:EM_ANDAMENTO', 'ENCERRAR'],
       }),
     );
-    expect(acoes.map((a) => a.label)).toEqual([
-      'Iniciar atendimento',
-      'Concluir',
-      'Inativar',
-    ]);
-    expect(acoes[0]).toMatchObject({ status: 'EM_ANDAMENTO', tone: 'primary' });
-    expect(acoes[1]).toMatchObject({ status: 'CONCLUIDO', tone: 'success' });
-    expect(acoes[2]).toMatchObject({ status: 'INATIVO', tone: 'destructive' });
+    expect(acoes.map((a) => a.label)).toEqual(['Concluir', 'Inativar']);
+    expect(acoes[0]).toMatchObject({ status: 'CONCLUIDO', tone: 'success' });
+    expect(acoes[1]).toMatchObject({ status: 'INATIVO', tone: 'destructive' });
   });
 
   it('NOVO com MUDAR_STATUS:ORCAMENTAMENTO → Encaminhar p/ orçamento', () => {
