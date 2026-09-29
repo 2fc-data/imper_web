@@ -573,13 +573,6 @@ export function AtendimentoList({
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={fecharExpandido}
-                                className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-primary/10 hover:text-primary transition-colors"
-                              >
-                                Cancelar
-                              </button>
-                              <button
-                                type="button"
                                 onClick={() => salvarLog(item)}
                                 disabled={salvando}
                                 className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors disabled:opacity-50"
