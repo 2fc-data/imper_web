@@ -5,6 +5,7 @@ import type {
   StatusAtendimento,
   Urgencia,
 } from '../../schemas/index.js';
+import type { AcaoAtendimento } from '../proximas-acoes.js';
 
 export interface AtendimentoItem {
   id: number;
@@ -16,9 +17,11 @@ export interface AtendimentoItem {
   user?: { id: number; nome: string; telefone: string | null } | null;
   atendenteId: number | null;
   atendente?: { id: number; nome: string } | null;
+  visitaSolicitada: boolean;
+  proximasAcoes?: AcaoAtendimento[];
   createdAt: string;
   updatedAt: string;
-  _count?: { visitas: number; os: number };
+  _count?: { visitas: number; agendamentos: number };
 }
 
 export interface AtendimentoLogItem {
@@ -43,6 +46,7 @@ export interface CriarAtendimentoInput {
   urgencia?: Urgencia;
   descricao?: string;
   enderecoNovo?: DadosEndereco;
+  visitaSolicitada?: boolean;
 }
 
 export async function listarAtendimentos(params?: {
@@ -68,6 +72,13 @@ export async function listarAtendimentos(params?: {
   );
 }
 
+/** Detalhe de um atendimento (usado para exibir opção fora do filtro da lista). */
+export async function obterAtendimento(
+  id: number,
+): Promise<AtendimentoItem> {
+  return api.get<AtendimentoItem>(`/atendimentos/${id}`);
+}
+
 export async function criarAtendimento(
   input: CriarAtendimentoInput,
 ): Promise<AtendimentoItem> {
@@ -79,6 +90,21 @@ export async function atualizarStatusAtendimento(
   status: StatusAtendimento,
 ): Promise<AtendimentoItem> {
   return api.patch<AtendimentoItem>(`/atendimentos/${id}/status`, { status });
+}
+
+/** Atualiza `visitaSolicitada` do atendimento (flag da cascata). */
+export async function atualizarAtendimento(
+  id: number,
+  patch: { visitaSolicitada?: boolean },
+): Promise<AtendimentoItem> {
+  return api.patch<AtendimentoItem>(`/atendimentos/${id}`, patch);
+}
+
+/** Passo em cascata: NOVO → ORCAMENTAMENTO via encadeamento (também cria agendamento/visita quando necessário). */
+export async function encaminharParaOrcamento(
+  id: number,
+): Promise<AtendimentoItem> {
+  return api.post<AtendimentoItem>(`/atendimentos/${id}/encaminhar-orcamento`);
 }
 
 export async function listarLogsAtendimento(

@@ -4,6 +4,7 @@
 export type StatusAtendimento =
   | 'NOVO'
   | 'EM_ANDAMENTO'
+  | 'ORCAMENTAMENTO'
   | 'CONCLUIDO'
   | 'INATIVO';
 
@@ -46,6 +47,8 @@ export type ResultadoVisita =
   | 'ORCAMENTO_NECESSARIO'
   | 'OBRA_NECESSARIA'
   | 'CLIENTE_AUSENTE';
+
+export type StatusVisita = 'AGENDADA' | 'REALIZADA' | 'CANCELADA';
 
 export type StatusManutencao =
   | 'PENDENTE'

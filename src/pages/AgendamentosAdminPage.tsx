@@ -3,13 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
+  type AtendimentoItem,
   type AtendimentoLogItem,
   atualizarAgendamento,
   atualizarStatusAgendamento,
   buscarUsuarios,
   criarAgendamento,
+  criarAtendimento,
   getRotaAgendamento,
   listarAgendamentos,
+  listarAtendimentos,
   listarLogsAtendimento,
   type MeuUser,
   type RotaAgendamento,
@@ -291,16 +294,30 @@ export function AgendamentoList({
     setPlanejando(true);
     setPlanejarError(null);
     try {
+      // "Novo Agendamento" nunca envia atendimentoId: cria e vincula um
+      // atendimento do cliente antes de abrir o wizard (dropdown depende do vínculo).
+      let atendimentoId = item.atendimentoId;
+      if (!atendimentoId) {
+        if (!item.userId) {
+          throw new Error('Agendamento sem cliente vinculado.');
+        }
+        const atendimento = await criarAtendimento({
+          userId: item.userId,
+          canal: 'LOJA',
+          descricao: `Criado ao planejar orçamento do agendamento #${item.id} (${rotulosTipo[item.tipo] ?? item.tipo}).`,
+        });
+        await atualizarAgendamento(item.id, {
+          atendimentoId: atendimento.id,
+        });
+        atendimentoId = atendimento.id;
+      }
       const dataRealizada =
         item.status !== 'REALIZADO' && !item.dataRealizada
           ? new Date().toISOString()
           : undefined;
       await atualizarStatusAgendamento(item.id, 'REALIZADO', dataRealizada);
       await onRecarregar();
-      const qs = item.atendimentoId
-        ? `?view=novo&atendimentoId=${item.atendimentoId}`
-        : '?view=novo';
-      navigate(`/orcamentos${qs}`);
+      navigate(`/orcamentos?view=novo&atendimentoId=${atendimentoId}`);
     } catch (e) {
       setPlanejarError(
         e instanceof Error ? e.message : 'Erro ao planejar orçamento',
@@ -712,6 +729,12 @@ export function NovoAgendamentoForm({
   const [tipo, setTipo] = useState<TipoAgendamento>('VISITA');
   const [dataPrevista, setDataPrevista] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [atendimentosCandidatos, setAtendimentosCandidatos] = useState<
+    AtendimentoItem[]
+  >([]);
+  const [atendimentoIdSelecionado, setAtendimentoIdSelecionado] = useState<
+    number | null
+  >(null);
 
   const [sugestoes, setSugestoes] = useState<MeuUser[]>([]);
   const [buscandoUsuarios, setBuscandoUsuarios] = useState(false);
@@ -767,6 +790,41 @@ export function NovoAgendamentoForm({
     };
   }, []);
 
+  // Atendimentos elegíveis do cliente selecionado (não-terminal com ações
+  // pendentes de agendamento/visita).
+  useEffect(() => {
+    let vivo = true;
+    if (userIdSelecionado == null) {
+      setAtendimentosCandidatos([]);
+      setAtendimentoIdSelecionado(null);
+      return;
+    }
+    listarAtendimentos()
+      .then((lista) => {
+        if (!vivo) return;
+        setAtendimentosCandidatos(
+          lista.filter(
+            (a) =>
+              a.userId === userIdSelecionado &&
+              (a.proximasAcoes ?? []).length > 0,
+          ),
+        );
+      })
+      .catch(() => {
+        if (vivo) setAtendimentosCandidatos([]);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [userIdSelecionado]);
+
+  const atendimentosDoTipo = atendimentosCandidatos.filter((a) => {
+    const acoes = a.proximasAcoes ?? [];
+    return tipo === 'VISITA'
+      ? acoes.includes('CRIAR_AGENDAMENTO')
+      : acoes.length > 0;
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -775,8 +833,12 @@ export function NovoAgendamentoForm({
       if (!userIdSelecionado) {
         throw new Error('Selecione um cliente cadastrado.');
       }
+      if (!atendimentoIdSelecionado) {
+        throw new Error('Selecione o atendimento vinculado.');
+      }
       await criarAgendamento({
         userId: userIdSelecionado,
+        atendimentoId: atendimentoIdSelecionado,
         tipo,
         dataPrevista: new Date(dataPrevista).toISOString(),
         observacoes: observacoes || undefined,
@@ -881,6 +943,36 @@ export function NovoAgendamentoForm({
             <option value="RETORNO">Retorno</option>
             <option value="REUNIAO">Reunião</option>
           </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className={campoLabel}>Atendimento *</label>
+          <select
+            value={atendimentoIdSelecionado ?? ''}
+            onChange={(e) =>
+              setAtendimentoIdSelecionado(
+                e.target.value ? Number(e.target.value) : null,
+              )
+            }
+            className={campoInput}
+            required
+          >
+            <option value="">
+              {atendimentosDoTipo.length === 0
+                ? 'Nenhum atendimento disponível…'
+                : 'Selecionar atendimento…'}
+            </option>
+            {atendimentosDoTipo.map((a) => (
+              <option key={a.id} value={a.id}>
+                #{a.id} — {a.user?.nome ?? '—'} · {a.descricao ?? a.canal}
+              </option>
+            ))}
+          </select>
+          {atendimentosDoTipo.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              Nenhum atendimento aberto para este cliente.
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">

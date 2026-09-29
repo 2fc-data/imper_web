@@ -15,6 +15,7 @@ export type {
   StatusMaterial,
   StatusOrcamento,
   StatusOS,
+  StatusVisita,
   TipoAgendamento,
   TipoItemServico,
   TipoMaterial,

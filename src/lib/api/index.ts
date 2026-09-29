@@ -83,6 +83,7 @@ export type {
   StatusMaterial,
   StatusOrcamento,
   StatusOS,
+  StatusVisita,
   TipoAgendamento,
   TipoItemServico,
   TipoMaterial,
@@ -128,8 +129,11 @@ export type {
 // Atendimentos
 export {
   listarAtendimentos,
+  obterAtendimento,
   criarAtendimento,
   atualizarStatusAtendimento,
+  atualizarAtendimento,
+  encaminharParaOrcamento,
   listarLogsAtendimento,
   registrarLogAtendimento,
 } from './atendimentos.js';
@@ -138,6 +142,18 @@ export type {
   AtendimentoLogItem,
   CriarAtendimentoInput,
 } from './atendimentos.js';
+
+// Visitas
+export {
+  listarVisitas,
+  criarVisita,
+  atualizarVisita,
+} from './visitas.js';
+export type {
+  VisitaItem,
+  CriarVisitaInput,
+  AtualizarVisitaInput,
+} from './visitas.js';
 
 // Orcamentos Admin
 export {

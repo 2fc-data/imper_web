@@ -5,6 +5,7 @@ import type {
   Urgencia,
   DadosEndereco,
 } from '../../schemas/index.js';
+import type { VisitaItem } from './visitas.js';
 
 export interface EnderecoItem {
   id: number;
@@ -22,7 +23,7 @@ export interface EnderecoItem {
 export interface AgendamentoItem {
   id: number;
   userId: number;
-  atendimentoId: number | null;
+  atendimentoId: number;
   enderecoId: number | null;
   tipo: TipoAgendamento;
   status: StatusAgendamento;
@@ -40,11 +41,12 @@ export interface AgendamentoItem {
     descricao: string;
     urgencia?: Urgencia | null;
   } | null;
+  visita?: VisitaItem | null;
 }
 
 export interface CriarAgendamentoInput {
   userId: number;
-  atendimentoId?: number | null;
+  atendimentoId: number;
   enderecoId?: number | null;
   tipo?: TipoAgendamento;
   status?: StatusAgendamento;
