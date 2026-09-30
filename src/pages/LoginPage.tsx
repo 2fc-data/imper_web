@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
-import { BackToLogin } from '../components/auth/BackToLogin';
+import { BackToHome } from '../components/auth/BackToHome';
 import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
@@ -97,15 +97,18 @@ export default function LoginPage() {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Não tem conta?{' '}
-            <Link
-              to="/cadastro"
-              className="font-semibold text-primary transition-colors hover:underline underline-offset-4"
-            >
-              Criar conta
-            </Link>
-          </p>
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <p className="text-center text-sm text-muted-foreground">
+              Não tem conta?{' '}
+              <Link
+                to="/cadastro"
+                className="font-semibold text-primary transition-colors hover:underline underline-offset-4"
+              >
+                Criar conta
+              </Link>
+            </p>
+            <BackToHome className="w-full text-xs" />
+          </div>
         </CardContent>
       </Card>
     </AuthShell>

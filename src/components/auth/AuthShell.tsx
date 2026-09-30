@@ -20,7 +20,7 @@ function BackHomeLink() {
   return (
     <Link
       to="/"
-      className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/10"
+      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-all hover:bg-primary/10 hover:text-primary focus-gold"
     >
       <svg
         viewBox="0 0 24 24"
@@ -29,7 +29,7 @@ function BackHomeLink() {
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-4 w-4"
+        className="h-4 w-4 text-primary"
         aria-hidden="true"
       >
         <path d="M19 12H5M12 19l-7-7 7-7" />
