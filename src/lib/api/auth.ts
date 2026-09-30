@@ -44,6 +44,6 @@ export async function redefinirSenha(
 ): Promise<{ ok: boolean }> {
   return api.post<{ ok: boolean }>('/auth/redefinir-senha', {
     token,
-    novaSenha,
+    senha: novaSenha,
   });
 }
