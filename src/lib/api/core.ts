@@ -5,6 +5,7 @@ export interface LoginResponse {
     nome: string;
     email: string;
     papel: string;
+    papeis: string[];
     permissoes: string[];
   };
 }
