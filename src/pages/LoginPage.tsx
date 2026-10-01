@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
 import { BackToHome } from '../components/auth/BackToHome';
+import { homeFor } from '../lib/nav';
 import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
@@ -29,9 +30,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const authed = await login(email, senha);
-      navigate(authed.permissoes.length === 0 ? '/portal' : '/painel', {
-        replace: true,
-      });
+      navigate(homeFor(authed), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha no login');
     } finally {

@@ -180,14 +180,14 @@ function ProtectedLayout({
   }
 
   if (onlyNoPermissions && user.permissoes.length > 0) {
-    return <Navigate to={homeFor(user.permissoes)} replace />;
+    return <Navigate to={homeFor(user)} replace />;
   }
 
   if (
     requiredPermissions &&
     !requiredPermissions.some((p) => user.permissoes.includes(p))
   ) {
-    return <Navigate to={homeFor(user.permissoes)} replace />;
+    return <Navigate to={homeFor(user)} replace />;
   }
 
   return <AdminLayout sidebar={sidebar}>{children}</AdminLayout>;
@@ -557,14 +557,14 @@ function ExecucaoDashboardRoute() {
 function GuestsOnly({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to={homeFor(user.permissoes)} replace />;
+  if (user) return <Navigate to={homeFor(user)} replace />;
   return <>{children}</>;
 }
 
 function CatchAllRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return <Navigate to={user ? homeFor(user.permissoes) : '/login'} replace />;
+  return <Navigate to={user ? homeFor(user) : '/login'} replace />;
 }
 
 export default function App() {

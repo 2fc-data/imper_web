@@ -17,6 +17,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { PhoneInput } from '../components/ui/phone-input';
 import { EmailInput } from '../components/ui/email-input';
+import { homeFor } from '../lib/nav';
 
 export default function RegisterPage() {
   const { cadastrar } = useAuth();
@@ -41,9 +42,7 @@ export default function RegisterPage() {
         senha,
         turnstileToken: turnstileToken || undefined,
       });
-      navigate(authed.permissoes.length === 0 ? '/portal' : '/', {
-        replace: true,
-      });
+      navigate(homeFor(authed), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha no cadastro');
     } finally {
