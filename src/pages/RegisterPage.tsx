@@ -41,7 +41,7 @@ export default function RegisterPage() {
         senha,
         turnstileToken: turnstileToken || undefined,
       });
-      navigate(authed.permissoes.length === 0 ? '/minha-conta' : '/', {
+      navigate(authed.permissoes.length === 0 ? '/portal' : '/', {
         replace: true,
       });
     } catch (err) {

@@ -29,7 +29,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const authed = await login(email, senha);
-      navigate(authed.permissoes.length === 0 ? '/minha-conta' : '/painel', {
+      navigate(authed.permissoes.length === 0 ? '/portal' : '/painel', {
         replace: true,
       });
     } catch (err) {

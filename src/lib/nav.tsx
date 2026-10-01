@@ -191,7 +191,7 @@ export const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    to: '/minha-conta',
+    to: '/portal/dados',
     label: 'Minha conta',
     icon: (
       <Icon d="M16 11a1 1 0 01-1 1H9a1 1 0 01-1-1V8a1 1 0 011-1h6a1 1 0 011 1v3zM12 3a3 3 0 100 6 3 3 0 000-6zM8 21v-2a4 4 0 018 0v2" />
@@ -218,7 +218,7 @@ export function itensPara(permissoes: string[]): NavItem[] {
 }
 
 export function homeFor(permissoes: string[]): string {
-  return permissoes.length === 0 ? '/minha-conta' : '/painel';
+  return permissoes.length === 0 ? '/portal' : '/painel';
 }
 
 export function iniciais(nome: string | undefined): string {

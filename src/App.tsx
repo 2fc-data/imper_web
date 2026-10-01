@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-rou
 import { useAuth } from './auth/AuthContext';
 import { LandingLayout } from './components/landing/LandingLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
+import { PortalLayout } from './components/layout/PortalLayout';
 import {
   AgendamentosSidebar,
   AlmoxarifeSidebar,
@@ -54,7 +55,6 @@ const LandingContent = lazy(() => import('./pages/LandingContent'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const ManutencoesAdminPage = lazy(() => import('./pages/ManutencoesAdminPage'));
 const MateriaisAdminPage = lazy(() => import('./pages/MateriaisAdminPage'));
-const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage'));
 const OrcamentoPage = lazy(() => import('./pages/OrcamentoPage'));
 const OrcamentosAdminPage = lazy(() =>
   import('./pages/OrcamentosAdminPage').then((m) => ({
@@ -63,6 +63,27 @@ const OrcamentosAdminPage = lazy(() =>
 );
 const OSAdminPage = lazy(() =>
   import('./pages/OSAdminPage').then((m) => ({ default: m.OSAdminPage })),
+);
+const PortalHomePage = lazy(() => import('./pages/portal/PortalHomePage'));
+const PortalDadosPage = lazy(() => import('./pages/portal/PortalDadosPage'));
+const PortalAtendimentosPage = lazy(
+  () => import('./pages/portal/PortalAtendimentosPage'),
+);
+const PortalAtendimentoDetalhePage = lazy(
+  () => import('./pages/portal/PortalAtendimentoDetalhePage'),
+);
+const PortalAgendamentosPage = lazy(
+  () => import('./pages/portal/PortalAgendamentosPage'),
+);
+const PortalOrcamentosPage = lazy(
+  () => import('./pages/portal/PortalOrcamentosPage'),
+);
+const PortalOrcamentoDetalhePage = lazy(
+  () => import('./pages/portal/PortalOrcamentoDetalhePage'),
+);
+const PortalOsPage = lazy(() => import('./pages/portal/PortalOsPage'));
+const PortalOsDetalhePage = lazy(
+  () => import('./pages/portal/PortalOsDetalhePage'),
 );
 const RbacAdminPage = lazy(() => import('./pages/RbacAdminPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
@@ -657,14 +678,18 @@ export default function App() {
         <Route element={<MovimentacaoRoute />} path="/movimentacoes" />
         <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
         <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
-        <Route
-          element={
-            <ProtectedLayout onlyNoPermissions>
-              <MinhaContaPage />
-            </ProtectedLayout>
-          }
-          path="/minha-conta"
-        />
+        <Route element={<Navigate to="/portal/dados" replace />} path="/minha-conta" />
+        <Route path="/portal" element={<PortalLayout />}>
+          <Route index element={<PortalHomePage />} />
+          <Route path="dados" element={<PortalDadosPage />} />
+          <Route path="atendimentos" element={<PortalAtendimentosPage />} />
+          <Route path="atendimentos/:id" element={<PortalAtendimentoDetalhePage />} />
+          <Route path="agendamentos" element={<PortalAgendamentosPage />} />
+          <Route path="orcamentos" element={<PortalOrcamentosPage />} />
+          <Route path="orcamentos/:id" element={<PortalOrcamentoDetalhePage />} />
+          <Route path="os" element={<PortalOsPage />} />
+          <Route path="os/:id" element={<PortalOsDetalhePage />} />
+        </Route>
         <Route path="*" element={<CatchAllRedirect />} />
       </Routes>
       </Suspense>
