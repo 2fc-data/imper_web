@@ -116,6 +116,11 @@ const ExecucaoDashboardPage = lazy(() =>
     default: m.ExecucaoDashboardPage,
   })),
 );
+const EscolherPerfilPage = lazy(() =>
+  import('./pages/EscolherPerfilPage').then((m) => ({
+    default: m.EscolherPerfilPage,
+  })),
+);
 
 function PageFallback() {
   return (
@@ -604,6 +609,7 @@ export default function App() {
             </GuestsOnly>
           }
         />
+        <Route element={<EscolherPerfilPage />} path="/escolher-perfil" />
         <Route element={<UsuariosRoute />} path="/usuarios" />
         <Route element={<ServicosRoute />} path="/servicos-admin" />
         <Route element={<RbacRoute />} path="/rbac" />
