@@ -14,8 +14,30 @@ export {
   cadastrar,
   recuperarSenha,
   redefinirSenha,
+  alterarSenha,
 } from './auth.js';
 export type { CadastroInput } from './auth.js';
+
+// Portal
+export {
+  listarAtendimentosPortal,
+  obterAtendimentoPortal,
+  listarAgendamentosPortal,
+  listarOrcamentosPortal,
+  obterOrcamentoPortal,
+  listarOsPortal,
+  obterOsPortal,
+  atualizarPerfil,
+} from './portal.js';
+export type {
+  PerfilAtualizado,
+  AtualizarPerfilInput,
+  AtendimentoPortalDetalhe,
+  OsPortalItem,
+  OsPortalDetalhe,
+  EtapaPortal,
+  AtividadePortal,
+} from './portal.js';
 
 // Usuarios
 export {
