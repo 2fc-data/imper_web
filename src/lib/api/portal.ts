@@ -1,7 +1,7 @@
 import type { AtendimentoItem, AtendimentoLogItem } from './atendimentos.js';
 import type { AgendamentoItem } from './agendamentos.js';
 import { api } from './core.js';
-import type { OrcamentoAdminItem } from './orcamentos-admin.js';
+import type { OrcamentoAdminDetalhe } from './orcamentos-admin.js';
 
 export interface PerfilAtualizado {
   id: number;
@@ -88,11 +88,11 @@ export function listarAgendamentosPortal(): Promise<AgendamentoItem[]> {
   return api.get('/portal/agendamentos');
 }
 
-export function listarOrcamentosPortal(): Promise<OrcamentoAdminItem[]> {
+export function listarOrcamentosPortal(): Promise<OrcamentoAdminDetalhe[]> {
   return api.get('/portal/orcamentos');
 }
 
-export function obterOrcamentoPortal(id: number): Promise<OrcamentoAdminItem> {
+export function obterOrcamentoPortal(id: number): Promise<OrcamentoAdminDetalhe> {
   return api.get(`/portal/orcamentos/${id}`);
 }
 
