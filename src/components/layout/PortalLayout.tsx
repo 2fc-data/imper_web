@@ -1,5 +1,6 @@
 import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { PerfilSwitcher } from '../PerfilSwitcher';
 
 export function PortalLayout() {
   const { user, loading, logout } = useAuth();
@@ -44,6 +45,7 @@ export function PortalLayout() {
           </NavLink>
         </nav>
         <div className="flex items-center gap-3 text-sm">
+          <PerfilSwitcher />
           <span className="hidden sm:inline">{user.nome}</span>
           <button
             type="button"
