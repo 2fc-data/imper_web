@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { homeFor } from './nav';
 
-const cliente = { papeis: ['CLIENTE'], permissoes: [] };
+const cliente = { papeis: ['CLIENTE'], permissoes: ['ver_minha_os'] };
 const staff = { papeis: ['TECNICO'], permissoes: ['criar_os'] };
-const misto = { papeis: ['CLIENTE', 'TECNICO'], permissoes: ['criar_os'] };
+const misto = {
+  papeis: ['CLIENTE', 'TECNICO'],
+  permissoes: ['ver_minha_os', 'criar_os'],
+};
 
 describe('homeFor', () => {
-  it('somente CLIENTE → /portal', () => {
+  it('somente CLIENTE → /portal mesmo com permissões do papel', () => {
     expect(homeFor(cliente)).toBe('/portal');
   });
 
@@ -18,8 +21,8 @@ describe('homeFor', () => {
     expect(homeFor(misto)).toBe('/painel');
   });
 
-  it('sem papéis e sem permissões → /portal', () => {
-    expect(homeFor({ permissoes: [] })).toBe('/portal');
+  it('sem papéis → /portal', () => {
+    expect(homeFor({ papeis: [] })).toBe('/portal');
   });
 
   it('chave antiga de preferência no localStorage é ignorada', () => {

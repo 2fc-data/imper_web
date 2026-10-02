@@ -179,6 +179,10 @@ function ProtectedLayout({
     return <Navigate to="/" replace />;
   }
 
+  if (user.papeis.every((nome) => nome === 'CLIENTE')) {
+    return <Navigate to="/portal" replace />;
+  }
+
   if (onlyNoPermissions && user.permissoes.length > 0) {
     return <Navigate to={homeFor(user)} replace />;
   }

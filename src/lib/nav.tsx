@@ -217,8 +217,9 @@ export function itensPara(permissoes: string[]): NavItem[] {
   }).filter(Boolean) as NavItem[];
 }
 
-export function homeFor(user: { permissoes: string[] }): string {
-  return user.permissoes.length > 0 ? '/painel' : '/portal';
+export function homeFor(user: { papeis: string[] }): string {
+  const temPainel = user.papeis.some((nome) => nome !== 'CLIENTE');
+  return temPainel ? '/painel' : '/portal';
 }
 
 export function iniciais(nome: string | undefined): string {

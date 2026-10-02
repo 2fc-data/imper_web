@@ -1,13 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
-export function opcoesSwitcher(user: {
-  papeis: string[];
-  permissoes: string[];
-}) {
+export function opcoesSwitcher(user: { papeis: string[] }) {
   return {
     portal: user.papeis.includes('CLIENTE'),
-    painel: user.permissoes.length > 0,
+    painel: user.papeis.some((nome) => nome !== 'CLIENTE'),
   };
 }
 
