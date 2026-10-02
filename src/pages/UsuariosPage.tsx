@@ -14,6 +14,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { PhoneInput } from '../components/ui/phone-input';
 import { EmailInput } from '../components/ui/email-input';
+import { MultiSelectPapeis } from '../components/MultiSelectPapeis';
 import {
   atualizarCargo,
   atualizarUsuario,
@@ -45,12 +46,20 @@ export function UsuariosAnalises({ usuarios }: UsuariosAnalisesProps) {
   const total = usuarios.length;
   const ativos = usuarios.filter((u) => u.ativo).length;
   const inativos = usuarios.filter((u) => !u.ativo).length;
-  const semPerfil = usuarios.filter((u) => u.papel === 'CLIENTE').length;
+  const semPerfil = usuarios.filter(
+    (u) =>
+      u.papeis.length === 0 ||
+      u.papeis.every((p) => p.nome === 'CLIENTE'),
+  ).length;
 
   const porPapel = usuarios.reduce(
     (acc, u) => {
-      const nome = u.papeis?.[0]?.nome ?? u.papel ?? 'Sem perfil';
-      acc[nome] = (acc[nome] || 0) + 1;
+      const nomes = u.papeis.length
+        ? u.papeis.map((p) => p.nome)
+        : ['Sem perfil'];
+      for (const nome of nomes) {
+        acc[nome] = (acc[nome] || 0) + 1;
+      }
       return acc;
     },
     {} as Record<string, number>,
@@ -179,7 +188,7 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [telefone, setTelefone] = useState('');
-  const [papelId, setPapelId] = useState<number>(0);
+  const [papelIds, setPapelIds] = useState<number[]>([]);
   const [cargoId, setCargoId] = useState<number | undefined>(undefined);
   const [papeis, setPapeis] = useState<PapelRbac[]>([]);
   const [cargos, setCargos] = useState<{ id: number; nome: string }[]>([]);
@@ -204,7 +213,7 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
       if (papeisResult) {
         setPapeis(papeisResult);
         const papelCliente = papeisResult.find((p) => p.nome === 'CLIENTE');
-        if (papelCliente) setPapelId(papelCliente.id);
+        if (papelCliente) setPapelIds([papelCliente.id]);
       }
       if (cargosResult) setCargos(cargosResult);
     });
@@ -213,6 +222,10 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!papelIds.length) {
+      setError('Selecione ao menos um perfil');
+      return;
+    }
     setSaving(true);
     try {
       await criarUsuario({
@@ -220,7 +233,7 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
         email: email || undefined,
         senha,
         telefone: telefone || undefined,
-        papelId,
+        papelIds,
         cargoId: cargoId ?? undefined,
         cpfCnpj: cpfCnpj || undefined,
         cep: cep || undefined,
@@ -450,24 +463,13 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="papel">Perfil de Acesso *</Label>
-                <select
-                  id="papel"
-                  value={papelId}
-                  onChange={(e) => setPapelId(Number(e.target.value))}
-                  className={selectClasses}
+                <Label htmlFor="papel">Perfis de Acesso *</Label>
+                <MultiSelectPapeis
+                  papeis={papeis}
+                  value={papelIds}
+                  onChange={setPapelIds}
                   disabled={saving}
-                  required
-                >
-                  <option value={0} disabled>
-                    Selecione...
-                  </option>
-                  {papeis.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {ROTULO_PAPEL[p.nome] ?? p.nome}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
@@ -507,7 +509,9 @@ function ModalEditarUsuario({
   const [nome, setNome] = useState(usuario.nome);
   const [email, setEmail] = useState(usuario.email ?? '');
   const [telefone, setTelefone] = useState(usuario.telefone ?? '');
-  const [papelId, setPapelId] = useState(usuario.papeis?.[0]?.id ?? 0);
+  const [papelIds, setPapelIds] = useState<number[]>(
+    usuario.papeis?.map((p) => p.id) ?? [],
+  );
   const [cargoId, setCargoId] = useState<number | undefined>(
     usuario.cargoId ?? undefined,
   );
@@ -531,7 +535,7 @@ function ModalEditarUsuario({
 
   async function handleSalvar(e: FormEvent) {
     e.preventDefault();
-    if (!papelId) return;
+    if (!papelIds.length) return;
     setSaving(true);
     setErr(null);
     try {
@@ -539,7 +543,7 @@ function ModalEditarUsuario({
         nome: nome.trim(),
         email: email.trim() || undefined,
         telefone: telefone.trim() || undefined,
-        papelId,
+        papelIds,
         cargoId: cargoId ?? null,
         ativo,
         ...(cep?.trim() && {
@@ -602,24 +606,13 @@ function ModalEditarUsuario({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="edit-papel">Perfil de Acesso *</Label>
-          <select
-            id="edit-papel"
-            value={papelId}
-            onChange={(e) => setPapelId(Number(e.target.value))}
-            className={selectClasses}
-            required
+          <Label htmlFor="edit-papel">Perfis de Acesso *</Label>
+          <MultiSelectPapeis
+            papeis={papeis}
+            value={papelIds}
+            onChange={setPapelIds}
             disabled={saving}
-          >
-            <option value={0} disabled>
-              Selecione...
-            </option>
-            {papeis.map((p) => (
-              <option key={p.id} value={p.id}>
-                {ROTULO_PAPEL[p.nome] ?? p.nome}
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="edit-cargo">Cargo</Label>
@@ -987,6 +980,7 @@ export default function UsuariosPage({
   const [busca, setBusca] = useState('');
   const [filtroLocal, setFiltroLocal] = useState<string>('CLIENTE');
   const [saving, setSaving] = useState<number | null>(null);
+  const [selecoes, setSelecoes] = useState<Record<number, number[]>>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const [editandoUsuario, setEditandoUsuario] = useState<Usuario | null>(null);
   const [cargos, setCargos] = useState<Cargo[]>([]);
@@ -1011,23 +1005,29 @@ export default function UsuariosPage({
     user?.permissoes?.includes('editar_usuario') ||
     user?.permissoes?.includes('definir_perfil');
 
-  async function handlePerfil(e: FormEvent<HTMLFormElement>, id: number) {
-    e.preventDefault();
+  function valorDe(u: Usuario): number[] {
+    return selecoes[u.id] ?? u.papeis.map((p) => p.id);
+  }
+
+  async function handleSalvarPerfil(id: number) {
+    const ids = selecoes[id];
+    if (!ids) return;
     setSaving(id);
     setError(null);
     try {
-      const form = e.currentTarget;
-      const select = form.elements.namedItem('papel') as HTMLSelectElement;
-      const atualizado = await definirPerfilUsuario(id, Number(select.value));
+      const atualizado = await definirPerfilUsuario(id, ids);
       setUsuarios((prev) =>
         prev.map((u) =>
-          u.id === atualizado.id
-            ? { ...u, papel: atualizado.papel, papeis: atualizado.papeis }
-            : u,
+          u.id === atualizado.id ? { ...u, papeis: atualizado.papeis } : u,
         ),
       );
+      setSelecoes((prev) => {
+        const novo = { ...prev };
+        delete novo[id];
+        return novo;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao definir perfil');
+      setError(err instanceof Error ? err.message : 'Falha ao salvar perfis');
     } finally {
       setSaving(null);
     }
@@ -1035,9 +1035,7 @@ export default function UsuariosPage({
 
   const filtrados = usuarios.filter(
     (u) =>
-      (!filtroLocal ||
-        u.papel === filtroLocal ||
-        u.papeis?.some((p) => p.nome === filtroLocal)) &&
+      (!filtroLocal || u.papeis?.some((p) => p.nome === filtroLocal)) &&
       (u.nome.toLowerCase().includes(busca.toLowerCase()) ||
         u.email.toLowerCase().includes(busca.toLowerCase())),
   );
@@ -1141,7 +1139,6 @@ export default function UsuariosPage({
                 </tr>
               ) : (
                 filtrados.map((u) => {
-                  const nomePapel = u.papeis?.[0]?.nome ?? u.papel;
                   return (
                     <tr
                       key={u.id}
@@ -1156,37 +1153,40 @@ export default function UsuariosPage({
                       </td>
                       <td className="px-4 py-3">
                         {podeDefinirPerfil ? (
-                          <form
-                            onSubmit={(e) => handlePerfil(e, u.id)}
-                            className="flex items-center gap-1"
-                          >
-                            <select
-                              name="papel"
-                              defaultValue={nomePapel}
-                              className="h-8 rounded border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          <div className="flex items-center gap-1">
+                            <MultiSelectPapeis
+                              papeis={papeis}
+                              value={valorDe(u)}
+                              onChange={(ids) =>
+                                setSelecoes((prev) => ({
+                                  ...prev,
+                                  [u.id]: ids,
+                                }))
+                              }
                               disabled={saving === u.id}
-                            >
-                              {papeis.map((p) => (
-                                <option key={p.id} value={p.nome}>
-                                  {ROTULO_PAPEL[p.nome] ?? p.nome}
-                                </option>
-                              ))}
-                            </select>
+                            />
                             <Button
-                              type="submit"
+                              type="button"
                               variant="ghost"
                               size="sm"
-                              disabled={saving === u.id}
-                              className="h-8 px-2 text-xs"
+                              disabled={
+                                saving === u.id || selecoes[u.id] === undefined
+                              }
+                              onClick={() => handleSalvarPerfil(u.id)}
                             >
-                              {saving === u.id ? '...' : 'Salvar'}
+                              {saving === u.id ? 'Salvando…' : 'Salvar'}
                             </Button>
-                          </form>
+                          </div>
                         ) : (
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badgetColor(nomePapel)}`}
-                          >
-                            {ROTULO_PAPEL[nomePapel] ?? nomePapel}
+                          <span className="flex flex-wrap gap-1">
+                            {u.papeis.map((p) => (
+                              <span
+                                key={p.id}
+                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${badgetColor(p.nome)}`}
+                              >
+                                {ROTULO_PAPEL[p.nome] ?? p.nome}
+                              </span>
+                            ))}
                           </span>
                         )}
                       </td>
