@@ -9,7 +9,7 @@ export const ROTULO_PAPEL: Record<string, string> = {
   COLABORADOR: 'Colaborador',
 };
 
-export function badcolor(nomePapel: string) {
+export function badgetColor(nomePapel: string) {
   switch (nomePapel) {
     case 'ADMIN':
       return 'bg-destructive/10 text-destructive';

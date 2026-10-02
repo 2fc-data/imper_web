@@ -27,7 +27,7 @@ import {
   type PapelRbac,
   type Usuario,
 } from '../lib/api';
-import { badcolor, ROTULO_PAPEL } from '../lib/papeis-ui';
+import { badgetColor, ROTULO_PAPEL } from '../lib/papeis-ui';
 
 function FormatoData({ value }: { value: string }) {
   return (

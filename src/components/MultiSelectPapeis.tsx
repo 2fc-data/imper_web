@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { PapelRbac } from '../lib/api/usuarios';
-import { badcolor, ROTULO_PAPEL } from '../lib/papeis-ui';
+import { badgetColor, ROTULO_PAPEL } from '../lib/papeis-ui';
 
 export function selecionarPapel(ids: number[], id: number): number[] {
   if (ids.includes(id)) {
@@ -40,7 +40,7 @@ export function MultiSelectPapeis({
           selecionados.map((p) => (
             <span
               key={p.id}
-              className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${badcolor(p.nome)}`}
+              className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${badgetColor(p.nome)}`}
             >
               {ROTULO_PAPEL[p.nome] ?? p.nome}
             </span>
