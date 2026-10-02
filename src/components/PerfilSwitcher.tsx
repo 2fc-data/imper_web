@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { salvarPerfilUltimo } from '../lib/nav';
 
 export function opcoesSwitcher(user: {
   papeis: string[];
@@ -24,7 +23,6 @@ export function PerfilSwitcher() {
   const ativo = location.pathname.startsWith('/painel') ? '/painel' : '/portal';
 
   function trocar(destino: '/portal' | '/painel') {
-    salvarPerfilUltimo(destino);
     navigate(destino);
   }
 

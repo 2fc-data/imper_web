@@ -217,28 +217,8 @@ export function itensPara(permissoes: string[]): NavItem[] {
   }).filter(Boolean) as NavItem[];
 }
 
-export const CHAVE_PERFIL_ULTIMO = 'imper_v02:perfil-ultimo';
-
-export function lerPerfilUltimo(): string | null {
-  return localStorage.getItem(CHAVE_PERFIL_ULTIMO);
-}
-
-export function salvarPerfilUltimo(perfil: '/portal' | '/painel'): void {
-  localStorage.setItem(CHAVE_PERFIL_ULTIMO, perfil);
-}
-
-export function homeFor(user: {
-  papeis: string[];
-  permissoes: string[];
-}): string {
-  const temPortal = user.papeis.includes('CLIENTE');
-  const temPainel = user.permissoes.length > 0;
-  if (!temPortal && !temPainel) return '/portal';
-  const salvo = lerPerfilUltimo();
-  if (salvo === '/painel' && temPainel) return '/painel';
-  if (salvo === '/portal' && temPortal) return '/portal';
-  if (temPortal && temPainel) return '/escolher-perfil';
-  return temPainel ? '/painel' : '/portal';
+export function homeFor(user: { permissoes: string[] }): string {
+  return user.permissoes.length > 0 ? '/painel' : '/portal';
 }
 
 export function iniciais(nome: string | undefined): string {

@@ -1,17 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  CHAVE_PERFIL_ULTIMO,
-  homeFor,
-  lerPerfilUltimo,
-  salvarPerfilUltimo,
-} from './nav';
+import { describe, expect, it } from 'vitest';
+import { homeFor } from './nav';
 
 const cliente = { papeis: ['CLIENTE'], permissoes: [] };
 const staff = { papeis: ['TECNICO'], permissoes: ['criar_os'] };
 const misto = { papeis: ['CLIENTE', 'TECNICO'], permissoes: ['criar_os'] };
-
-beforeEach(() => localStorage.clear());
-afterEach(() => localStorage.clear());
 
 describe('homeFor', () => {
   it('somente CLIENTE → /portal', () => {
@@ -22,33 +14,17 @@ describe('homeFor', () => {
     expect(homeFor(staff)).toBe('/painel');
   });
 
-  it('misto sem preferência → /escolher-perfil', () => {
-    expect(homeFor(misto)).toBe('/escolher-perfil');
-  });
-
-  it('misto com preferência /painel → /painel', () => {
-    salvarPerfilUltimo('/painel');
+  it('CLIENTE + outro perfil → /painel', () => {
     expect(homeFor(misto)).toBe('/painel');
   });
 
-  it('misto com preferência /portal → /portal', () => {
-    salvarPerfilUltimo('/portal');
-    expect(homeFor(misto)).toBe('/portal');
+  it('sem papéis e sem permissões → /portal', () => {
+    expect(homeFor({ permissoes: [] })).toBe('/portal');
   });
 
-  it('preferência ignorada quando o perfil não existe mais', () => {
-    salvarPerfilUltimo('/painel');
+  it('chave antiga de preferência no localStorage é ignorada', () => {
+    localStorage.setItem('imper_v02:perfil-ultimo', '/portal');
+    expect(homeFor(misto)).toBe('/painel');
     expect(homeFor(cliente)).toBe('/portal');
-    expect(homeFor(staff)).toBe('/painel');
-  });
-
-  it('valor inválido em misto → /escolher-perfil', () => {
-    localStorage.setItem(CHAVE_PERFIL_ULTIMO, '/outra');
-    expect(homeFor(misto)).toBe('/escolher-perfil');
-  });
-
-  it('roundtrip salvar/ler', () => {
-    salvarPerfilUltimo('/painel');
-    expect(lerPerfilUltimo()).toBe('/painel');
   });
 });
