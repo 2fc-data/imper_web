@@ -22,6 +22,7 @@ interface User {
   nome: string;
   email: string;
   papel: string;
+  papeis: string[];
   permissoes: string[];
 }
 
@@ -31,6 +32,7 @@ interface AuthContextValue {
   login: (email: string, senha: string) => Promise<User>;
   cadastrar: (input: CadastroInput) => Promise<User>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -68,9 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const me = await fetchMe();
+    setUser(me);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, login, cadastrar, logout }),
-    [user, loading, login, cadastrar, logout],
+    () => ({ user, loading, login, cadastrar, logout, refreshUser }),
+    [user, loading, login, cadastrar, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

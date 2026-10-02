@@ -12,7 +12,6 @@ export interface Usuario {
   nome: string;
   email: string;
   telefone: string | null;
-  papel: string;
   papeis: PapelRbac[];
   ativo: boolean;
   cargoId: number | null;
@@ -41,9 +40,9 @@ export async function listarPapeis(): Promise<PapelRbac[]> {
 
 export async function definirPerfilUsuario(
   id: number,
-  papelId: number,
+  papelIds: number[],
 ): Promise<Usuario> {
-  return api.patch<Usuario>(`/usuarios/${id}/perfil`, { papelId });
+  return api.patch<Usuario>(`/usuarios/${id}/perfil`, { papelIds });
 }
 
 export async function atualizarUsuario(
@@ -52,7 +51,7 @@ export async function atualizarUsuario(
     nome?: string;
     email?: string;
     telefone?: string;
-    papelId?: number;
+    papelIds?: number[];
     cargoId?: number | null;
     ativo?: boolean;
     cpfCnpj?: string;
@@ -73,7 +72,7 @@ export interface CriarUsuarioInput {
   email?: string;
   senha: string;
   telefone?: string;
-  papelId: number;
+  papelIds: number[];
   cargoId?: number | null;
   cpfCnpj?: string;
   cep?: string;
