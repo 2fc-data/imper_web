@@ -304,6 +304,33 @@ export function AtendimentosSidebar({
   );
 }
 
+export function ObrasSidebar({
+  viewAtiva,
+  onNavegar,
+}: {
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+}) {
+  return (
+    <>
+      <SidebarButton
+        active={viewAtiva === 'analises'}
+        onClick={() => onNavegar('analises')}
+        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+      >
+        Análises
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar('lista')}
+        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+      >
+        Lista de Obras
+      </SidebarButton>
+    </>
+  );
+}
+
 export function OrcamentosSidebar({
   viewAtiva,
   onNavegar,

@@ -17,6 +17,7 @@ import {
   ManutencoesSidebar,
   MateriaisSidebar,
   MovimentacaoSidebar,
+  ObrasSidebar,
   OrcamentosSidebar,
   OSSidebar,
   RbacSidebar,
@@ -25,6 +26,14 @@ import {
   UsuariosSidebar,
 } from './components/layout/sidebarContent';
 import { homeFor } from './lib/nav';
+
+const ObrasAdminPage = lazy(() =>
+  import('./pages/ObrasAdminPage').then((m) => ({ default: m.ObrasAdminPage })),
+);
+const ObraDetalhePage = lazy(() =>
+  import('./pages/ObraDetalhePage').then((m) => ({ default: m.ObraDetalhePage })),
+);
+const PortalObraDetalhePage = lazy(() => import('./pages/portal/PortalObraDetalhePage'));
 
 const AgendamentosAdminPage = lazy(() =>
   import('./pages/AgendamentosAdminPage').then((m) => ({
@@ -558,6 +567,32 @@ function ExecucaoDashboardRoute() {
   );
 }
 
+function ObrasRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>('lista');
+
+  return (
+    <ProtectedLayout
+      requiredPermissions={['ver_obras']}
+      sidebar={<ObrasSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />}
+    >
+      <ObrasAdminPage />
+    </ProtectedLayout>
+  );
+}
+
+function ObraDetalheRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>('lista');
+
+  return (
+    <ProtectedLayout
+      requiredPermissions={['ver_obras']}
+      sidebar={<ObrasSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />}
+    >
+      <ObraDetalhePage />
+    </ProtectedLayout>
+  );
+}
+
 function GuestsOnly({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -667,6 +702,8 @@ export default function App() {
         <Route element={<AgendamentosRoute />} path="/agendamentos" />
         <Route element={<CalendarioRoute />} path="/calendario" />
         <Route element={<OrcamentosRoute />} path="/orcamentos" />
+        <Route element={<ObrasRoute />} path="/obras" />
+        <Route element={<ObraDetalheRoute />} path="/obras/:id" />
         <Route element={<OSRoute />} path="/os" />
         <Route element={<CatalogosRoute />} path="/catalogos" />
         <Route element={<EquipamentosRoute />} path="/equipamentos" />
