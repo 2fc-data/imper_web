@@ -19,6 +19,20 @@ export interface AtendimentoItem {
   atendente?: { id: number; nome: string } | null;
   visitaSolicitada: boolean;
   proximasAcoes?: AcaoAtendimento[];
+  agendamentos?: {
+    id: number;
+    dataPrevista: string;
+    status: string;
+    endereco?: {
+      logradouro?: string;
+      numero?: string;
+      complemento?: string;
+      bairro?: string;
+      cidade?: string;
+      estado?: string;
+      cep?: string;
+    } | null;
+  }[];
   createdAt: string;
   updatedAt: string;
   _count?: { visitas: number; agendamentos: number };

@@ -976,6 +976,9 @@ export function AtendimentosAdminPage({
       throw new Error('Atendimento sem cliente vinculado. Não é possível agendar.');
     }
     try {
+      if (!atendimento?.visitaSolicitada) {
+        await atualizarAtendimento(atendimentoId, { visitaSolicitada: true });
+      }
       const payload = {
         userId,
         atendimentoId,
@@ -1076,7 +1079,11 @@ export function AtendimentosAdminPage({
 
           {modoVisao === 'kanban' ? (
             <PipelineKanban
-              items={statusFiltro ? atendimentos : atendimentosTodos}
+              items={
+                (busca || statusFiltro || criadoDe || criadoAte || atualizadoDe || atualizadoAte)
+                  ? atendimentos
+                  : atendimentosTodos
+              }
               loading={loading}
               onSelectCard={handleAbrirModal}
             />
