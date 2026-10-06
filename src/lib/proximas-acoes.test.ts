@@ -32,7 +32,7 @@ describe('montarAcoesAtendimento', () => {
         proximasAcoes: ['MUDAR_STATUS:EM_ANDAMENTO', 'ENCERRAR'],
       }),
     );
-    expect(acoes.map((a) => a.label)).toEqual(['Concluir', 'Inativar']);
+    expect(acoes.map((a) => a.label)).toEqual(['Finalizar Atendimento', 'Inativar']);
     expect(acoes[0]).toMatchObject({ status: 'CONCLUIDO', tone: 'success' });
     expect(acoes[1]).toMatchObject({ status: 'INATIVO', tone: 'destructive' });
   });
@@ -78,7 +78,7 @@ describe('montarAcoesAtendimento', () => {
     expect(acoes.map((a) => a.label)).toEqual([
       'Atendimento em andamento',
       'Criar orçamento',
-      'Concluir',
+      'Finalizar Atendimento',
       'Inativar',
     ]);
     expect(acoes[1]).toMatchObject({ criarOrcamento: true, tone: 'outline' });
@@ -88,7 +88,7 @@ describe('montarAcoesAtendimento', () => {
     const acoes = montarAcoesAtendimento(
       item({ proximasAcoes: ['CRIAR_AGENDAMENTO', 'ENCERRAR'] }),
     );
-    expect(acoes.map((a) => a.label)).toEqual(['Concluir', 'Inativar']);
+    expect(acoes.map((a) => a.label)).toEqual(['Finalizar Atendimento', 'Inativar']);
   });
 
   it('CRIAR_VISITA → nota Criar visita (muted)', () => {

@@ -25,6 +25,16 @@ interface AgendarVisitaProps {
   disabled?: boolean;
   titulo?: string;
   onValidChange?: (valid: boolean, isAgendar: boolean) => void;
+  modoReagendar?: boolean;
+  enderecoInicial?: {
+    logradouro?: string;
+    bairro?: string;
+    cidade?: string;
+    estado?: string;
+    numero?: string;
+    complemento?: string;
+    cep?: string;
+  } | null;
 }
 
 const campoInput =
@@ -32,18 +42,43 @@ const campoInput =
 const campoLabel = 'text-xs font-semibold text-foreground';
 
 export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>(
-  function AgendarVisita({ disabled = false, titulo = 'Horários Disponíveis', onValidChange }, ref) {
-    const [agendar, setAgendar] = useState(false);
+  function AgendarVisita(
+    {
+      disabled = false,
+      titulo = 'Horários Disponíveis',
+      onValidChange,
+      modoReagendar = false,
+      enderecoInicial,
+    },
+    ref,
+  ) {
+    const [agendar, setAgendar] = useState(modoReagendar);
     const [agendarSlot, setAgendarSlot] = useState('');
-    const [cep, setCep] = useState('');
-    const [endereco, setEndereco] = useState('');
-    const [bairro, setBairro] = useState('');
-    const [cidade, setCidade] = useState('');
-    const [estado, setEstado] = useState('');
-    const [numero, setNumero] = useState('');
-    const [complemento, setComplemento] = useState('');
-    const [cepValido, setCepValido] = useState(false);
+    const [cep, setCep] = useState(enderecoInicial?.cep || '');
+    const [endereco, setEndereco] = useState(enderecoInicial?.logradouro || '');
+    const [bairro, setBairro] = useState(enderecoInicial?.bairro || '');
+    const [cidade, setCidade] = useState(enderecoInicial?.cidade || '');
+    const [estado, setEstado] = useState(enderecoInicial?.estado || '');
+    const [numero, setNumero] = useState(enderecoInicial?.numero || '');
+    const [complemento, setComplemento] = useState(enderecoInicial?.complemento || '');
+    const [cepValido, setCepValido] = useState(modoReagendar || Boolean(enderecoInicial?.cep));
     const [mostrarErros, setMostrarErros] = useState(false);
+
+    useEffect(() => {
+      if (modoReagendar) {
+        setAgendar(true);
+        setCepValido(true);
+        if (enderecoInicial) {
+          if (enderecoInicial.cep) setCep(enderecoInicial.cep);
+          if (enderecoInicial.logradouro) setEndereco(enderecoInicial.logradouro);
+          if (enderecoInicial.bairro) setBairro(enderecoInicial.bairro);
+          if (enderecoInicial.cidade) setCidade(enderecoInicial.cidade);
+          if (enderecoInicial.estado) setEstado(enderecoInicial.estado);
+          if (enderecoInicial.numero) setNumero(enderecoInicial.numero);
+          if (enderecoInicial.complemento) setComplemento(enderecoInicial.complemento);
+        }
+      }
+    }, [modoReagendar, enderecoInicial]);
 
     useEffect(() => {
       const valid = agendar ? !!agendarSlot && cepValido : false;
@@ -90,116 +125,135 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
 
     return (
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="agendar-visita-checkbox"
-            checked={agendar}
-            onChange={(e) => handleCheckboxChange(e.target.checked)}
-            disabled={disabled}
-            className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-          />
-          <label
-            htmlFor="agendar-visita-checkbox"
-            className="text-sm font-medium text-foreground cursor-pointer select-none"
-          >
-            Agendar visita técnica
-          </label>
-        </div>
-
-        {agendar && (
-          <div className="space-y-1.5">
-            <label className={campoLabel}>CEP (Local da visita técnica)</label>
-            <CepInput
-              value={cep}
-              onChange={setCep}
-              onConsulta={(dados: CepDados) => {
-                setEndereco(dados.logradouro);
-                setBairro(dados.bairro);
-                setCidade(dados.cidade);
-                setEstado(dados.estado);
-                setCepValido(true);
-              }}
-              onErro={() => setCepValido(false)}
-            />
-            {mostrarErros && !cepValido && (
-              <p className="text-xs text-destructive">Informe um CEP válido</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
-              automaticamente.
+        {modoReagendar ? (
+          <div className="rounded-xl border border-border/80 bg-muted/30 p-3.5 text-xs space-y-1">
+            <span className="font-bold text-foreground flex items-center gap-1.5">
+              📍 Endereço da Visita (Mantido):
+            </span>
+            <p className="text-muted-foreground font-medium">
+              {endereco || 'Logradouro não informado'}
+              {numero ? `, ${numero}` : ''}
+              {complemento ? ` (${complemento})` : ''}
+              {bairro ? ` - ${bairro}` : ''}
+              {cidade ? `, ${cidade}` : ''}
+              {estado ? `/${estado}` : ''}
+              {cep ? ` • CEP: ${cep}` : ''}
             </p>
           </div>
-        )}
-
-        {cepValido && (
+        ) : (
           <>
-            <div className="space-y-1.5">
-              <label className={campoLabel}>Endereço</label>
+            <div className="flex items-center gap-2">
               <input
-                type="text"
-                value={endereco}
-                onChange={(e) => setEndereco(e.target.value)}
-                className={campoInput}
-                placeholder="Rua, avenida..."
+                type="checkbox"
+                id="agendar-visita-checkbox"
+                checked={agendar}
+                onChange={(e) => handleCheckboxChange(e.target.checked)}
+                disabled={disabled}
+                className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
               />
+              <label
+                htmlFor="agendar-visita-checkbox"
+                className="text-sm font-medium text-foreground cursor-pointer select-none"
+              >
+                Agendar visita técnica
+              </label>
             </div>
-            <div className="grid gap-4 sm:grid-cols-[1fr_1fr_120px]">
+
+            {agendar && (
               <div className="space-y-1.5">
-                <label className={campoLabel}>Bairro</label>
-                <input
-                  type="text"
-                  value={bairro}
-                  onChange={(e) => setBairro(e.target.value)}
-                  className={campoInput}
-                  placeholder="Bairro"
+                <label className={campoLabel}>CEP (Local da visita técnica)</label>
+                <CepInput
+                  value={cep}
+                  onChange={setCep}
+                  onConsulta={(dados: CepDados) => {
+                    setEndereco(dados.logradouro);
+                    setBairro(dados.bairro);
+                    setCidade(dados.cidade);
+                    setEstado(dados.estado);
+                    setCepValido(true);
+                  }}
+                  onErro={() => setCepValido(false)}
                 />
+                {mostrarErros && !cepValido && (
+                  <p className="text-xs text-destructive">Informe um CEP válido</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Ao informar o CEP, preenchemos endereço, bairro, cidade e UF
+                  automaticamente.
+                </p>
               </div>
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Cidade</label>
-                <input
-                  type="text"
-                  value={cidade}
-                  onChange={(e) => setCidade(e.target.value)}
-                  className={campoInput}
-                  placeholder="Cidade"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className={campoLabel}>UF</label>
-                <input
-                  type="text"
-                  maxLength={2}
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value.toUpperCase())}
-                  className={campoInput}
-                  placeholder="UF"
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Número</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={numero}
-                  onChange={(e) => setNumero(e.target.value)}
-                  className={campoInput}
-                  placeholder="Número"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className={campoLabel}>Complemento</label>
-                <input
-                  type="text"
-                  value={complemento}
-                  onChange={(e) => setComplemento(e.target.value)}
-                  className={campoInput}
-                  placeholder="Apto, bloco..."
-                />
-              </div>
-            </div>
+            )}
+
+            {cepValido && (
+              <>
+                <div className="space-y-1.5">
+                  <label className={campoLabel}>Endereço</label>
+                  <input
+                    type="text"
+                    value={endereco}
+                    onChange={(e) => setEndereco(e.target.value)}
+                    className={campoInput}
+                    placeholder="Rua, avenida..."
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-[1fr_1fr_120px]">
+                  <div className="space-y-1.5">
+                    <label className={campoLabel}>Bairro</label>
+                    <input
+                      type="text"
+                      value={bairro}
+                      onChange={(e) => setBairro(e.target.value)}
+                      className={campoInput}
+                      placeholder="Bairro"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={campoLabel}>Cidade</label>
+                    <input
+                      type="text"
+                      value={cidade}
+                      onChange={(e) => setCidade(e.target.value)}
+                      className={campoInput}
+                      placeholder="Cidade"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={campoLabel}>UF</label>
+                    <input
+                      type="text"
+                      maxLength={2}
+                      value={estado}
+                      onChange={(e) => setEstado(e.target.value.toUpperCase())}
+                      className={campoInput}
+                      placeholder="UF"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className={campoLabel}>Número</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={numero}
+                      onChange={(e) => setNumero(e.target.value)}
+                      className={campoInput}
+                      placeholder="Número"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className={campoLabel}>Complemento</label>
+                    <input
+                      type="text"
+                      value={complemento}
+                      onChange={(e) => setComplemento(e.target.value)}
+                      className={campoInput}
+                      placeholder="Apto, bloco..."
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
 

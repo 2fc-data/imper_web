@@ -39,6 +39,9 @@ export function ProcessDetailModal({
     return partes.length >= 2 ? (partes[0][0] + partes[1][0]).toUpperCase() : nome.slice(0, 2).toUpperCase();
   };
 
+  const agendamentoAtivo = item.agendamentos && item.agendamentos.length > 0 ? item.agendamentos[0] : null;
+  const temVisitaAgendada = Boolean(agendamentoAtivo);
+
   const handleSalvar = async () => {
     setErro(null);
     const isAgendar = agendarRef.current?.isAgendar() ?? false;
@@ -51,7 +54,11 @@ export function ProcessDetailModal({
     }
 
     const isValid = agendarRef.current?.isValid() ?? false;
-    if (!descricaoDraft.trim() && !isValid) return;
+    if (!descricaoDraft.trim() && !isValid) {
+      onClose();
+      onCriarOrcamento?.(item.id);
+      return;
+    }
 
     setSalvando(true);
     try {
@@ -60,10 +67,31 @@ export function ProcessDetailModal({
       }
       const agendarDados = agendarRef.current?.getDados();
       if (agendarDados && onAgendarVisita) {
+        if (agendamentoAtivo) {
+          const dataAnterior = new Date(agendamentoAtivo.dataPrevista).toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          const dataNova = new Date(agendarDados.slotIso).toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          await onRegistrarLog(
+            item.id,
+            `Reagendamento de visita técnica: alterado de ${dataAnterior} para ${dataNova}`,
+          );
+        }
         await onAgendarVisita(item.id, agendarDados);
       }
       setDescricaoDraft('');
       onClose();
+      onCriarOrcamento?.(item.id);
     } catch (err: any) {
       setErro(err?.message || 'Erro ao salvar registro de atendimento.');
     } finally {
@@ -156,7 +184,7 @@ export function ProcessDetailModal({
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
           >
-            Visita / Agendamento
+            {temVisitaAgendada ? 'Reagendar' : 'Visita / Agendamento'}
           </button>
         </div>
 
@@ -192,6 +220,54 @@ export function ProcessDetailModal({
                 <p className="text-foreground font-semibold text-sm">{item.atendente?.nome || 'Sistema'}</p>
               </div>
             </div>
+
+            {/* Card de Visita Técnica Agendada */}
+            {agendamentoAtivo && (
+              <div className="rounded-2xl border border-primary/40 bg-primary/5 p-4 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-primary uppercase tracking-wider flex items-center gap-1.5">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                    Visita Técnica Agendada
+                  </span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/15 text-primary uppercase">
+                    {agendamentoAtivo.status}
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground font-semibold">Data e Horário Programado:</span>
+                    <p className="font-bold text-foreground text-sm">
+                      {new Date(agendamentoAtivo.dataPrevista).toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  {agendamentoAtivo.endereco && (
+                    <div className="space-y-1">
+                      <span className="text-muted-foreground font-semibold">Endereço da Vistoria:</span>
+                      <p className="font-semibold text-foreground text-xs leading-relaxed">
+                        {agendamentoAtivo.endereco.logradouro}
+                        {agendamentoAtivo.endereco.numero ? `, ${agendamentoAtivo.endereco.numero}` : ''}
+                        {agendamentoAtivo.endereco.complemento ? ` (${agendamentoAtivo.endereco.complemento})` : ''}
+                        {agendamentoAtivo.endereco.bairro ? ` - ${agendamentoAtivo.endereco.bairro}` : ''}
+                        {agendamentoAtivo.endereco.cidade ? `, ${agendamentoAtivo.endereco.cidade}` : ''}
+                        {agendamentoAtivo.endereco.estado ? `/${agendamentoAtivo.endereco.estado}` : ''}
+                        {agendamentoAtivo.endereco.cep ? ` • CEP: ${agendamentoAtivo.endereco.cep}` : ''}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {item.descricao && (
               <div className="rounded-2xl border border-border/60 bg-background p-4 space-y-1.5 shadow-2xs">
@@ -267,10 +343,35 @@ export function ProcessDetailModal({
           </div>
         )}
 
-        {/* Conteúdo Aba Agendamento */}
+        {/* Conteúdo Aba Agendamento / Reagendar */}
         {abaAtiva === 'agendamento' && (
           <div className="space-y-4">
-            <AgendarVisita ref={agendarRef} disabled={salvando} titulo="Seleção de Slots & CEP para Vistoria" />
+            {agendamentoAtivo && (
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-3.5 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span className="font-bold text-foreground">Horário Agendado Atualmente: </span>
+                  <span className="text-primary font-bold">
+                    {new Date(agendamentoAtivo.dataPrevista).toLocaleString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+                <span className="text-xs font-semibold text-muted-foreground">
+                  Selecione um novo slot de data e horário para reagendar
+                </span>
+              </div>
+            )}
+            <AgendarVisita
+              ref={agendarRef}
+              disabled={salvando}
+              modoReagendar={temVisitaAgendada}
+              enderecoInicial={agendamentoAtivo?.endereco}
+              titulo={temVisitaAgendada ? 'Reagendamento de Visita Técnica' : 'Seleção de Slots & CEP para Vistoria'}
+            />
           </div>
         )}
 
@@ -290,7 +391,7 @@ export function ProcessDetailModal({
             disabled={salvando}
             className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-50"
           >
-            {salvando ? 'Salvando...' : 'Salvar e Concluir'}
+            {salvando ? 'Processando...' : 'Iniciar Orçamento'}
           </button>
         </div>
       </div>

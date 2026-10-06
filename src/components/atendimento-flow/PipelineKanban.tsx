@@ -96,20 +96,25 @@ export function PipelineKanban({
 }: PipelineKanbanProps) {
   const agruparItensPorEstagio = (estagioId: string): AtendimentoItem[] => {
     return items.filter((item) => {
+      const temAgendamento =
+        item.visitaSolicitada ||
+        (item.agendamentos && item.agendamentos.length > 0) ||
+        (item._count?.agendamentos ?? 0) > 0;
+
       if (estagioId === 'NOVO') {
-        return item.status === 'NOVO' && !item.visitaSolicitada;
+        return item.status === 'NOVO' && !temAgendamento;
       }
       if (estagioId === 'VISITA_AGENDADA') {
         return (
-          item.status === 'EM_ANDAMENTO' ||
-          (item.status === 'NOVO' && item.visitaSolicitada)
+          temAgendamento &&
+          (item.status === 'NOVO' || item.status === 'EM_ANDAMENTO')
         );
       }
       if (estagioId === 'ORCAMENTAMENTO') {
         return item.status === 'ORCAMENTAMENTO';
       }
       if (estagioId === 'OS_EXECUCAO') {
-        return item.status === 'EM_ANDAMENTO' && item.visitaSolicitada;
+        return item.status === 'EM_ANDAMENTO' && !temAgendamento;
       }
       if (estagioId === 'CONCLUIDO') {
         return item.status === 'CONCLUIDO' || item.status === 'INATIVO';

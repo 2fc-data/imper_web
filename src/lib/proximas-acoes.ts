@@ -61,7 +61,7 @@ export function montarAcoesAtendimento(item: AtendimentoItem): AcaoUI[] {
         break;
       case 'ENCERRAR':
         acoes.push({
-          label: 'Concluir',
+          label: 'Finalizar Atendimento',
           status: 'CONCLUIDO',
           tone: 'success',
         });
