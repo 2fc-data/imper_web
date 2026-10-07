@@ -24,6 +24,7 @@ import {
   RetiradaDeItensSidebar,
   ServicosSidebar,
   UsuariosSidebar,
+  VocabularioSidebar,
 } from './components/layout/sidebarContent';
 import { homeFor } from './lib/nav';
 
@@ -102,6 +103,11 @@ const UsuariosPage = lazy(() => import('./pages/UsuariosPage'));
 const CatalogoAtividadesPage = lazy(() =>
   import('./pages/CatalogoAtividadesPage').then((m) => ({
     default: m.CatalogoAtividadesPage,
+  })),
+);
+const VocabularioAdminPage = lazy(() =>
+  import('./pages/VocabularioAdminPage').then((m) => ({
+    default: m.default,
   })),
 );
 const EquipesPage = lazy(() =>
@@ -479,13 +485,13 @@ function RbacRoute() {
 }
 
 function CatalogoAtividadesRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    'lista',
-  );
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'lista' | 'novo' | 'editar'
+  >('lista');
 
   return (
     <ProtectedLayout
-      requiredPermissions={['gerenciar_os', 'criar_os']}
+      requiredPermissions={['gerenciar_catalogo']}
       sidebar={
         <CatalogoAtividadesSidebar
           viewAtiva={viewAtiva}
@@ -494,6 +500,23 @@ function CatalogoAtividadesRoute() {
       }
     >
       <CatalogoAtividadesPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+    </ProtectedLayout>
+  );
+}
+
+function VocabularioRoute() {
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'etapas' | 'termos' | 'sub-servicos' | 'combos'
+  >('etapas');
+
+  return (
+    <ProtectedLayout
+      requiredPermissions={['gerenciar_catalogo']}
+      sidebar={
+        <VocabularioSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+      }
+    >
+      <VocabularioAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
@@ -714,6 +737,7 @@ export default function App() {
           element={<CatalogoAtividadesRoute />}
           path="/catalogo-atividades"
         />
+        <Route element={<VocabularioRoute />} path="/vocabulario" />
         <Route element={<EquipesRoute />} path="/equipes" />
         <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
         <Route element={<MovimentacaoRoute />} path="/movimentacoes" />

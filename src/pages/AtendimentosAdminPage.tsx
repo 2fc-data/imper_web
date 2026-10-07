@@ -12,7 +12,9 @@ import {
   type AtendimentoItem,
   type AtendimentoLogItem,
   atualizarAtendimento,
+  atualizarStatusAgendamento,
   atualizarStatusAtendimento,
+  atualizarVisita,
   buscarUsuarios,
   type CanalAtendimento,
   criarAgendamento,
@@ -20,6 +22,7 @@ import {
   encaminharParaOrcamento,
   listarAtendimentos,
   listarLogsAtendimento,
+  listarVisitas,
   type MeuUser,
   registrarLogAtendimento,
   type StatusAtendimento,
@@ -958,8 +961,30 @@ export function AtendimentosAdminPage({
     await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
   };
 
-  const handleCriarOrcamento = (id: number) => {
-    navigate(`/orcamentos?view=novo&atendimentoId=${id}`);
+  const handleCriarOrcamento = async (id: number) => {
+    try {
+      const visitas = await listarVisitas({ atendimentoId: id });
+      let visitaRealizada = visitas.some((v) => v.status === 'REALIZADA');
+
+      if (!visitaRealizada) {
+        const pendente = visitas.find((v) => v.status === 'AGENDADA');
+        if (pendente) {
+          await atualizarVisita(pendente.id, { status: 'REALIZADA' });
+          visitaRealizada = true;
+        }
+      }
+
+      if (!visitaRealizada) {
+        await atualizarAtendimento(id, { visitaSolicitada: false });
+      }
+
+      await encaminharParaOrcamento(id);
+      await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+      navigate(`/orcamentos?view=novo&atendimentoId=${id}`);
+    } catch (err) {
+      console.error('Erro ao iniciar orçamento:', err);
+      throw err;
+    }
   };
 
   const handleCarregarLogs = (id: number) => listarLogsAtendimento(id);
@@ -967,6 +992,14 @@ export function AtendimentosAdminPage({
   const handleRegistrarLog = async (id: number, descricao: string) => {
     await registrarLogAtendimento(id, descricao);
     await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+    if (itemSelecionadoModal?.id === id) {
+      try {
+        const logsData = await listarLogsAtendimento(id);
+        setLogsModal(logsData);
+      } catch (refreshErr) {
+        console.error('Erro ao atualizar logs do modal:', refreshErr);
+      }
+    }
   };
 
   const handleAgendarVisita = async (atendimentoId: number, dados: AgendarDados) => {
@@ -996,11 +1029,26 @@ export function AtendimentosAdminPage({
       };
       await criarAgendamento(payload);
       await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+      if (itemSelecionadoModal?.id === atendimentoId) {
+        try {
+          const fresco = await listarAtendimentos();
+          const atualizado = fresco.find((a) => a.id === atendimentoId);
+          if (atualizado) setItemSelecionadoModal(atualizado);
+          const logsData = await listarLogsAtendimento(atendimentoId);
+          setLogsModal(logsData);
+        } catch (refreshErr) {
+          console.error('Erro ao atualizar dados do modal:', refreshErr);
+        }
+      }
     } catch (err: unknown) {
       console.error('[handleAgendarVisita] error:', err);
       if (err instanceof Error) throw err;
       throw new Error('Erro ao agendar visita técnica.');
     }
+  };
+
+  const handleCancelarAgendamento = async (agendamentoId: number) => {
+    await atualizarStatusAgendamento(agendamentoId, 'CANCELADO');
   };
 
   const handleAbrirModal = async (item: AtendimentoItem) => {
@@ -1133,6 +1181,7 @@ export function AtendimentosAdminPage({
           onStatusChange={handleStatusInline}
           onRegistrarLog={handleRegistrarLog}
           onAgendarVisita={handleAgendarVisita}
+          onCancelarAgendamento={handleCancelarAgendamento}
           onCriarOrcamento={handleCriarOrcamento}
         />
       )}

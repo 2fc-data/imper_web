@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { StatusBadge } from '../ui/StatusBadge';
 import { AgendarVisita, type AgendarDados, type AgendarVisitaHandle } from '../agendamento/AgendarVisita';
-import { montarAcoesAtendimento, type AcaoUI } from '../../lib/proximas-acoes';
+import { acaoPresente, type AcaoUI } from '../../lib/proximas-acoes';
 import type { AtendimentoItem, AtendimentoLogItem, StatusAtendimento } from '../../lib/api';
 
 interface ProcessDetailModalProps {
@@ -12,7 +12,8 @@ interface ProcessDetailModalProps {
   onStatusChange: (id: number, status: StatusAtendimento) => Promise<void>;
   onRegistrarLog: (id: number, descricao: string) => Promise<void>;
   onAgendarVisita?: (atendimentoId: number, dados: AgendarDados) => Promise<void>;
-  onCriarOrcamento?: (atendimentoId: number) => void;
+  onCancelarAgendamento?: (agendamentoId: number) => Promise<void>;
+  onCriarOrcamento?: (atendimentoId: number) => Promise<void> | void;
 }
 
 export function ProcessDetailModal({
@@ -23,15 +24,18 @@ export function ProcessDetailModal({
   onStatusChange,
   onRegistrarLog,
   onAgendarVisita,
+  onCancelarAgendamento,
   onCriarOrcamento,
 }: ProcessDetailModalProps) {
   const [abaAtiva, setAbaAtiva] = useState<'geral' | 'historico' | 'agendamento'>('geral');
   const [descricaoDraft, setDescricaoDraft] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [avisoReagendamento, setAvisoReagendamento] = useState<string | null>(null);
+  const [avisoRegistro, setAvisoRegistro] = useState<string | null>(null);
   const agendarRef = useRef<AgendarVisitaHandle>(null);
 
-  const acoes = montarAcoesAtendimento(item);
+  const encerravel = acaoPresente(item, 'ENCERRAR');
 
   const getInicial = (nome?: string | null) => {
     if (!nome) return 'AT';
@@ -56,7 +60,7 @@ export function ProcessDetailModal({
     const isValid = agendarRef.current?.isValid() ?? false;
     if (!descricaoDraft.trim() && !isValid) {
       onClose();
-      onCriarOrcamento?.(item.id);
+      await onCriarOrcamento?.(item.id);
       return;
     }
 
@@ -91,9 +95,29 @@ export function ProcessDetailModal({
       }
       setDescricaoDraft('');
       onClose();
-      onCriarOrcamento?.(item.id);
+      await onCriarOrcamento?.(item.id);
     } catch (err: any) {
       setErro(err?.message || 'Erro ao salvar registro de atendimento.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const handleSalvarRegistro = async () => {
+    setErro(null);
+    setAvisoRegistro(null);
+    const descricao = descricaoDraft.trim();
+    if (!descricao) {
+      setErro('Digite um registro para salvar.');
+      return;
+    }
+    setSalvando(true);
+    try {
+      await onRegistrarLog(item.id, descricao);
+      setDescricaoDraft('');
+      setAvisoRegistro('Registro salvo no histórico');
+    } catch (err: any) {
+      setErro(err?.message || 'Erro ao salvar o registro.');
     } finally {
       setSalvando(false);
     }
@@ -105,10 +129,59 @@ export function ProcessDetailModal({
       if (acao.status) {
         await onStatusChange(item.id, acao.status);
       } else if (acao.criarOrcamento) {
-        onCriarOrcamento?.(item.id);
+        await onCriarOrcamento?.(item.id);
       }
     } catch (err: any) {
       setErro(err?.message || 'Erro ao executar ação.');
+    }
+  };
+
+  const formatarData = (iso: string) =>
+    new Date(iso).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const handleSalvarReagendamento = async () => {
+    setErro(null);
+    setAvisoReagendamento(null);
+    const agendarOk = agendarRef.current?.tentarValidar() ?? false;
+    if (!agendarOk) {
+      setErro('Informe um CEP válido e selecione um horário disponível.');
+      return;
+    }
+    const agendarDados = agendarRef.current?.getDados();
+    if (!agendarDados || !onAgendarVisita) {
+      setErro('Não foi possível ler o novo horário selecionado.');
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      const dataNova = formatarData(agendarDados.slotIso);
+      if (agendamentoAtivo) {
+        const dataAnterior = formatarData(agendamentoAtivo.dataPrevista);
+        await onRegistrarLog(
+          item.id,
+          `Reagendamento de visita técnica: alterado de ${dataAnterior} para ${dataNova}`,
+        );
+        await onAgendarVisita(item.id, agendarDados);
+        if (onCancelarAgendamento) {
+          await onCancelarAgendamento(agendamentoAtivo.id);
+        }
+        setAvisoReagendamento(`Horário atualizado com sucesso: ${dataNova}`);
+      } else {
+        await onRegistrarLog(item.id, `Visita técnica agendada para ${dataNova}`);
+        await onAgendarVisita(item.id, agendarDados);
+        setAvisoReagendamento(`Visita agendada com sucesso: ${dataNova}`);
+      }
+    } catch (err: any) {
+      setErro(err?.message || 'Erro ao salvar o novo horário.');
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -127,7 +200,10 @@ export function ProcessDetailModal({
                 <h2 className="text-xl font-bold tracking-tight text-foreground">
                   {item.user?.nome || `Atendimento #${item.id}`}
                 </h2>
-                <StatusBadge status={item.status} />
+                <StatusBadge
+                  status={item.status}
+                  labelOverride={temVisitaAgendada && item.status === 'NOVO' ? 'Visita Técnica' : undefined}
+                />
               </div>
               <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
                 <span>ID: #{item.id}</span>
@@ -275,24 +351,6 @@ export function ProcessDetailModal({
                 <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{item.descricao}</p>
               </div>
             )}
-
-            {/* Ações Rápidas */}
-            <div className="space-y-2 pt-2">
-              <span className="font-bold text-xs text-foreground uppercase tracking-wider">Próximos Passos Recomendados:</span>
-              <div className="flex flex-wrap gap-2">
-                {acoes.map((acao) => (
-                  <button
-                    key={acao.label}
-                    type="button"
-                    disabled={salvando}
-                    onClick={() => void executarAcao(acao)}
-                    className="rounded-xl bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground px-4 py-2 text-xs font-bold transition-all shadow-2xs disabled:opacity-50"
-                  >
-                    {acao.label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
@@ -309,6 +367,25 @@ export function ProcessDetailModal({
                 placeholder="Descreva a interação ou atualização com o cliente..."
                 className="w-full rounded-xl border border-input bg-background p-3 text-xs shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               />
+              {avisoRegistro && (
+                <div className="rounded-xl border border-success/30 bg-success/10 p-3.5 text-xs font-medium text-success flex items-center gap-2">
+                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <span>{avisoRegistro}</span>
+                </div>
+              )}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => void handleSalvarRegistro()}
+                  disabled={salvando || !descricaoDraft.trim()}
+                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-50"
+                >
+                  {salvando ? 'Salvando...' : 'Salvar Registro'}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -365,6 +442,17 @@ export function ProcessDetailModal({
                 </span>
               </div>
             )}
+
+            {avisoReagendamento && (
+              <div className="rounded-xl border border-success/30 bg-success/10 p-3.5 text-xs font-medium text-success flex items-center gap-2">
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <span>{avisoReagendamento}</span>
+              </div>
+            )}
+
             <AgendarVisita
               ref={agendarRef}
               disabled={salvando}
@@ -372,6 +460,22 @@ export function ProcessDetailModal({
               enderecoInicial={agendamentoAtivo?.endereco}
               titulo={temVisitaAgendada ? 'Reagendamento de Visita Técnica' : 'Seleção de Slots & CEP para Vistoria'}
             />
+
+            {temVisitaAgendada && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                <p className="text-xs text-muted-foreground">
+                  Após selecionar o novo horário, clique em salvar para confirmar o reagendamento.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void handleSalvarReagendamento()}
+                  disabled={salvando}
+                  className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-50 shrink-0"
+                >
+                  {salvando ? 'Salvando...' : 'Salvar Novo Horário'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -392,6 +496,26 @@ export function ProcessDetailModal({
             className="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-50"
           >
             {salvando ? 'Processando...' : 'Iniciar Orçamento'}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              void executarAcao({ label: 'Finalizar Atendimento', status: 'CONCLUIDO', tone: 'success' })
+            }
+            disabled={salvando || !encerravel}
+            className="rounded-xl bg-success px-5 py-2 text-xs font-bold text-success-foreground shadow-md hover:bg-success/90 transition-all disabled:opacity-50"
+          >
+            Finalizar Atendimento
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              void executarAcao({ label: 'Inativar', status: 'INATIVO', tone: 'destructive' })
+            }
+            disabled={salvando || !encerravel}
+            className="rounded-xl bg-destructive px-5 py-2 text-xs font-bold text-destructive-foreground shadow-md hover:bg-destructive/90 transition-all disabled:opacity-50"
+          >
+            Inativar
           </button>
         </div>
       </div>

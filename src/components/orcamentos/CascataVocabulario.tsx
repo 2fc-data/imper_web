@@ -18,6 +18,11 @@ import {
 interface Props {
   valor: ValorCascata;
   onChange: (v: ValorCascata) => void;
+  /**
+   * `reduzida` — só Etapa + Sub-serviço (seleção do que será feito).
+   * `completa` (padrão) — todas as dimensões.
+   */
+  modo?: 'reduzida' | 'completa';
 }
 
 /** Limpa as dimensões downstream de `dim` (mantém `dim` intacta). */
@@ -50,7 +55,12 @@ function limparDownstream(
  * Componente controlado: recebe `ValorCascata` e emite o novo valor já com
  * as dimensões downstream limpas (evita round-trips inválidos no servidor).
  */
-export function CascataVocabulario({ valor, onChange }: Props) {
+export function CascataVocabulario({
+  valor,
+  onChange,
+  modo = 'completa',
+}: Props) {
+  const soEtapasSubs = modo === 'reduzida';
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [subs, setSubs] = useState<SubServico[]>([]);
   const [cascata, setCascata] = useState<Cascata | null>(null);
@@ -87,8 +97,9 @@ export function CascataVocabulario({ valor, onChange }: Props) {
   }, [valor.etapaId]);
 
   // cascata: um único efeito, refaz a busca quando a seleção muda
+  // (não busca em modo reduzida — não há dimensões expostas)
   useEffect(() => {
-    if (valor.subServicoId == null) {
+    if (soEtapasSubs || valor.subServicoId == null) {
       setCascata(null);
       return;
     }
@@ -111,6 +122,7 @@ export function CascataVocabulario({ valor, onChange }: Props) {
       vivo = false;
     };
   }, [
+    soEtapasSubs,
     valor.subServicoId,
     valor.verboId,
     valor.objetoId,
@@ -175,7 +187,13 @@ export function CascataVocabulario({ valor, onChange }: Props) {
   const desabilitadoDim = valor.subServicoId == null;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      className={
+        soEtapasSubs
+          ? 'grid gap-3 sm:grid-cols-2'
+          : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3'
+      }
+    >
       <label className="flex flex-col gap-1">
         <span className={labelClasses}>Etapa</span>
         <select
@@ -209,75 +227,79 @@ export function CascataVocabulario({ valor, onChange }: Props) {
         </select>
       </label>
 
-      <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Verbo</span>
-        <select
-          className={selectClasses}
-          value={valor.verboId ?? ''}
-          onChange={mudarOpcao('verbo')}
-          disabled={desabilitadoDim}
-        >
-          <option value="">Selecione…</option>
-          {opts(cascata?.verbo).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+      {soEtapasSubs ? null : (
+        <>
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Verbo</span>
+            <select
+              className={selectClasses}
+              value={valor.verboId ?? ''}
+              onChange={mudarOpcao('verbo')}
+              disabled={desabilitadoDim}
+            >
+              <option value="">Selecione…</option>
+              {opts(cascata?.verbo).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.nome}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Objeto</span>
-        <select
-          className={selectClasses}
-          value={valor.objetoId ?? ''}
-          onChange={mudarOpcao('objeto')}
-          disabled={desabilitadoDim || valor.verboId == null}
-        >
-          <option value="">Selecione…</option>
-          {opts(cascata?.objeto).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Objeto</span>
+            <select
+              className={selectClasses}
+              value={valor.objetoId ?? ''}
+              onChange={mudarOpcao('objeto')}
+              disabled={desabilitadoDim || valor.verboId == null}
+            >
+              <option value="">Selecione…</option>
+              {opts(cascata?.objeto).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.nome}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Local</span>
-        <select
-          className={selectClasses}
-          value={valor.localId ?? ''}
-          onChange={mudarOpcao('local')}
-          disabled={desabilitadoDim || valor.objetoId == null}
-        >
-          <option value="">(qualquer)</option>
-          {opts(cascata?.local).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Local</span>
+            <select
+              className={selectClasses}
+              value={valor.localId ?? ''}
+              onChange={mudarOpcao('local')}
+              disabled={desabilitadoDim || valor.objetoId == null}
+            >
+              <option value="">(qualquer)</option>
+              {opts(cascata?.local).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.nome}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Característica</span>
-        <select
-          className={selectClasses}
-          value={valor.caracteristicaId ?? ''}
-          onChange={mudarOpcao('caracteristica')}
-          disabled={desabilitadoDim || valor.objetoId == null}
-        >
-          <option value="">(qualquer)</option>
-          {opts(cascata?.caracteristica).map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Característica</span>
+            <select
+              className={selectClasses}
+              value={valor.caracteristicaId ?? ''}
+              onChange={mudarOpcao('caracteristica')}
+              disabled={desabilitadoDim || valor.objetoId == null}
+            >
+              <option value="">(qualquer)</option>
+              {opts(cascata?.caracteristica).map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      )}
 
-      {carregando ? (
+      {!soEtapasSubs && carregando ? (
         <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
           Carregando combinações…
         </p>

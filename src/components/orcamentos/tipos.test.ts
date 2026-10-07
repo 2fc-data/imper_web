@@ -150,9 +150,9 @@ describe('estadoInicialWizard', () => {
 });
 
 describe('transições de atividade/linha', () => {
-  it('chave agrupa por etapa+sub+catálogo', () => {
-    expect(chaveAtividade(atividade())).toBe('5:7:cat-1');
-    expect(chaveAtividade(atividade({ subServicoId: 8 }))).toBe('5:8:cat-1');
+  it('chave agrupa por etapa+sub-serviço', () => {
+    expect(chaveAtividade(atividade())).toBe('5:7');
+    expect(chaveAtividade(atividade({ subServicoId: 8 }))).toBe('5:8');
   });
 
   it('adicionarLinha cria atividade e mescla pela chave', () => {
@@ -333,6 +333,19 @@ describe('montarInput', () => {
     expect(l.materiais).toEqual([{ materialId: 5, quantidade: 3 }]);
   });
 
+  it('omite catalogoAtividadeId quando nulo (auto-resolve no backend)', () => {
+    const s = adicionarLinha(
+      estadoInicialWizard({ atendimentoId: 10, validade: '2026-10-01' }),
+      atividade({ catalogoAtividadeId: null, catalogo: null }),
+      linha(),
+    );
+    const input = montarInput(s);
+    const a = input.atividades[0];
+    expect('catalogoAtividadeId' in a).toBe(false);
+    expect(a.etapaId).toBe(5);
+    expect(a.subServicoId).toBe(7);
+  });
+
   it('inclui ficha apenas quando há conteúdo e limpa campos de texto', () => {
     const s = estadoInicialWizard({
       atendimentoId: 1,
@@ -457,8 +470,15 @@ describe('estadoDeEdicao', () => {
       catalogo: (id) =>
         id === 'cat-1'
           ? {
-              ...atividade().catalogo,
+              id: 'cat-1',
               nome: 'Aplicar pintura 2 demãos',
+              descricao: null,
+              especialidadeNecessaria: 'Pintor',
+              tempoEstimadoHoras: null,
+              ativo: true,
+              criadoEm: '2026-01-01T00:00:00.000Z',
+              subSteps: [],
+              recursos: [],
             }
           : undefined,
       termoNome: (dim, id) =>
@@ -467,7 +487,7 @@ describe('estadoDeEdicao', () => {
     const a = s.atividades[0];
     expect(a.etapaNome).toBe('Pintura');
     expect(a.subServicoNome).toBe('Residencial');
-    expect(a.catalogo.nome).toBe('Aplicar pintura 2 demãos');
+    expect(a.catalogo?.nome).toBe('Aplicar pintura 2 demãos');
     const l = a.linhas[0];
     expect(l.verboNome).toBe('Aplicar');
     expect(l.objetoNome).toBe('#22');
@@ -493,9 +513,20 @@ describe('estadoDeEdicao', () => {
       ],
     });
     const s = estadoDeEdicao(det);
-    expect(s.atividades[0].catalogo.id).toBe('outro-id-abc');
-    expect(s.atividades[0].catalogo.nome).toMatch(/Atividade/);
+    expect(s.atividades[0].catalogo?.id).toBe('outro-id-abc');
+    expect(s.atividades[0].catalogo?.nome).toMatch(/Atividade/);
     expect(s.atividades[0].linhas[0].materiais[0].nome).toBe('#9');
+  });
+
+  it('catalogo null quando a linha não tem catálogo (auto-resolve)', () => {
+    const det = detalhe({
+      atividades: [
+        row({ catalogoAtividadeId: null }),
+      ],
+    });
+    const s = estadoDeEdicao(det);
+    expect(s.atividades[0].catalogoAtividadeId).toBeNull();
+    expect(s.atividades[0].catalogo).toBeNull();
   });
 
   it('hidrata ficha quando existe', () => {

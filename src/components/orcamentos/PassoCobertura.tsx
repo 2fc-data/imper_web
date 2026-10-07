@@ -1,8 +1,4 @@
-import { useEffect, useState } from 'react';
-import {
-  listarCatalogoAtividades,
-  type CatalogoAtividadeItem,
-} from '../../lib/api';
+import { useState } from 'react';
 import { CascataVocabulario } from './CascataVocabulario';
 import {
   adicionarLinha,
@@ -10,13 +6,12 @@ import {
   btnSecundarioClasses,
   cascataVazia,
   cardClasses,
-  catalogoPlaceholder,
   inputClasses,
   labelClasses,
   linhaDaCascata,
   removerAtividade,
   removerLinha,
-  selectClasses,
+  rotuloAtividade,
   type AtualizarEstado,
   type ValorCascata,
   type WizardState,
@@ -27,62 +22,44 @@ interface Props {
   set: AtualizarEstado;
 }
 
-/** Passo 2: cascata de vocabulário + catálogo + atividades/linhas adicionadas. */
+/**
+ * Passo 2 — cobertura.
+ *
+ * 1. Selecione o que será feito: só Etapa + Sub-serviço.
+ * 2. Termos: Verbo/Objeto/Local/Característica + descrição + adicionar.
+ *    O backend auto-resolve `catalogoAtividadeId` a partir do sub-serviço.
+ * 3. Linhas adicionadas (agrupadas por etapa+sub-serviço).
+ */
 export function PassoCobertura({ state, set }: Props) {
   const [cascata, setCascata] = useState<ValorCascata>(cascataVazia);
-  const [opcoes, setOpcoes] = useState<CatalogoAtividadeItem[]>([]);
-  const [catalogoAtividadeId, setCatalogoAtividadeId] = useState('');
   const [descricao, setDescricao] = useState('');
 
   const temSelecao = cascata.etapaId != null && cascata.subServicoId != null;
-
-  useEffect(() => {
-    if (!temSelecao) {
-      setOpcoes([]);
-      return;
-    }
-    let vivo = true;
-    listarCatalogoAtividades({
-      etapaId: cascata.etapaId as number,
-      subServicoId: cascata.subServicoId as number,
-    })
-      .then((r) => {
-        if (vivo) setOpcoes(r.filter((o) => o.ativo));
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-    };
-  }, [temSelecao, cascata.etapaId, cascata.subServicoId]);
 
   const podeAdicionar =
     cascata.etapaId != null &&
     cascata.subServicoId != null &&
     cascata.verboId != null &&
     cascata.objetoId != null &&
-    catalogoAtividadeId !== '' &&
     descricao.trim() !== '';
 
   const adicionar = () => {
     if (!podeAdicionar) return;
-    const catalogo =
-      opcoes.find((o) => o.id === catalogoAtividadeId) ??
-      catalogoPlaceholder(catalogoAtividadeId);
     set((s) =>
       adicionarLinha(
         s,
         {
           etapaId: cascata.etapaId as number,
           subServicoId: cascata.subServicoId as number,
-          catalogoAtividadeId,
+          catalogoAtividadeId: null,
           etapaNome: cascata.etapaNome ?? `#${cascata.etapaId}`,
           subServicoNome: cascata.subServicoNome ?? `#${cascata.subServicoId}`,
-          catalogo,
+          catalogo: null,
         },
         linhaDaCascata(cascata, descricao.trim()),
       ),
     );
-    // mantém etapa/sub-serviço; limpa seleção de termos, catálogo e descrição
+    // mantém etapa/sub-serviço; limpa seleção de termos e descrição
     setCascata((c) => ({
       ...c,
       verboId: null,
@@ -94,7 +71,6 @@ export function PassoCobertura({ state, set }: Props) {
       caracteristicaId: null,
       caracteristicaNome: null,
     }));
-    setCatalogoAtividadeId('');
     setDescricao('');
   };
 
@@ -104,35 +80,15 @@ export function PassoCobertura({ state, set }: Props) {
         <h3 className="mb-3 text-sm font-semibold">
           1. Selecione o que será feito
         </h3>
-        <CascataVocabulario valor={cascata} onChange={setCascata} />
+        <CascataVocabulario valor={cascata} onChange={setCascata} modo="reduzida" />
       </div>
 
       <div className={cardClasses}>
         <h3 className="mb-3 text-sm font-semibold">
-          2. Atividade do catálogo
+          2. Detalhe da atividade
         </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Atividade</span>
-            <select
-              className={selectClasses}
-              value={catalogoAtividadeId}
-              onChange={(e) => setCatalogoAtividadeId(e.target.value)}
-              disabled={!temSelecao}
-            >
-              <option value="">
-                {temSelecao
-                  ? 'Selecione a atividade…'
-                  : 'Selecione etapa e sub-serviço primeiro'}
-              </option>
-              {opcoes.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-
+        <CascataVocabulario valor={cascata} onChange={setCascata} modo="completa" />
+        <div className="mt-3">
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>Descrição da linha</span>
             <input
@@ -174,14 +130,13 @@ export function PassoCobertura({ state, set }: Props) {
         ) : (
           <div className="flex flex-col gap-3">
             {state.atividades.map((a, aIdx) => (
-              <div key={`${a.etapaId}:${a.subServicoId}:${a.catalogoAtividadeId}`} className={cardClasses}>
+              <div
+                key={`${a.etapaId}:${a.subServicoId}`}
+                className={cardClasses}
+              >
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="text-sm">
-                    <span className="font-medium">{a.etapaNome}</span>
-                    <span className="text-muted-foreground"> › </span>
-                    <span className="font-medium">{a.subServicoNome}</span>
-                    <span className="text-muted-foreground"> › </span>
-                    <span>{a.catalogo.nome}</span>
+                    <span className="font-medium">{rotuloAtividade(a)}</span>
                   </div>
                   <button
                     type="button"
@@ -229,7 +184,6 @@ export function PassoCobertura({ state, set }: Props) {
                         subServicoId: a.subServicoId,
                         subServicoNome: a.subServicoNome,
                       });
-                      setCatalogoAtividadeId(a.catalogoAtividadeId);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                   >

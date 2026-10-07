@@ -5,6 +5,7 @@ import {
   inputClasses,
   labelClasses,
   numero,
+  rotuloAtividade,
   subtotalLinha,
   totaisDoEstado,
   type AtualizarEstado,
@@ -37,7 +38,7 @@ export function PassoPrecificacao({ state, set }: Props) {
       {state.atividades.map((a, aIdx) => (
         <div key={aIdx} className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">
-            {a.etapaNome} › {a.subServicoNome} › {a.catalogo.nome}
+            {rotuloAtividade(a)}
           </h3>
 
           {a.linhas.map((l, lIdx) => {

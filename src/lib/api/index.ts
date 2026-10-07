@@ -207,13 +207,25 @@ export type {
 // Vocabulario (etapas, termos, sub-servicos, cascata, combos)
 export {
   listarEtapas,
+  listarEtapasTodas,
+  criarEtapa,
+  atualizarEtapa,
+  removerEtapa,
   listarTermos,
+  atualizarTermo,
   listarSubServicos,
+  listarSubServicosTodas,
   getCascata,
   criarTermo,
   criarSubServico,
+  atualizarSubServico,
+  removerSubServico,
   criarCombosLote,
+  criarCombo,
+  listarCombos,
+  listarCombosDoSubServico,
   excluirCombo,
+  reativarCombo,
 } from './vocabulario.js';
 export type {
   DimensaoVocabulario,
@@ -224,7 +236,33 @@ export type {
   Cascata,
   FiltrosCascata,
   ComboInput,
+  ComboRow,
+  ResultadoCriacaoCombos,
 } from './vocabulario.js';
+
+// Catalogo de atividades
+export {
+  ESPECIALIDADES_CATALOGO,
+  TIPOS_RECURSO_ATIVIDADE,
+  listarCatalogoAtividades,
+  detalharCatalogoAtividade,
+  criarCatalogoAtividade,
+  atualizarCatalogoAtividade,
+  excluirCatalogoAtividade,
+  adicionarSubStepCatalogo,
+  removerSubStepCatalogo,
+  adicionarRecursoCatalogo,
+  removerRecursoCatalogo,
+} from './catalogo-atividades.js';
+export type {
+  CatalogoAtividadeItem,
+  SubStepItem,
+  RecursoAtividadeItem,
+  SubStepInput,
+  RecursoInput,
+  CriarCatalogoAtividadeInput,
+  AtualizarCatalogoAtividadeInput,
+} from './catalogo-atividades.js';
 
 // OS Admin
 export {
@@ -323,18 +361,6 @@ export type {
   PermissaoRbac,
   PapelRbacAdmin,
 } from './rbac.js';
-
-// Catalogo de Atividades
-export {
-  listarCatalogoAtividades,
-  criarCatalogoAtividade,
-} from './catalogo-atividades.js';
-export type {
-  CatalogoAtividadeItem,
-  CriarCatalogoAtividadeInput,
-  SubStepItem,
-  RecursoAtividadeItem,
-} from './catalogo-atividades.js';
 
 // Equipes
 export {

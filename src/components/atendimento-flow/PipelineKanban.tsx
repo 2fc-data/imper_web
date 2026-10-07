@@ -200,7 +200,11 @@ export function PipelineKanban({
                               </span>
                             </div>
                           </div>
-                          <StatusBadge status={item.status} size="sm" />
+                          <StatusBadge
+                            status={item.status}
+                            size="sm"
+                            labelOverride={coluna.id === 'VISITA_AGENDADA' ? 'Visita Agendada' : undefined}
+                          />
                         </div>
 
                         {/* Contato & Detalhes */}

@@ -5,6 +5,7 @@ import {
   inputClasses,
   labelClasses,
   numero,
+  rotuloAtividade,
   selectClasses,
   subtotalLinha,
   textareaClasses,
@@ -359,7 +360,7 @@ export function PassoFichaResumo({ state, set }: Props) {
             {state.atividades
               .map(
                 (a) =>
-                  `${a.catalogo.nome}: ${brl(
+                  `${rotuloAtividade(a)}: ${brl(
                     a.linhas.reduce((acc, l) => acc + subtotalLinha(l), 0),
                   )}`,
               )

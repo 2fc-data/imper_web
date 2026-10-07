@@ -54,10 +54,11 @@ export interface LinhaForm {
 export interface AtividadeForm {
   etapaId: number;
   subServicoId: number;
-  catalogoAtividadeId: string;
+  /** Omitido no wizard novo; backend auto-resolve a partir do sub-serviço. */
+  catalogoAtividadeId: string | null;
   etapaNome: string;
   subServicoNome: string;
-  catalogo: CatalogoAtividadeItem;
+  catalogo?: CatalogoAtividadeItem | null;
   linhas: LinhaForm[];
 }
 
@@ -143,9 +144,16 @@ export function estadoInicialWizard(
 export function chaveAtividade(a: {
   etapaId: number;
   subServicoId: number;
-  catalogoAtividadeId: string;
 }): string {
-  return `${a.etapaId}:${a.subServicoId}:${a.catalogoAtividadeId}`;
+  return `${a.etapaId}:${a.subServicoId}`;
+}
+
+/** Cabeçalho de atividade: etapa › sub-serviço (catálogo é detalhe de origem). */
+export function rotuloAtividade(a: {
+  etapaNome: string;
+  subServicoNome: string;
+}): string {
+  return `${a.etapaNome} › ${a.subServicoNome}`;
 }
 
 export function catalogoPlaceholder(id: string): CatalogoAtividadeItem {
@@ -250,7 +258,7 @@ export function validarPasso(
     case 3: {
       for (const a of state.atividades) {
         if (a.linhas.length === 0)
-          return `Atividade "${a.catalogo.nome}" sem linhas.`;
+          return `Atividade "${rotuloAtividade(a)}" sem linhas.`;
         for (const l of a.linhas) {
           if (!l.descricao.trim())
             return 'Preencha a descrição de todas as linhas.';
@@ -340,7 +348,9 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
     atividades: state.atividades.map((a) => ({
       etapaId: a.etapaId,
       subServicoId: a.subServicoId,
-      catalogoAtividadeId: a.catalogoAtividadeId,
+      ...(a.catalogoAtividadeId != null
+        ? { catalogoAtividadeId: a.catalogoAtividadeId }
+        : {}),
       linhas: a.linhas.map((l) => ({
         verboId: l.verboId,
         objetoId: l.objetoId,
@@ -436,16 +446,18 @@ export function estadoDeEdicao(
   const atividades: AtividadeForm[] = [];
 
   for (const row of [...det.atividades].sort((a, b) => a.ordem - b.ordem)) {
-    const chave = `${row.etapaId}:${row.subServicoId}:${row.catalogoAtividadeId}`;
+    const chave = `${row.etapaId}:${row.subServicoId}`;
     let atividade = porChave.get(chave);
     if (!atividade) {
       const catalogo =
-        resolver.catalogo?.(row.catalogoAtividadeId) ??
-        catalogoPlaceholder(row.catalogoAtividadeId);
+        row.catalogoAtividadeId != null
+          ? resolver.catalogo?.(row.catalogoAtividadeId) ??
+            catalogoPlaceholder(row.catalogoAtividadeId)
+          : null;
       atividade = {
         etapaId: row.etapaId,
         subServicoId: row.subServicoId,
-        catalogoAtividadeId: row.catalogoAtividadeId,
+        catalogoAtividadeId: row.catalogoAtividadeId ?? null,
         etapaNome:
           resolver.etapaNome?.(row.etapaId) ?? `#${row.etapaId}`,
         subServicoNome:
