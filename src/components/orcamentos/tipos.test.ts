@@ -53,6 +53,7 @@ function atividade(parcial: Partial<AtividadeForm> = {}): Omit<
     subServicoId: 7,
     catalogoAtividadeId: 'cat-1',
     etapaNome: 'Pintura',
+    etapaOrdem: 0,
     subServicoNome: 'Pintura residencial',
     catalogo: {
       id: 'cat-1',
@@ -222,13 +223,13 @@ describe('validarPasso', () => {
     expect(validarPasso(s, 2)).toBeNull();
   });
 
-  it('passo 3 valida descrição, MO, quantidade, área e materiais', () => {
-    const base = adicionarLinha(
+  it('passo 3 aceita descrição vazia e valida MO, quantidade, área e materiais', () => {
+    const semDescricao = adicionarLinha(
       estadoInicialWizard(),
       atividade(),
       linha({ descricao: '  ' }),
     );
-    expect(validarPasso(base, 3)).toMatch(/descrição/i);
+    expect(validarPasso(semDescricao, 3)).toBeNull();
 
     const mo = adicionarLinha(
       estadoInicialWizard(),

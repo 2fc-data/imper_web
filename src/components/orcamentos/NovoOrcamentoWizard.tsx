@@ -159,6 +159,7 @@ export function NovoOrcamentoWizard({
         if (!vivo) return;
 
         const etapaNome = new Map(etapas.map((e) => [e.id, e.nome]));
+        const etapaOrdem = new Map(etapas.map((e) => [e.id, e.ordem]));
         const subNome = new Map<number, string>();
         subsPorEtapas.flat().forEach((s) => subNome.set(s.id, s.nome));
         const catPorId = new Map(catalogo.map((c) => [c.id, c]));
@@ -179,6 +180,7 @@ export function NovoOrcamentoWizard({
 
         const resolver: ResolverEdicao = {
           etapaNome: (id) => etapaNome.get(id),
+          etapaOrdem: (id) => etapaOrdem.get(id),
           subServicoNome: (id) => subNome.get(id),
           catalogo: (id) => catPorId.get(id) as CatalogoAtividadeItem | undefined,
           termoNome: (dim, id) => termoNome(dim, id),

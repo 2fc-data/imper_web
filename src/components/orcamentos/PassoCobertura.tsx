@@ -3,7 +3,6 @@ import { CascataVocabulario } from './CascataVocabulario';
 import {
   adicionarLinha,
   btnPrimarioClasses,
-  btnSecundarioClasses,
   cascataVazia,
   cardClasses,
   inputClasses,
@@ -26,8 +25,10 @@ interface Props {
  * Passo 2 — cobertura.
  *
  * 1. Selecione o que será feito: só Etapa + Sub-serviço.
- * 2. Termos: Verbo/Objeto/Local/Característica + descrição + adicionar.
- *    O backend auto-resolve `catalogoAtividadeId` a partir do sub-serviço.
+ * 2. Detalhe da atividade: Verbo/Objeto/Local/Característica + descrição
+ *    + adicionar. Para cada combinação etapa+sub-serviço o usuário pode
+ *    adicionar várias linhas. O backend auto-resolve `catalogoAtividadeId`
+ *    a partir do sub-serviço.
  * 3. Linhas adicionadas (agrupadas por etapa+sub-serviço).
  */
 export function PassoCobertura({ state, set }: Props) {
@@ -40,8 +41,7 @@ export function PassoCobertura({ state, set }: Props) {
     cascata.etapaId != null &&
     cascata.subServicoId != null &&
     cascata.verboId != null &&
-    cascata.objetoId != null &&
-    descricao.trim() !== '';
+    cascata.objetoId != null;
 
   const adicionar = () => {
     if (!podeAdicionar) return;
@@ -50,6 +50,7 @@ export function PassoCobertura({ state, set }: Props) {
         s,
         {
           etapaId: cascata.etapaId as number,
+          etapaOrdem: cascata.etapaOrdem ?? 0,
           subServicoId: cascata.subServicoId as number,
           catalogoAtividadeId: null,
           etapaNome: cascata.etapaNome ?? `#${cascata.etapaId}`,
@@ -84,13 +85,25 @@ export function PassoCobertura({ state, set }: Props) {
       </div>
 
       <div className={cardClasses}>
-        <h3 className="mb-3 text-sm font-semibold">
-          2. Detalhe da atividade
-        </h3>
-        <CascataVocabulario valor={cascata} onChange={setCascata} modo="completa" />
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-sm font-semibold">2. Detalhe da atividade</h3>
+          {temSelecao ? (
+            <span className="text-xs text-muted-foreground">
+              Detalhando: <span className="font-medium">{cascata.etapaNome}</span>{' '}
+              › <span className="font-medium">{cascata.subServicoNome}</span>
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              Selecione etapa e sub-serviço em «1. Selecione o que será feito»
+            </span>
+          )}
+        </div>
+        <CascataVocabulario valor={cascata} onChange={setCascata} modo="termos" />
         <div className="mt-3">
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Descrição da linha</span>
+            <span className={labelClasses}>
+              Descrição da linha (opcional)
+            </span>
             <input
               className={inputClasses}
               type="text"
@@ -129,11 +142,18 @@ export function PassoCobertura({ state, set }: Props) {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {state.atividades.map((a, aIdx) => (
-              <div
-                key={`${a.etapaId}:${a.subServicoId}`}
-                className={cardClasses}
-              >
+            {state.atividades
+              .map((a, aIdx) => ({ a, aIdx }))
+              // ordena por Etapa.ordem (Início, Em andamento, Acabamento,
+              // Finalizado); empates preservam a ordem de inserção
+              .sort(
+                (x, y) => x.a.etapaOrdem - y.a.etapaOrdem || x.aIdx - y.aIdx,
+              )
+              .map(({ a, aIdx }) => (
+                <div
+                  key={`${a.etapaId}:${a.subServicoId}`}
+                  className={cardClasses}
+                >
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <div className="text-sm">
                     <span className="font-medium">{rotuloAtividade(a)}</span>
@@ -157,10 +177,13 @@ export function PassoCobertura({ state, set }: Props) {
                         {l.localNome ? ` ${l.localNome}` : ''}
                         {l.caracteristicaNome
                           ? ` — ${l.caracteristicaNome}`
-                          : ''}{' '}
-                        <span className="text-muted-foreground">
-                          · {l.descricao}
-                        </span>
+                          : ''}
+                        {l.descricao ? (
+                          <span className="text-muted-foreground">
+                            {' '}
+                            · {l.descricao}
+                          </span>
+                        ) : null}
                       </span>
                       <button
                         type="button"
@@ -172,24 +195,6 @@ export function PassoCobertura({ state, set }: Props) {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex justify-end">
-                  <button
-                    type="button"
-                    className={`${btnSecundarioClasses} text-xs`}
-                    onClick={() => {
-                      setCascata({
-                        ...cascataVazia(),
-                        etapaId: a.etapaId,
-                        etapaNome: a.etapaNome,
-                        subServicoId: a.subServicoId,
-                        subServicoNome: a.subServicoNome,
-                      });
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                  >
-                    Adicionar outra linha aqui
-                  </button>
-                </div>
               </div>
             ))}
           </div>

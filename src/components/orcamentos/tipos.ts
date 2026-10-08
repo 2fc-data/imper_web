@@ -57,6 +57,8 @@ export interface AtividadeForm {
   /** Omitido no wizard novo; backend auto-resolve a partir do sub-serviço. */
   catalogoAtividadeId: string | null;
   etapaNome: string;
+  /** `Etapa.ordem` — usado para ordenar a exibição das atividades. */
+  etapaOrdem: number;
   subServicoNome: string;
   catalogo?: CatalogoAtividadeItem | null;
   linhas: LinhaForm[];
@@ -260,18 +262,17 @@ export function validarPasso(
         if (a.linhas.length === 0)
           return `Atividade "${rotuloAtividade(a)}" sem linhas.`;
         for (const l of a.linhas) {
-          if (!l.descricao.trim())
-            return 'Preencha a descrição de todas as linhas.';
+          const rotulo = l.descricao.trim() || `${l.verboNome} ${l.objetoNome}`;
           if (l.areaM2 != null && l.areaM2 <= 0)
-            return `Linha "${l.descricao}": área (m²) deve ser maior que zero.`;
+            return `Linha "${rotulo}": área (m²) deve ser maior que zero.`;
           if (l.quantidade != null && l.quantidade <= 0)
-            return `Linha "${l.descricao}": quantidade deve ser maior que zero.`;
+            return `Linha "${rotulo}": quantidade deve ser maior que zero.`;
           if (l.moPessoas != null && l.moPessoas < 1)
-            return `Linha "${l.descricao}": mão de obra precisa de ao menos 1 pessoa.`;
+            return `Linha "${rotulo}": mão de obra precisa de ao menos 1 pessoa.`;
           if (l.moHoras != null && l.moHoras < 0)
-            return `Linha "${l.descricao}": horas de mão de obra não podem ser negativas.`;
+            return `Linha "${rotulo}": horas de mão de obra não podem ser negativas.`;
           if (l.moValorHora != null && l.moValorHora < 0)
-            return `Linha "${l.descricao}": valor/hora não pode ser negativo.`;
+            return `Linha "${rotulo}": valor/hora não pode ser negativo.`;
           for (const m of l.materiais) {
             if (!(m.quantidade > 0))
               return `Material "${m.nome}" com quantidade inválida.`;
@@ -409,6 +410,7 @@ function linhasCalculo(a: AtividadeForm) {
 
 export interface ResolverEdicao {
   etapaNome?: (id: number) => string | undefined;
+  etapaOrdem?: (id: number) => number | undefined;
   subServicoNome?: (id: number) => string | undefined;
   catalogo?: (id: string) => CatalogoAtividadeItem | undefined;
   termoNome?: (dim: DimensaoVocabulario, id: number) => string | undefined;
@@ -460,6 +462,7 @@ export function estadoDeEdicao(
         catalogoAtividadeId: row.catalogoAtividadeId ?? null,
         etapaNome:
           resolver.etapaNome?.(row.etapaId) ?? `#${row.etapaId}`,
+        etapaOrdem: resolver.etapaOrdem?.(row.etapaId) ?? 0,
         subServicoNome:
           resolver.subServicoNome?.(row.subServicoId) ?? `#${row.subServicoId}`,
         catalogo,
@@ -522,6 +525,7 @@ export function estadoDeEdicao(
 export interface ValorCascata {
   etapaId: number | null;
   etapaNome: string | null;
+  etapaOrdem: number | null;
   subServicoId: number | null;
   subServicoNome: string | null;
   verboId: number | null;
@@ -538,6 +542,7 @@ export function cascataVazia(): ValorCascata {
   return {
     etapaId: null,
     etapaNome: null,
+    etapaOrdem: null,
     subServicoId: null,
     subServicoNome: null,
     verboId: null,

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../ui/StatusBadge';
 import type { AtendimentoItem } from '../../lib/api';
 
@@ -87,13 +88,21 @@ interface PipelineKanbanProps {
   loading?: boolean;
   onSelectCard: (item: AtendimentoItem) => void;
   onNovoAtendimento?: () => void;
+  /**
+   * Mesmo fluxo do botão "Iniciar Orçamento" do modal (card Visita Agendada):
+   * visita realizada + encaminhar p/ orçamento + abrir o wizard de novo
+   * orçamento com os dados do atendimento.
+   */
+  onCriarOrcamento?: (id: number) => Promise<void> | void;
 }
 
 export function PipelineKanban({
   items,
   loading = false,
   onSelectCard,
+  onCriarOrcamento,
 }: PipelineKanbanProps) {
+  const navigate = useNavigate();
   const agruparItensPorEstagio = (estagioId: string): AtendimentoItem[] => {
     return items.filter((item) => {
       const temAgendamento =
@@ -179,10 +188,31 @@ export function PipelineKanban({
                 ) : (
                   cards.map((item) => {
                     const inicial = getInicial(item.user?.nome);
+                    const abrirOrcamentos = coluna.id === 'ORCAMENTAMENTO';
                     return (
                       <div
                         key={item.id}
-                        onClick={() => onSelectCard(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (abrirOrcamentos) {
+                            if (onCriarOrcamento) {
+                              void Promise.resolve(
+                                onCriarOrcamento(item.id),
+                              ).catch((err) => {
+                                console.error(
+                                  'Erro ao iniciar orçamento pelo kanban:',
+                                  err,
+                                );
+                              });
+                              return;
+                            }
+                            navigate(
+                              `/orcamentos?view=novo&atendimentoId=${item.id}`,
+                            );
+                            return;
+                          }
+                          onSelectCard(item);
+                        }}
                         className="group relative cursor-pointer rounded-xl border border-border/70 bg-card p-4 shadow-2xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-lg space-y-3"
                       >
                         {/* Top Bar Card */}

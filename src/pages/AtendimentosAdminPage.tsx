@@ -1134,6 +1134,7 @@ export function AtendimentosAdminPage({
               }
               loading={loading}
               onSelectCard={handleAbrirModal}
+              onCriarOrcamento={handleCriarOrcamento}
             />
           ) : (
             <AtendimentoList

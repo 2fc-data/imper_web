@@ -20,9 +20,10 @@ interface Props {
   onChange: (v: ValorCascata) => void;
   /**
    * `reduzida` — só Etapa + Sub-serviço (seleção do que será feito).
+   * `termos` — só Verbo/Objeto/Local/Característica (etapa/sub vêm de fora).
    * `completa` (padrão) — todas as dimensões.
    */
-  modo?: 'reduzida' | 'completa';
+  modo?: 'reduzida' | 'completa' | 'termos';
 }
 
 /** Limpa as dimensões downstream de `dim` (mantém `dim` intacta). */
@@ -61,13 +62,15 @@ export function CascataVocabulario({
   modo = 'completa',
 }: Props) {
   const soEtapasSubs = modo === 'reduzida';
+  const soTermos = modo === 'termos';
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [subs, setSubs] = useState<SubServico[]>([]);
   const [cascata, setCascata] = useState<Cascata | null>(null);
   const [carregando, setCarregando] = useState(false);
 
-  // etapas (uma vez)
+  // etapas (uma vez; não busca em modo `termos` — não são renderizadas)
   useEffect(() => {
+    if (soTermos) return;
     let vivo = true;
     listarEtapas(true)
       .then((r) => {
@@ -77,11 +80,11 @@ export function CascataVocabulario({
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [soTermos]);
 
   // sub-serviços por etapa
   useEffect(() => {
-    if (valor.etapaId == null) {
+    if (soTermos || valor.etapaId == null) {
       setSubs([]);
       return;
     }
@@ -94,10 +97,11 @@ export function CascataVocabulario({
     return () => {
       vivo = false;
     };
-  }, [valor.etapaId]);
+  }, [soTermos, valor.etapaId]);
 
   // cascata: um único efeito, refaz a busca quando a seleção muda
-  // (não busca em modo reduzida — não há dimensões expostas)
+  // (não busca em modo reduzida — não há dimensões expostas;
+  //  em modo `termos` busca pelo sub-serviço escolhido no cartão anterior)
   useEffect(() => {
     if (soEtapasSubs || valor.subServicoId == null) {
       setCascata(null);
@@ -132,8 +136,13 @@ export function CascataVocabulario({
 
   const mudarEtapa = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? Number(e.target.value) : null;
-    const nome = etapas.find((x) => x.id === id)?.nome ?? null;
-    onChange({ ...cascataVazia(), etapaId: id, etapaNome: nome });
+    const etapa = etapas.find((x) => x.id === id) ?? null;
+    onChange({
+      ...cascataVazia(),
+      etapaId: id,
+      etapaNome: etapa?.nome ?? null,
+      etapaOrdem: etapa?.ordem ?? null,
+    });
   };
 
   const mudarSub = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -194,38 +203,42 @@ export function CascataVocabulario({
           : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3'
       }
     >
-      <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Etapa</span>
-        <select
-          className={selectClasses}
-          value={valor.etapaId ?? ''}
-          onChange={mudarEtapa}
-        >
-          <option value="">Selecione a etapa…</option>
-          {etapas.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+      {soTermos ? null : (
+        <>
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Etapa</span>
+            <select
+              className={selectClasses}
+              value={valor.etapaId ?? ''}
+              onChange={mudarEtapa}
+            >
+              <option value="">Selecione a etapa…</option>
+              {etapas.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nome}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Sub-serviço</span>
-        <select
-          className={selectClasses}
-          value={valor.subServicoId ?? ''}
-          onChange={mudarSub}
-          disabled={desabilitadoSub}
-        >
-          <option value="">Selecione o sub-serviço…</option>
-          {subs.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Sub-serviço</span>
+            <select
+              className={selectClasses}
+              value={valor.subServicoId ?? ''}
+              onChange={mudarSub}
+              disabled={desabilitadoSub}
+            >
+              <option value="">Selecione o sub-serviço…</option>
+              {subs.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      )}
 
       {soEtapasSubs ? null : (
         <>
