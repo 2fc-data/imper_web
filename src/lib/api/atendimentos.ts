@@ -3,6 +3,7 @@ import type {
   CanalAtendimento,
   DadosEndereco,
   StatusAtendimento,
+  StatusOrcamento,
   Urgencia,
 } from '../../schemas/index.js';
 import type { AcaoAtendimento } from '../proximas-acoes.js';
@@ -36,6 +37,15 @@ export interface AtendimentoItem {
   createdAt: string;
   updatedAt: string;
   _count?: { visitas: number; agendamentos: number };
+  orcamentos?: {
+    id: number;
+    codigo: string;
+    status: StatusOrcamento;
+    valorTotal: string | number;
+    observacoes: string | null;
+    ficha?: { id?: number } | null;
+    _count?: { atividades: number };
+  }[];
 }
 
 export interface AtendimentoLogItem {

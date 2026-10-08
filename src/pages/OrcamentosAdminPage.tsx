@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import {
   aprovarOrcamentoAdmin,
   enviarOrcamentoAdmin,
   excluirOrcamentoAdmin,
   listarOrcamentosAdmin,
+  rascunhoParaRetomar,
   recusarOrcamentoAdmin,
   type OrcamentoAdminItem,
 } from '../lib/api';
@@ -15,6 +16,10 @@ import {
 } from '../components/orcamentos/NovoOrcamentoWizard';
 import { PendenciasAprovacaoModal } from '../components/orcamentos/PendenciasAprovacaoModal';
 import { RecusaOrcamentoModal } from '../components/orcamentos/RecusaOrcamentoModal';
+import {
+  calcularEvolucaoOrcamento,
+  EvolucaoOrcamento,
+} from '../components/orcamentos/EvolucaoOrcamento';
 
 interface OrcamentosAnalisesProps {
   orcamentos: OrcamentoAdminItem[];
@@ -183,6 +188,7 @@ export function OrcamentoList({
               <th className="px-4 py-3">Atendimento</th>
               <th className="px-4 py-3">Valor Total</th>
               <th className="px-4 py-3">Atividades</th>
+              <th className="px-4 py-3">Evolução</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Validade</th>
               <th className="px-4 py-3 text-right">Ações</th>
@@ -192,7 +198,7 @@ export function OrcamentoList({
             {loading ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Carregando orçamentos...
@@ -201,7 +207,7 @@ export function OrcamentoList({
             ) : orcamentos.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
                   Nenhum orçamento encontrado.
@@ -234,6 +240,16 @@ export function OrcamentoList({
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {item._count?.atividades ?? '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <EvolucaoOrcamento
+                        evolucao={calcularEvolucaoOrcamento({
+                          atividades: item._count?.atividades,
+                          valorTotal: item.valorTotal,
+                          ficha: item.ficha,
+                          observacoes: item.observacoes,
+                        })}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -360,6 +376,36 @@ export function OrcamentosAdminPage({
   );
   const [pendencias, setPendencias] = useState<string[] | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+
+  // Ao abrir o wizard via ?view=novo&atendimentoId=X, procura um rascunho
+  // editável (RASCUNHO/ENVIADO) desse atendimento e retoma em vez de abrir
+  // um orçamento em branco. Uma única tentativa por montagem.
+  const [retomandoRascunho, setRetomandoRascunho] = useState(
+    initialView === 'novo' && atendimentoInicial != null,
+  );
+  const retomacaoFeita = useRef(false);
+
+  useEffect(() => {
+    if (retomacaoFeita.current) return;
+    retomacaoFeita.current = true;
+    if (initialView !== 'novo' || atendimentoInicial == null) {
+      setRetomandoRascunho(false);
+      return;
+    }
+    (async () => {
+      try {
+        const lista = await listarOrcamentosAdmin({
+          atendimentoId: atendimentoInicial,
+        });
+        const existente = rascunhoParaRetomar(lista);
+        if (existente) setOrcamentoEdicao(existente);
+      } catch (err) {
+        console.error('Erro ao buscar rascunho do atendimento:', err);
+      } finally {
+        setRetomandoRascunho(false);
+      }
+    })();
+  }, [initialView, atendimentoInicial]);
 
   const mudarView = (novaView: 'analises' | 'lista' | 'novo') => {
     if (onNavegar) onNavegar(novaView);
@@ -489,17 +535,23 @@ export function OrcamentosAdminPage({
                 : 'Preencha cliente, cobertura, precificação e ficha para gerar a proposta.'}
             </p>
           </div>
-          <NovoOrcamentoWizard
-            orcamentoEdicao={orcamentoEdicao ?? undefined}
-            atendimentoTravado={
-              orcamentoEdicao ? null : atendimentoInicial
-            }
-            onSalvo={() => {
-              fecharWizard();
-              carregarOrcamentos();
-            }}
-            onCancel={fecharWizard}
-          />
+          {retomandoRascunho ? (
+            <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+              Verificando rascunho existente deste atendimento…
+            </div>
+          ) : (
+            <NovoOrcamentoWizard
+              orcamentoEdicao={orcamentoEdicao ?? undefined}
+              atendimentoTravado={
+                orcamentoEdicao ? null : atendimentoInicial
+              }
+              onSalvo={() => {
+                fecharWizard();
+                carregarOrcamentos();
+              }}
+              onCancel={fecharWizard}
+            />
+          )}
         </div>
       )}
 

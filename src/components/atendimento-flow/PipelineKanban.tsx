@@ -2,6 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../ui/StatusBadge';
 import type { AtendimentoItem } from '../../lib/api';
+import {
+  calcularEvolucaoOrcamento,
+  EvolucaoOrcamento,
+} from '../orcamentos/EvolucaoOrcamento';
 
 export interface PipelineStage {
   id: string;
@@ -252,6 +256,24 @@ export function PipelineKanban({
                             {item.descricao}
                           </p>
                         )}
+
+                        {item.orcamentos?.[0] ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold tracking-wide text-foreground/70">
+                              {item.orcamentos[0].codigo}
+                            </span>
+                            <EvolucaoOrcamento
+                              evolucao={calcularEvolucaoOrcamento({
+                                atividades:
+                                  item.orcamentos[0]._count?.atividades,
+                                valorTotal: item.orcamentos[0].valorTotal,
+                                ficha: item.orcamentos[0].ficha,
+                                observacoes: item.orcamentos[0].observacoes,
+                              })}
+                              size="sm"
+                            />
+                          </div>
+                        ) : null}
 
                         {/* Footer Card */}
                         <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px] text-muted-foreground">

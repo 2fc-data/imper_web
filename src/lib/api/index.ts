@@ -188,6 +188,7 @@ export {
   enviarOrcamentoAdmin,
   aprovarOrcamentoAdmin,
   recusarOrcamentoAdmin,
+  rascunhoParaRetomar,
 } from './orcamentos-admin.js';
 export type {
   ItemOrcamentoInput,

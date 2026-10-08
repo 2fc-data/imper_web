@@ -117,17 +117,34 @@ export interface OrcamentoAdminItem {
   user?: { id: number; nome: string } | null;
   ordemServico?: { id: number; codigo: string; status: string } | null;
   servicoMarketing?: { id: number; titulo: string } | null;
+  ficha?: { id?: number } | null;
   _count?: { atividades: number };
 }
 
 export async function listarOrcamentosAdmin(params?: {
   status?: string;
   q?: string;
+  atendimentoId?: number;
 }): Promise<OrcamentoAdminItem[]> {
   return api.get<OrcamentoAdminItem[]>('/orcamentos', {
     status: params?.status,
     q: params?.q,
+    atendimentoId: params?.atendimentoId,
   });
+}
+
+/**
+ * Melhor orçamento existente para retomar ao abrir o wizard de um
+ * atendimento: um rascunho editável (RASCUNHO/ENVIADO), o mais recente
+ * (a API já ordena por createdAt desc). Sem candidato → null (wizard novo).
+ */
+export function rascunhoParaRetomar(
+  lista: OrcamentoAdminItem[],
+): OrcamentoAdminItem | null {
+  return (
+    lista.find((o) => o.status === 'RASCUNHO' || o.status === 'ENVIADO') ??
+    null
+  );
 }
 
 export async function obterOrcamentoAdmin(
