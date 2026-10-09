@@ -425,3 +425,41 @@ export type {
   DisponibilidadeData,
   DisponibilidadeSlot,
 } from './disponibilidade.js';
+
+// Frota
+export {
+  listarVeiculos,
+  buscarVeiculoLookups,
+  buscarAnalisesFrota,
+  obterVeiculo,
+  obterProximoCodigoVeiculo,
+  criarVeiculo,
+  atualizarVeiculo,
+  excluirVeiculo,
+  listarRegistrosKm,
+  registrarKm,
+  atualizarRegistroKm,
+  excluirRegistroKm,
+  listarAbastecimentos,
+  criarAbastecimento,
+  atualizarAbastecimento,
+  excluirAbastecimento,
+  listarManutencoesVeiculos,
+  buscarManutencoesVeiculosLookups,
+  criarManutencaoVeiculo,
+  atualizarManutencaoVeiculo,
+  excluirManutencaoVeiculo,
+} from './veiculos.js';
+export type {
+  VeiculoItem,
+  VeiculoInput,
+  RegistroKmItem,
+  RegistroKmInput,
+  AbastecimentoItem,
+  AbastecimentoInput,
+  ManutencaoVeiculoItem,
+  ManutencaoVeiculoInput,
+  AnalisesFrota,
+  VeiculoLookups,
+  ManutencoesVeiculosLookups,
+} from './veiculos.js';

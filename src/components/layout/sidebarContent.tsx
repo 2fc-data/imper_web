@@ -118,6 +118,80 @@ export function UsuariosSidebar({
   );
 }
 
+export function FrotaSidebar({
+  viewAtiva,
+  onNavegar,
+}: {
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+}) {
+  return (
+    <>
+      <SidebarButton
+        active={viewAtiva === 'analises'}
+        onClick={() => onNavegar('analises')}
+        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+      >
+        Análises
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar('lista')}
+        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+      >
+        Lista de Veículos
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'novo'}
+        onClick={() => onNavegar('novo')}
+        icon={icone('M12 4v16m8-8H4')}
+      >
+        Novo Veículo
+      </SidebarButton>
+      <SidebarNote>
+        Frota: veículos, km diário, abastecimentos e manutenções.
+      </SidebarNote>
+    </>
+  );
+}
+
+export function FrotaLinksSidebar() {
+  return (
+    <>
+      <SidebarLink
+        to="/veiculos"
+        icon={icone(
+          'M5 17h14M5 17a2 2 0 01-2-2V9a2 2 0 012-2h1l1-2h6l1 2h1a2 2 0 012 2v6a2 2 0 01-2 2M5 17a2 2 0 100 4 2 2 0 000-4zM19 17a2 2 0 100 4 2 2 0 000-4z',
+        )}
+      >
+        Veículos
+      </SidebarLink>
+      <SidebarLink
+        to="/frota-km"
+        icon={icone('M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z')}
+      >
+        Km Diário
+      </SidebarLink>
+      <SidebarLink
+        to="/abastecimentos"
+        icon={icone(
+          'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+        )}
+      >
+        Abastecimentos
+      </SidebarLink>
+      <SidebarLink
+        to="/manutencoes-veiculos"
+        icon={icone(
+          'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+        )}
+      >
+        Manutenções
+      </SidebarLink>
+    </>
+  );
+}
+
 export function ServicosSidebar({
   viewAtiva,
   onNavegar,

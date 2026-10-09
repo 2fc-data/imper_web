@@ -14,6 +14,8 @@ import {
   EpisSidebar,
   EquipamentosSidebar,
   EquipesSidebar,
+  FrotaLinksSidebar,
+  FrotaSidebar,
   ManutencoesSidebar,
   MateriaisSidebar,
   MovimentacaoSidebar,
@@ -129,6 +131,24 @@ const RetiradaDeItensPage = lazy(() =>
 const ExecucaoDashboardPage = lazy(() =>
   import('./pages/ExecucaoDashboardPage').then((m) => ({
     default: m.ExecucaoDashboardPage,
+  })),
+);
+const VeiculosAdminPage = lazy(() =>
+  import('./pages/VeiculosAdminPage').then((m) => ({
+    default: m.default,
+  })),
+);
+const FrotaKmPage = lazy(() =>
+  import('./pages/FrotaKmPage').then((m) => ({ default: m.default })),
+);
+const AbastecimentosPage = lazy(() =>
+  import('./pages/AbastecimentosPage').then((m) => ({
+    default: m.default,
+  })),
+);
+const ManutencoesVeiculosPage = lazy(() =>
+  import('./pages/ManutencoesVeiculosPage').then((m) => ({
+    default: m.default,
   })),
 );
 
@@ -399,6 +419,51 @@ function ManutencoesRoute() {
       }
     >
       <ManutencoesAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+    </ProtectedLayout>
+  );
+}
+
+function VeiculosRoute() {
+  const [view, setView] = useState<'analises' | 'lista' | 'novo'>('lista');
+  return (
+    <ProtectedLayout
+      requiredPermissions={['visualizar_frota']}
+      sidebar={<FrotaSidebar viewAtiva={view} onNavegar={setView} />}
+    >
+      <VeiculosAdminPage view={view} onViewChange={setView} />
+    </ProtectedLayout>
+  );
+}
+
+function FrotaKmRoute() {
+  return (
+    <ProtectedLayout
+      requiredPermissions={['visualizar_frota', 'registrar_km_frota']}
+      sidebar={<FrotaLinksSidebar />}
+    >
+      <FrotaKmPage />
+    </ProtectedLayout>
+  );
+}
+
+function AbastecimentosRoute() {
+  return (
+    <ProtectedLayout
+      requiredPermissions={['visualizar_frota', 'gerenciar_frota']}
+      sidebar={<FrotaLinksSidebar />}
+    >
+      <AbastecimentosPage />
+    </ProtectedLayout>
+  );
+}
+
+function ManutencoesVeiculosRoute() {
+  return (
+    <ProtectedLayout
+      requiredPermissions={['visualizar_frota', 'gerenciar_frota']}
+      sidebar={<FrotaLinksSidebar />}
+    >
+      <ManutencoesVeiculosPage />
     </ProtectedLayout>
   );
 }
@@ -731,6 +796,13 @@ export default function App() {
         <Route element={<CatalogosRoute />} path="/catalogos" />
         <Route element={<EquipamentosRoute />} path="/equipamentos" />
         <Route element={<ManutencoesRoute />} path="/manutencoes" />
+        <Route element={<VeiculosRoute />} path="/veiculos" />
+        <Route element={<FrotaKmRoute />} path="/frota-km" />
+        <Route element={<AbastecimentosRoute />} path="/abastecimentos" />
+        <Route
+          element={<ManutencoesVeiculosRoute />}
+          path="/manutencoes-veiculos"
+        />
         <Route element={<EpisRoute />} path="/epis" />
         <Route element={<MateriaisRoute />} path="/materiais" />
         <Route
