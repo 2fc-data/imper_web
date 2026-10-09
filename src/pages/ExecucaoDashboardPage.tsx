@@ -8,9 +8,7 @@ import {
 } from '../components/ui/card';
 import {
   type AtividadeOSItem,
-  type ChecklistItem,
   listarAtividadesOS,
-  listarChecklistPendentesEquipe,
   listarSeparacoes,
   type SeparacaoItem,
 } from '../lib/api';
@@ -34,17 +32,8 @@ const STATUS_ATIVIDADE_LABELS: Record<string, string> = {
   BLOQUEADA: 'Bloqueada',
 };
 
-const STATUS_CHECKLIST_COLORS: Record<string, string> = {
-  PENDENTE: 'bg-muted text-muted-foreground',
-  CONCLUIDO: 'bg-success/10 text-success',
-  BLOQUEADO: 'bg-destructive/10 text-destructive',
-};
-
 export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
   const [atividades, setAtividades] = useState<AtividadeOSItem[]>([]);
-  const [checklistsPendentes, setChecklistsPendentes] = useState<
-    ChecklistItem[]
-  >([]);
   const [separacoes, setSeparacoes] = useState<SeparacaoItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,12 +41,10 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
     setLoading(true);
     Promise.all([
       listarAtividadesOS().catch(() => []),
-      listarChecklistPendentesEquipe().catch(() => []),
       listarSeparacoes({ status: 'PENDENTE' }).catch(() => []),
     ])
-      .then(([atv, check, sep]) => {
+      .then(([atv, sep]) => {
         setAtividades(atv);
-        setChecklistsPendentes(check);
         setSeparacoes(sep);
       })
       .finally(() => setLoading(false));
@@ -78,7 +65,6 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
   const concluidas = atividades.filter((a) => a.status === 'CONCLUIDA').length;
   const bloqueadas = atividades.filter((a) => a.status === 'BLOQUEADA').length;
 
-  const checklistPendentes = checklistsPendentes.length;
   const separacoesPendentes = separacoes.length;
 
   return (
@@ -86,7 +72,7 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
       <h2 className="text-lg font-semibold">Dashboard de Execução</h2>
 
       {/* Cards de resumo */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Em Andamento</CardDescription>
@@ -125,14 +111,6 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
             <span className="text-2xl font-bold text-destructive">
               {bloqueadas}
             </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Checklists Pendentes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <span className="text-2xl font-bold">{checklistPendentes}</span>
           </CardContent>
         </Card>
       </div>
@@ -180,42 +158,6 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
         </CardContent>
       </Card>
 
-      {/* Checklists pendentes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Checklists Pendentes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {checklistsPendentes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum checklist pendente.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {checklistsPendentes.slice(0, 10).map((ck) => (
-                <div
-                  key={ck.id}
-                  className="flex items-center justify-between rounded border p-2"
-                >
-                  <div className="text-sm">
-                    <span className="font-medium">{ck.descricao}</span>
-                  </div>
-                  <span
-                    className={cn(
-                      'rounded-full px-2 py-0.5 text-xs font-medium',
-                      STATUS_CHECKLIST_COLORS[ck.status] ??
-                        'bg-muted text-muted-foreground',
-                    )}
-                  >
-                    {ck.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Separações pendentes */}
       <Card>
         <CardHeader>
@@ -236,9 +178,6 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
                   <div className="text-sm">
                     <span className="font-medium">
                       OS {sep.os?.numero ?? '#'}
-                    </span>
-                    <span className="ml-2 text-muted-foreground">
-                      — {sep.equipe?.nome ?? 'Sem equipe'}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">

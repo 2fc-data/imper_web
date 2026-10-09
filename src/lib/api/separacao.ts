@@ -1,5 +1,4 @@
 import { api } from './core.js';
-import type { EquipeItem } from './equipes.js';
 import type { MaterialItem } from './materiais.js';
 import type { EpiItem } from './epis.js';
 import type { EquipamentoItem } from './equipamentos.js';
@@ -10,7 +9,6 @@ export interface SeparacaoItem {
   status: string;
   statusNovo?: string;
   osId: number | null;
-  equipeId: string | null;
   dataPrevista: string | null;
   dataNecessidade?: string | null;
   dataConfirmacao: string | null;
@@ -18,7 +16,6 @@ export interface SeparacaoItem {
   totalItens?: number;
   criadoEm: string;
   os?: { id: number; codigo: string; numero?: string };
-  equipe?: EquipeItem;
   confirmadoPor?: { id: number; nome: string } | null;
   itens?: SeparacaoItemDetalhe[];
 }
@@ -43,13 +40,11 @@ export interface SeparacaoItemDetalhe {
 
 export async function listarSeparacoes(params?: {
   osId?: number;
-  equipeId?: string;
   status?: string;
   q?: string;
 }): Promise<SeparacaoItem[]> {
   const searchParams = new URLSearchParams();
   if (params?.osId) searchParams.set('osId', String(params.osId));
-  if (params?.equipeId) searchParams.set('equipeId', params.equipeId);
   if (params?.status) searchParams.set('status', params.status);
   if (params?.q) searchParams.set('q', params.q);
   const queryStr = searchParams.toString();
@@ -64,12 +59,6 @@ export async function detalharSeparacao(id: number): Promise<SeparacaoItem> {
 
 export async function confirmarSeparacao(id: number): Promise<SeparacaoItem> {
   return api.put<SeparacaoItem>(`/separacao/${id}/confirmar`);
-}
-
-export async function notificarEquipeSeparacao(
-  id: number,
-): Promise<SeparacaoItem> {
-  return api.put<SeparacaoItem>(`/separacao/${id}/notificar-equipe`);
 }
 
 export async function registrarRetiradaSeparacao(

@@ -706,41 +706,6 @@ export function VocabularioSidebar({
   );
 }
 
-export function EquipesSidebar({
-  viewAtiva,
-  onNavegar,
-}: {
-  viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
-}) {
-  return (
-    <>
-      <SidebarButton
-        active={viewAtiva === 'analises'}
-        onClick={() => onNavegar('analises')}
-        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
-      >
-        Análises
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'lista'}
-        onClick={() => onNavegar('lista')}
-        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
-      >
-        Lista de Equipes
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'novo'}
-        onClick={() => onNavegar('novo')}
-        icon={icone('M12 4v16m8-8H4')}
-      >
-        Nova Equipe
-      </SidebarButton>
-      <SidebarNote>Gerencie equipes de execução e seus membros.</SidebarNote>
-    </>
-  );
-}
-
 export function AlmoxarifeSidebar({
   viewAtiva,
   onNavegar,

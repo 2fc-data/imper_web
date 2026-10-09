@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button } from '../components/ui/button';
 import {
   aprovarOSAdmin,
-  atribuirEquipe,
   cancelarOSAdmin,
   concluirOSAdmin,
-  type EquipeItem,
   iniciarOSAdmin,
-  listarAtividadesOS,
-  type AtividadeOSItem,
-  listarEquipes,
   listarOSAdmin,
   type OrdemServicoAdminItem,
 } from '../lib/api';
@@ -107,7 +101,6 @@ interface OSListProps {
   onIniciar: (id: number) => void;
   onConcluir: (id: number) => void;
   onCancelar: (id: number) => void;
-  onPlanejar: (os: OrdemServicoAdminItem) => void;
   onVisualizar: (os: OrdemServicoAdminItem) => void;
 }
 
@@ -122,7 +115,6 @@ export function OSList({
   onIniciar,
   onConcluir,
   onCancelar,
-  onPlanejar,
   onVisualizar,
 }: OSListProps) {
   return (
@@ -262,13 +254,6 @@ export function OSList({
                         <>
                           <button
                             type="button"
-                            onClick={() => onPlanejar(item)}
-                            className="rounded-md bg-info px-2 py-1 text-xs font-medium text-info-foreground hover:bg-info/90 transition-colors"
-                          >
-                            Planejar
-                          </button>
-                          <button
-                            type="button"
                             onClick={() => onIniciar(item.id)}
                             className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                           >
@@ -353,8 +338,6 @@ export function OSAdminPage({
   const [statusFiltro, setStatusFiltro] = useState('');
   const [osSelecionada, setOsSelecionada] =
     useState<OrdemServicoAdminItem | null>(null);
-  const [osParaPlanejar, setOsParaPlanejar] =
-    useState<OrdemServicoAdminItem | null>(null);
 
   const carregarOS = useCallback(async () => {
     setLoading(true);
@@ -426,7 +409,6 @@ export function OSAdminPage({
           onIniciar={handleIniciar}
           onConcluir={handleConcluir}
           onCancelar={handleCancelar}
-          onPlanejar={(os) => setOsParaPlanejar(os)}
           onVisualizar={(os) => setOsSelecionada(os)}
         />
       )}
@@ -484,211 +466,6 @@ export function OSAdminPage({
           </div>
         </div>
       )}
-
-      {/* Modal de Planejamento de Execução */}
-      {osParaPlanejar && (
-        <PlanejarExecucaoModal
-          os={osParaPlanejar}
-          onClose={() => setOsParaPlanejar(null)}
-          onPlanejado={async () => {
-            setOsParaPlanejar(null);
-            await carregarOS();
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-interface PlanejarExecucaoModalProps {
-  os: OrdemServicoAdminItem;
-  onClose: () => void;
-  onPlanejado: () => void;
-}
-
-function PlanejarExecucaoModal({
-  os,
-  onClose,
-  onPlanejado,
-}: PlanejarExecucaoModalProps) {
-  const [atividades, setAtividades] = useState<AtividadeOSItem[]>([]);
-  const [equipes, setEquipes] = useState<EquipeItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-
-  const [atribuicoes, setAtribuicoes] = useState<
-    Record<string, { equipeId: string; dataPrevisao: string }>
-  >({});
-
-  useEffect(() => {
-    setLoading(true);
-    Promise.all([listarAtividadesOS({ osId: os.id }), listarEquipes()])
-      .then(([ats, eqs]) => {
-        setAtividades(ats);
-        setEquipes(eqs);
-        const inicial: Record<string, { equipeId: string; dataPrevisao: string }> = {};
-        for (const a of ats) {
-          inicial[a.id] = {
-            equipeId: a.equipeId ?? '',
-            dataPrevisao: a.dataPrevisao ? a.dataPrevisao.slice(0, 10) : '',
-          };
-        }
-        setAtribuicoes(inicial);
-      })
-      .catch((err) => {
-        setErro(
-          err instanceof Error
-            ? err.message
-            : 'Erro ao carregar atividades da OS.',
-        );
-      })
-      .finally(() => setLoading(false));
-  }, [os.id]);
-
-  function setAtribuicao(
-    atividadeId: string,
-    campo: { equipeId?: string; dataPrevisao?: string },
-  ) {
-    setAtribuicoes((prev) => ({
-      ...prev,
-      [atividadeId]: { ...prev[atividadeId], ...campo },
-    }));
-  }
-
-  async function handleSalvar() {
-    const linhasComEquipe = atividades.filter(
-      (a) => atribuicoes[a.id]?.equipeId,
-    );
-    if (linhasComEquipe.length === 0) return;
-    setSalvando(true);
-    setErro(null);
-    try {
-      await Promise.all(
-        linhasComEquipe.map((a) => {
-          const att = atribuicoes[a.id];
-          const dataPrevisao = att.dataPrevisao
-            ? new Date(`${att.dataPrevisao}T12:00:00`).toISOString()
-            : null;
-          return atribuirEquipe(a.id, {
-            equipeId: att.equipeId,
-            dataPrevisao,
-          });
-        }),
-      );
-      onPlanejado();
-    } catch (err) {
-      setErro(
-        err instanceof Error ? err.message : 'Erro ao atribuir equipes.',
-      );
-    } finally {
-      setSalvando(false);
-    }
-  }
-
-  const porEtapa = new Map<string, AtividadeOSItem[]>();
-  for (const a of atividades) {
-    const chave = a.etapaOS?.nome ?? 'Sem etapa';
-    const lista = porEtapa.get(chave);
-    if (lista) lista.push(a);
-    else porEtapa.set(chave, [a]);
-  }
-
-  const comEquipe = Object.values(atribuicoes).filter((a) => a.equipeId).length;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 p-4">
-      <div className="w-full max-w-5xl rounded-xl bg-card p-5 shadow-lg space-y-4 border max-h-[80vh] overflow-y-auto">
-        <h3 className="text-lg font-bold">
-          Planejar Execução — OS #{os.codigo}
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Atribua equipes e datas de previsão às atividades geradas desta OS.
-        </p>
-
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        ) : erro ? (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {erro}
-          </p>
-        ) : atividades.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Nenhuma atividade gerada nesta OS. Aprove um orçamento para gerar
-            as atividades.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {[...porEtapa.entries()].map(([nomeEtapa, linhas]) => (
-              <div key={nomeEtapa} className="space-y-2">
-                <h4 className="text-sm font-medium">{nomeEtapa}</h4>
-                {linhas.map((a) => {
-                  const atribuicao = atribuicoes[a.id] ?? {
-                    equipeId: '',
-                    dataPrevisao: '',
-                  };
-                  return (
-                    <div key={a.id} className="rounded-lg border p-3">
-                      <div className="text-sm font-medium">
-                        {a.catalogoAtividade?.nome || a.catalogoAtividadeId}
-                      </div>
-                      {a.catalogoAtividade?.descricao && (
-                        <div className="text-xs text-muted-foreground">
-                          {a.catalogoAtividade.descricao}
-                        </div>
-                      )}
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        <select
-                          value={atribuicao.equipeId}
-                          onChange={(e) =>
-                            setAtribuicao(a.id, { equipeId: e.target.value })
-                          }
-                          className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
-                        >
-                          <option value="">Selecione uma equipe</option>
-                          {equipes.map((eq) => (
-                            <option key={eq.id} value={eq.id}>
-                              {eq.nome}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="date"
-                          value={atribuicao.dataPrevisao}
-                          onChange={(e) =>
-                            setAtribuicao(a.id, {
-                              dataPrevisao: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-3 border-t">
-          <span className="text-xs text-muted-foreground">
-            {comEquipe} de {atividades.length} atividade(s) com equipe
-            atribuída
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={salvando}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSalvar}
-              disabled={salvando || comEquipe === 0}
-            >
-              {salvando ? 'Salvando...' : 'Atribuir Equipes'}
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
