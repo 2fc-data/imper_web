@@ -13,7 +13,6 @@ import {
   DashboardSidebar,
   EpisSidebar,
   EquipamentosSidebar,
-  EquipesSidebar,
   FrotaLinksSidebar,
   FrotaSidebar,
   ManutencoesSidebar,
@@ -111,9 +110,6 @@ const VocabularioAdminPage = lazy(() =>
   import('./pages/VocabularioAdminPage').then((m) => ({
     default: m.default,
   })),
-);
-const EquipesPage = lazy(() =>
-  import('./pages/EquipesPage').then((m) => ({ default: m.EquipesPage })),
 );
 const AlmoxarifePage = lazy(() =>
   import('./pages/AlmoxarifePage').then((m) => ({ default: m.AlmoxarifePage })),
@@ -586,23 +582,6 @@ function VocabularioRoute() {
   );
 }
 
-function EquipesRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    'lista',
-  );
-
-  return (
-    <ProtectedLayout
-      requiredPermissions={['gerenciar_os', 'criar_os']}
-      sidebar={
-        <EquipesSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-      }
-    >
-      <EquipesPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-    </ProtectedLayout>
-  );
-}
-
 function AlmoxarifeRoute() {
   const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
 
@@ -810,7 +789,6 @@ export default function App() {
           path="/catalogo-atividades"
         />
         <Route element={<VocabularioRoute />} path="/vocabulario" />
-        <Route element={<EquipesRoute />} path="/equipes" />
         <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
         <Route element={<MovimentacaoRoute />} path="/movimentacoes" />
         <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />

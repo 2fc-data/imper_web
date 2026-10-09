@@ -14,7 +14,6 @@ import {
   confirmarSeparacao,
   detalharSeparacao,
   listarSeparacoes,
-  notificarEquipeSeparacao,
   registrarDevolucaoSeparacao,
   registrarRetiradaSeparacao,
   type SeparacaoItem,
@@ -143,11 +142,6 @@ function SeparacaoCard({
     onAtualizar();
   }
 
-  async function handleNotificar() {
-    await notificarEquipeSeparacao(separacao.id);
-    onAtualizar();
-  }
-
   return (
     <Card>
       <CardHeader className="py-3">
@@ -157,8 +151,7 @@ function SeparacaoCard({
               Separação #{separacao.id}
             </CardTitle>
             <CardDescription>
-              OS {separacao.os?.numero ?? '#'} —{' '}
-              {separacao.equipe?.nome ?? 'Sem equipe'}
+              OS {separacao.os?.numero ?? '#'}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -179,11 +172,6 @@ function SeparacaoCard({
           {separacao.status === 'PENDENTE' && (
             <Button size="sm" variant="outline" onClick={handleConfirmar}>
               Confirmar Separação
-            </Button>
-          )}
-          {separacao.status === 'SEPARACAO' && (
-            <Button size="sm" variant="outline" onClick={handleNotificar}>
-              Notificar Equipe
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={onVerDetalhe}>
@@ -230,10 +218,6 @@ function DetalheModal({
             <div>
               <span className="font-medium">OS:</span>{' '}
               {detalhe.os?.numero ?? '#'}
-            </div>
-            <div>
-              <span className="font-medium">Equipe:</span>{' '}
-              {detalhe.equipe?.nome ?? '—'}
             </div>
             <div>
               <span className="font-medium">Data Necessidade:</span>{' '}

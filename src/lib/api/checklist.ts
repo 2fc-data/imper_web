@@ -13,10 +13,3 @@ export interface ChecklistItem {
   subStepAtividade?: SubStepItem;
   concluidoPor?: { id: number; nome: string } | null;
 }
-
-export async function listarChecklistPendentesEquipe(
-  equipeId?: string,
-): Promise<ChecklistItem[]> {
-  const queryStr = equipeId ? `/${equipeId}` : '';
-  return api.get<ChecklistItem[]>(`/checklist/equipe${queryStr}/pendentes`);
-}

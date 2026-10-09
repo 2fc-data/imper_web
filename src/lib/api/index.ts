@@ -363,30 +363,16 @@ export type {
   PapelRbacAdmin,
 } from './rbac.js';
 
-// Equipes
-export {
-  listarEquipes,
-  criarEquipe,
-} from './equipes.js';
-export type {
-  EquipeItem,
-  MembroEquipeItem,
-} from './equipes.js';
-
 // Atividades OS
 export {
   listarAtividadesOS,
   planificarAtividades,
-  atribuirEquipe,
 } from './atividades-os.js';
 export type {
   AtividadeOSItem,
 } from './atividades-os.js';
 
 // Checklist
-export {
-  listarChecklistPendentesEquipe,
-} from './checklist.js';
 export type {
   ChecklistItem,
 } from './checklist.js';
@@ -396,7 +382,6 @@ export {
   listarSeparacoes,
   detalharSeparacao,
   confirmarSeparacao,
-  notificarEquipeSeparacao,
   registrarRetiradaSeparacao,
   registrarDevolucaoSeparacao,
   registrarRetiradaItemSeparacao,

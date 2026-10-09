@@ -1,6 +1,5 @@
 import { api } from './core.js';
 import type { CatalogoAtividadeItem } from './catalogo-atividades.js';
-import type { EquipeItem } from './equipes.js';
 import type { ChecklistItem } from './checklist.js';
 
 export interface AtividadeOSItem {
@@ -9,7 +8,6 @@ export interface AtividadeOSItem {
   etapaOSId: number | null;
   catalogoAtividadeId: string;
   catalogoId?: string;
-  equipeId: string | null;
   status: string;
   dataPrevisao: string | null;
   criadoEm: string;
@@ -17,7 +15,6 @@ export interface AtividadeOSItem {
   etapaOS?: { id: number; nome: string };
   catalogoAtividade?: CatalogoAtividadeItem;
   catalogo?: CatalogoAtividadeItem;
-  equipe?: EquipeItem;
   checklist?: ChecklistItem[];
 }
 
@@ -41,19 +38,8 @@ export async function planificarAtividades(input: {
   etapaOSId: number;
   atividades: {
     catalogoAtividadeId: string;
-    equipeId?: string;
     dataPrevisao?: string;
   }[];
 }): Promise<AtividadeOSItem[]> {
   return api.post<AtividadeOSItem[]>('/atividades-os/planificar', input);
-}
-
-export async function atribuirEquipe(
-  atividadeId: string,
-  input: { equipeId: string; dataPrevisao?: string | null },
-): Promise<AtividadeOSItem> {
-  return api.put<AtividadeOSItem>(
-    `/atividades-os/${atividadeId}/equipe`,
-    input,
-  );
 }

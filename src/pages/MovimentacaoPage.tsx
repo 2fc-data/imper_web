@@ -141,8 +141,7 @@ function MovimentacaoCard({
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-base">
-              OS {separacao.os?.numero ?? '#'} —{' '}
-              {separacao.equipe?.nome ?? 'Sem equipe'}
+              OS {separacao.os?.numero ?? '#'}
             </CardTitle>
             <CardDescription>
               {separacao.dataNecessidade
@@ -204,10 +203,6 @@ function DetalheModal({
             <div>
               <span className="font-medium">OS:</span>{' '}
               {detalhe.os?.numero ?? '#'}
-            </div>
-            <div>
-              <span className="font-medium">Equipe:</span>{' '}
-              {detalhe.equipe?.nome ?? '—'}
             </div>
             <div>
               <span className="font-medium">Data Necessidade:</span>{' '}

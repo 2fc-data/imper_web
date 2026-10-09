@@ -14,7 +14,6 @@ import {
   registrarRetiradaItemSeparacao,
   registrarDevolucaoItemSeparacao,
   confirmarSeparacao,
-  notificarEquipeSeparacao,
   type SeparacaoItem,
   type SeparacaoItemDetalhe,
 } from '../lib/api';
@@ -29,7 +28,6 @@ type TabItem = 'equipamentos' | 'epis' | 'materiais';
 const STATUS_COLORS: Record<string, string> = {
   SEPARACAO_PENDENTE: 'bg-amber-500/10 text-amber-600',
   SEPARACAO_CONCLUIDA: 'bg-blue-500/10 text-blue-600',
-  EQUIPE_NOTIFICADA: 'bg-purple-500/10 text-purple-600',
   RETIRADA_PENDENTE: 'bg-orange-500/10 text-orange-600',
   RETIRADA_CONCLUIDA: 'bg-emerald-500/10 text-emerald-600',
   DEVOLUCAO_PENDENTE: 'bg-rose-500/10 text-rose-600',
@@ -39,7 +37,6 @@ const STATUS_COLORS: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   SEPARACAO_PENDENTE: 'Separação Pendente',
   SEPARACAO_CONCLUIDA: 'Separação Concluída',
-  EQUIPE_NOTIFICADA: 'Equipe Notificada',
   RETIRADA_PENDENTE: 'Retirada Pendente',
   RETIRADA_CONCLUIDA: 'Retirada Concluída',
   DEVOLUCAO_PENDENTE: 'Devolução Pendente',
@@ -309,8 +306,7 @@ function ListaView({
                 </span>
               </div>
               <CardDescription>
-                {sep.os?.codigo ?? `OS #${sep.osId}`} •{' '}
-                {sep.equipe?.nome ?? 'Sem equipe'}
+                {sep.os?.codigo ?? `OS #${sep.osId}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -372,8 +368,7 @@ function DetalheView({
         <div className="flex-1">
           <h2 className="text-lg font-semibold">{separacao.codigo}</h2>
           <p className="text-sm text-muted-foreground">
-            {separacao.os?.codigo ?? `OS #${separacao.osId}`} •{' '}
-            {separacao.equipe?.nome ?? 'Sem equipe'}
+            {separacao.os?.codigo ?? `OS #${separacao.osId}`}
           </p>
         </div>
         <span
@@ -400,15 +395,9 @@ function DetalheView({
           </Button>
         )}
         {status === 'SEPARACAO_CONCLUIDA' && (
-          <Button
-            size="sm"
-            onClick={async () => {
-              await notificarEquipeSeparacao(separacao.id);
-              onVoltar();
-            }}
-          >
-            Notificar Equipe
-          </Button>
+          <span className="text-xs text-muted-foreground">
+            Separação concluída. Aguarde retirada.
+          </span>
         )}
         {status === 'SEPARACAO_PENDENTE' && (
           <Button
