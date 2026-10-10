@@ -71,19 +71,6 @@ export const NAV_ITEMS: NavItem[] = [
         ),
         requiredPermissions: ['aprovar_compra', 'ver_financeiro'],
       },
-      {
-        to: '/os',
-        label: 'OS',
-        icon: <Icon d="M9 12h6M9 16h6M8 8h8M20 12a8 8 0 11-16 0 8 8 0 0116 0z" />,
-        requiredPermissions: [
-          'criar_os',
-          'editar_os',
-          'iniciar_os',
-          'concluir_os',
-          'aprovar_os',
-          'entregar_os',
-        ],
-      },
     ],
   },
   {

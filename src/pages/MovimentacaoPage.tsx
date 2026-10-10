@@ -49,7 +49,6 @@ export function MovimentacaoPage({ viewAtiva, onNavegar: _onNavegar }: Props) {
   function carregar() {
     setLoading(true);
     listarSeparacoes({
-      q: busca || undefined,
       status: filtroStatus || undefined,
     })
       .then(setSeparacoes)
@@ -141,7 +140,7 @@ function MovimentacaoCard({
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-base">
-              OS {separacao.os?.numero ?? '#'}
+              Obra {separacao.obraId ?? '#'}
             </CardTitle>
             <CardDescription>
               {separacao.dataNecessidade
@@ -201,8 +200,8 @@ function DetalheModal({
         <CardContent className="space-y-4">
           <div className="grid gap-2 text-sm">
             <div>
-              <span className="font-medium">OS:</span>{' '}
-              {detalhe.os?.numero ?? '#'}
+              <span className="font-medium">Obra:</span>{' '}
+              {detalhe.obraId ?? '—'}
             </div>
             <div>
               <span className="font-medium">Data Necessidade:</span>{' '}

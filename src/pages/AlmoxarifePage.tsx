@@ -151,7 +151,7 @@ function SeparacaoCard({
               Separação #{separacao.id}
             </CardTitle>
             <CardDescription>
-              OS {separacao.os?.numero ?? '#'}
+              Obra {separacao.obraId ?? '#'}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -216,8 +216,8 @@ function DetalheModal({
         <CardContent className="space-y-4">
           <div className="grid gap-2 text-sm">
             <div>
-              <span className="font-medium">OS:</span>{' '}
-              {detalhe.os?.numero ?? '#'}
+              <span className="font-medium">Obra:</span>{' '}
+              {detalhe.obraId ?? '—'}
             </div>
             <div>
               <span className="font-medium">Data Necessidade:</span>{' '}

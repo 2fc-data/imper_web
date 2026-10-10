@@ -127,9 +127,9 @@ export default function DashboardPage() {
       ),
     },
     {
-      label: 'OS em andamento',
+      label: 'Obras em execução',
       value: resumo?.osAndamento,
-      to: '/os',
+      to: '/execucao',
       tendencia: 'primario' as Tendencia,
       icon: icone('M9 12h6M9 16h6M8 8h8M20 12a8 8 0 11-16 0 8 8 0 0116 0z'),
     },

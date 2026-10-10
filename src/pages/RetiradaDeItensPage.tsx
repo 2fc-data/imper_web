@@ -14,6 +14,7 @@ import {
   registrarRetiradaItemSeparacao,
   registrarDevolucaoItemSeparacao,
   confirmarSeparacao,
+  listarLookupsEpis,
   type SeparacaoItem,
   type SeparacaoItemDetalhe,
 } from '../lib/api';
@@ -45,7 +46,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const ITEM_STATUS_COLORS: Record<string, string> = {
   PENDENTE: 'bg-muted text-muted-foreground',
-  CONFERIDO: 'bg-emerald-500/10 text-emerald-600',
+  RETIRADO: 'bg-emerald-500/10 text-emerald-600',
   DEVOLVIDO: 'bg-blue-500/10 text-blue-600',
   PERDIDO: 'bg-rose-500/10 text-rose-600',
 };
@@ -79,24 +80,44 @@ export function RetiradaDeItensPage() {
   const [separacoes, setSeparacoes] = useState<SeparacaoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState('');
-  const [filtroOs, setFiltroOs] = useState('');
+  const [filtroObra, setFiltroObra] = useState('');
+  const [filtroColaborador, setFiltroColaborador] = useState('');
   const [detalheId, setDetalheId] = useState<number | null>(null);
   const [detalhe, setDetalhe] = useState<SeparacaoItem | null>(null);
   const [tab, setTab] = useState<TabItem>('materiais');
   const [processando, setProcessando] = useState(false);
+  const [colaboradores, setColaboradores] = useState<
+    { id: number; nome: string }[]
+  >([]);
+  const [retiradaPendente, setRetiradaPendente] = useState<number | null>(null);
+  const [colaboradorId, setColaboradorId] = useState('');
+
+  useEffect(() => {
+    listarLookupsEpis()
+      .then((l) => setColaboradores(l.colaboradores ?? []))
+      .catch(console.error);
+  }, []);
 
   function carregar() {
     setLoading(true);
     listarSeparacoes({
       status: filtroStatus || undefined,
-      osId: filtroOs ? Number(filtroOs) : undefined,
+      obraId: filtroObra ? Number(filtroObra) : undefined,
     })
       .then(setSeparacoes)
       .catch(console.error)
       .finally(() => setLoading(false));
   }
 
-  useEffect(carregar, [filtroStatus, filtroOs]);
+  useEffect(carregar, [filtroStatus, filtroObra]);
+
+  const separacoesFiltradas = filtroColaborador
+    ? separacoes.filter((sep) =>
+        sep.itens?.some(
+          (i) => i.colaborador?.id === Number(filtroColaborador),
+        ),
+      )
+    : separacoes;
 
   useEffect(() => {
     if (detalheId === null) {
@@ -107,14 +128,16 @@ export function RetiradaDeItensPage() {
   }, [detalheId]);
 
   async function handleRetirarItem(itemId: number) {
-    if (!detalhe) return;
+    if (!detalhe || !colaboradorId) return;
     setProcessando(true);
     try {
       await registrarRetiradaItemSeparacao(detalhe.id, itemId, {
-        colaboradorId: 0, // TODO: popup de selecao de colaborador
+        colaboradorId: Number(colaboradorId),
       });
       const atualizado = await detalharSeparacao(detalhe.id);
       setDetalhe(atualizado);
+      setRetiradaPendente(null);
+      setColaboradorId('');
       carregar();
     } catch (e) {
       console.error(e);
@@ -163,7 +186,7 @@ export function RetiradaDeItensPage() {
   const totalRetirados = separacoes.reduce(
     (acc, s) =>
       acc +
-      (s.itens?.filter((i) => i.status === 'CONFERIDO').length ?? 0),
+      (s.itens?.filter((i) => i.status === 'RETIRADO').length ?? 0),
     0,
   );
 
@@ -174,12 +197,12 @@ export function RetiradaDeItensPage() {
         <h2 className="text-lg font-semibold">Retirada de Itens</h2>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Nº OS</label>
+          <label className="text-sm font-medium">Obra</label>
           <input
             type="number"
-            placeholder="Filtrar por OS..."
-            value={filtroOs}
-            onChange={(e) => setFiltroOs(e.target.value)}
+            placeholder="Filtrar por obra..."
+            value={filtroObra}
+            onChange={(e) => setFiltroObra(e.target.value)}
             className={selectClasses}
           />
         </div>
@@ -195,6 +218,22 @@ export function RetiradaDeItensPage() {
             {Object.entries(STATUS_LABELS).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Colaborador</label>
+          <select
+            value={filtroColaborador}
+            onChange={(e) => setFiltroColaborador(e.target.value)}
+            className={selectClasses}
+          >
+            <option value="">Todos</option>
+            {colaboradores.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
               </option>
             ))}
           </select>
@@ -236,10 +275,15 @@ export function RetiradaDeItensPage() {
             onDevolver={handleDevolverItem}
             onExcluir={handleExcluir}
             processando={processando}
+            colaboradores={colaboradores}
+            retiradaPendente={retiradaPendente}
+            setRetiradaPendente={setRetiradaPendente}
+            colaboradorId={colaboradorId}
+            setColaboradorId={setColaboradorId}
           />
         ) : (
           <ListaView
-            separacoes={separacoes}
+            separacoes={separacoesFiltradas}
             loading={loading}
             onSelect={setDetalheId}
           />
@@ -281,7 +325,7 @@ function ListaView({
       {separacoes.map((sep) => {
         const total = sep.totalItens ?? sep.itens?.length ?? 0;
         const retirados =
-          sep.itens?.filter((i) => i.status === 'CONFERIDO').length ?? 0;
+          sep.itens?.filter((i) => i.status === 'RETIRADO').length ?? 0;
         const progresso = total > 0 ? (retirados / total) * 100 : 0;
 
         return (
@@ -306,7 +350,7 @@ function ListaView({
                 </span>
               </div>
               <CardDescription>
-                {sep.os?.codigo ?? `OS #${sep.osId}`}
+                Obra {sep.obraId ?? '—'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -314,6 +358,24 @@ function ListaView({
                 <span>
                   {retirados}/{total} itens retirados
                 </span>
+                {(() => {
+                  const nomes = [
+                    ...new Set(
+                      (sep.itens ?? [])
+                        .filter(
+                          (i) =>
+                            i.status === 'RETIRADO' && i.colaborador?.nome,
+                        )
+                        .map((i) => i.colaborador!.nome),
+                    ),
+                  ];
+                  return nomes.length > 0 ? (
+                    <>
+                      <span>•</span>
+                      <span>com {nomes.join(', ')}</span>
+                    </>
+                  ) : null;
+                })()}
                 <span>•</span>
                 <span>
                   {sep.dataNecessidade
@@ -344,6 +406,11 @@ function DetalheView({
   onDevolver,
   onExcluir,
   processando,
+  colaboradores,
+  retiradaPendente,
+  setRetiradaPendente,
+  colaboradorId,
+  setColaboradorId,
 }: {
   separacao: SeparacaoItem;
   tab: TabItem;
@@ -353,6 +420,11 @@ function DetalheView({
   onDevolver: (itemId: number) => void;
   onExcluir: (id: number) => void;
   processando: boolean;
+  colaboradores: { id: number; nome: string }[];
+  retiradaPendente: number | null;
+  setRetiradaPendente: (id: number | null) => void;
+  colaboradorId: string;
+  setColaboradorId: (id: string) => void;
 }) {
   const itens = separacao.itens ?? [];
   const tabItems = getTabItems(itens, tab);
@@ -368,7 +440,7 @@ function DetalheView({
         <div className="flex-1">
           <h2 className="text-lg font-semibold">{separacao.codigo}</h2>
           <p className="text-sm text-muted-foreground">
-            {separacao.os?.codigo ?? `OS #${separacao.osId}`}
+            Obra {separacao.obraId ?? '—'}
           </p>
         </div>
         <span
@@ -449,13 +521,60 @@ function DetalheView({
               key={item.id}
               item={item}
               tab={tab}
-              onRetirar={() => onRetirar(item.id)}
+              onRetirar={() => setRetiradaPendente(item.id)}
               onDevolver={() => onDevolver(item.id)}
               processando={processando}
             />
           ))
         )}
       </div>
+
+      {/* Popup selecao de colaborador */}
+      {retiradaPendente !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <Card className="w-full max-w-sm">
+            <CardHeader>
+              <CardTitle className="text-base">Registrar Retirada</CardTitle>
+              <CardDescription>
+                Selecione o colaborador que está retirando o item.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <select
+                value={colaboradorId}
+                onChange={(e) => setColaboradorId(e.target.value)}
+                className={selectClasses}
+              >
+                <option value="">Selecione o colaborador...</option>
+                {colaboradores.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setRetiradaPendente(null);
+                    setColaboradorId('');
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={processando || !colaboradorId}
+                  onClick={() => onRetirar(retiradaPendente)}
+                >
+                  Confirmar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
@@ -488,6 +607,9 @@ function ItemRow({
         <div className="text-sm font-medium truncate">{nome}</div>
         <div className="text-xs text-muted-foreground">
           Qtd: {qtd}
+          {item.colaborador?.nome && (
+            <> • Colaborador: {item.colaborador.nome}</>
+          )}
           {item.retiradoEm && (
             <> • Retirado: {formatarData(item.retiradoEm)}</>
           )}
@@ -507,7 +629,7 @@ function ItemRow({
             Retirar
           </Button>
         )}
-        {item.status === 'CONFERIDO' && tab !== 'epis' && (
+        {item.status === 'RETIRADO' && tab !== 'epis' && (
           <Button
             size="sm"
             variant="outline"

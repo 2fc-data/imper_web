@@ -97,11 +97,11 @@ export function obterOrcamentoPortal(id: number): Promise<OrcamentoAdminDetalhe>
 }
 
 export function listarOsPortal(): Promise<OsPortalItem[]> {
-  return api.get('/portal/os');
+  return api.get('/portal/obras');
 }
 
 export function obterOsPortal(id: number): Promise<OsPortalDetalhe> {
-  return api.get(`/portal/os/${id}`);
+  return api.get(`/portal/obras/${id}`);
 }
 
 export function atualizarPerfil(

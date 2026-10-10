@@ -21,7 +21,6 @@ export interface MaterialMovimentoItem {
   saldoApos: number | string;
   registradoPorId: number | null;
   registradoPor?: { id: number; nome: string } | null;
-  ordemServicoId: number | null;
   compraItemId: number | null;
   separacaoItemId: number | null;
   observacao: string | null;

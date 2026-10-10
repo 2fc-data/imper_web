@@ -7,9 +7,9 @@ import {
   CardTitle,
 } from '../components/ui/card';
 import {
-  type AtividadeOSItem,
-  listarAtividadesOS,
+  listarExecucoes,
   listarSeparacoes,
+  type ExecucaoAtividadeItem,
   type SeparacaoItem,
 } from '../lib/api';
 import { cn } from '../lib/utils';
@@ -18,33 +18,33 @@ interface Props {
   viewAtiva: 'dashboard' | string;
 }
 
-const STATUS_ATIVIDADE_COLORS: Record<string, string> = {
+const STATUS_EXECUCAO_COLORS: Record<string, string> = {
   PENDENTE: 'bg-muted text-muted-foreground',
   EM_ANDAMENTO: 'bg-primary/10 text-primary',
   CONCLUIDA: 'bg-success/10 text-success',
-  BLOQUEADA: 'bg-destructive/10 text-destructive',
+  CANCELADA: 'bg-destructive/10 text-destructive',
 };
 
-const STATUS_ATIVIDADE_LABELS: Record<string, string> = {
+const STATUS_EXECUCAO_LABELS: Record<string, string> = {
   PENDENTE: 'Pendente',
   EM_ANDAMENTO: 'Em Andamento',
   CONCLUIDA: 'Concluída',
-  BLOQUEADA: 'Bloqueada',
+  CANCELADA: 'Cancelada',
 };
 
 export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
-  const [atividades, setAtividades] = useState<AtividadeOSItem[]>([]);
+  const [execucoes, setExecucoes] = useState<ExecucaoAtividadeItem[]>([]);
   const [separacoes, setSeparacoes] = useState<SeparacaoItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      listarAtividadesOS().catch(() => []),
+      listarExecucoes().catch(() => []),
       listarSeparacoes({ status: 'PENDENTE' }).catch(() => []),
     ])
-      .then(([atv, sep]) => {
-        setAtividades(atv);
+      .then(([exe, sep]) => {
+        setExecucoes(exe);
         setSeparacoes(sep);
       })
       .finally(() => setLoading(false));
@@ -58,12 +58,12 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
     );
   }
 
-  const emAndamento = atividades.filter(
-    (a) => a.status === 'EM_ANDAMENTO',
+  const emAndamento = execucoes.filter(
+    (e) => e.status === 'EM_ANDAMENTO',
   ).length;
-  const pendentes = atividades.filter((a) => a.status === 'PENDENTE').length;
-  const concluidas = atividades.filter((a) => a.status === 'CONCLUIDA').length;
-  const bloqueadas = atividades.filter((a) => a.status === 'BLOQUEADA').length;
+  const pendentes = execucoes.filter((e) => e.status === 'PENDENTE').length;
+  const concluidas = execucoes.filter((e) => e.status === 'CONCLUIDA').length;
+  const canceladas = execucoes.filter((e) => e.status === 'CANCELADA').length;
 
   const separacoesPendentes = separacoes.length;
 
@@ -105,51 +105,51 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Bloqueadas</CardDescription>
+            <CardDescription>Canceladas</CardDescription>
           </CardHeader>
           <CardContent>
             <span className="text-2xl font-bold text-destructive">
-              {bloqueadas}
+              {canceladas}
             </span>
           </CardContent>
         </Card>
       </div>
 
-      {/* Atividades em andamento */}
+      {/* Execuções em andamento */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Atividades em Andamento</CardTitle>
+          <CardTitle className="text-sm">Execuções em Andamento</CardTitle>
         </CardHeader>
         <CardContent>
-          {atividades.filter((a) => a.status === 'EM_ANDAMENTO').length ===
+          {execucoes.filter((e) => e.status === 'EM_ANDAMENTO').length ===
           0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhuma atividade em andamento.
+              Nenhuma execução em andamento.
             </p>
           ) : (
             <div className="space-y-2">
-              {atividades
-                .filter((a) => a.status === 'EM_ANDAMENTO')
-                .map((atv) => (
+              {execucoes
+                .filter((e) => e.status === 'EM_ANDAMENTO')
+                .map((exe) => (
                   <div
-                    key={atv.id}
+                    key={exe.id}
                     className="flex items-center justify-between rounded border p-2"
                   >
                     <div className="text-sm">
                       <span className="font-medium">
-                        {atv.catalogo?.nome ?? `Atividade #${atv.catalogoId}`}
+                        {exe.atividade?.descricao ?? `Atividade #${exe.atividadeId}`}
                       </span>
                       <span className="ml-2 text-muted-foreground">
-                        OS #{atv.osId}
+                        {exe.atividade?.obraEtapa?.nome}
                       </span>
                     </div>
                     <span
                       className={cn(
                         'rounded-full px-2 py-0.5 text-xs font-medium',
-                        STATUS_ATIVIDADE_COLORS[atv.status],
+                        STATUS_EXECUCAO_COLORS[exe.status],
                       )}
                     >
-                      {STATUS_ATIVIDADE_LABELS[atv.status]}
+                      {STATUS_EXECUCAO_LABELS[exe.status]}
                     </span>
                   </div>
                 ))}
@@ -177,7 +177,7 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
                 >
                   <div className="text-sm">
                     <span className="font-medium">
-                      OS {sep.os?.numero ?? '#'}
+                      Obra {sep.obraId ?? '#'}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">
