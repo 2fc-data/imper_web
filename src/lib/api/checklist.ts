@@ -3,7 +3,6 @@ import type { SubStepItem } from './catalogo-atividades.js';
 
 export interface ChecklistItem {
   id: string;
-  atividadeOSId: string;
   subStepAtividadeId: string;
   status: string;
   descricao?: string;

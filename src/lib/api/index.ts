@@ -265,18 +265,6 @@ export type {
   AtualizarCatalogoAtividadeInput,
 } from './catalogo-atividades.js';
 
-// OS Admin
-export {
-  listarOSAdmin,
-  aprovarOSAdmin,
-  iniciarOSAdmin,
-  concluirOSAdmin,
-  cancelarOSAdmin,
-} from './os-admin.js';
-export type {
-  OrdemServicoAdminItem,
-} from './os-admin.js';
-
 // Agendamentos
 export {
   listarAgendamentos,
@@ -363,14 +351,17 @@ export type {
   PapelRbacAdmin,
 } from './rbac.js';
 
-// Atividades OS
+// Execucao
 export {
-  listarAtividadesOS,
-  planificarAtividades,
-} from './atividades-os.js';
+  listarExecucoes,
+  detalharExecucao,
+  planificarExecucao,
+  mudarStatusExecucao,
+} from './execucao.js';
 export type {
-  AtividadeOSItem,
-} from './atividades-os.js';
+  StatusExecucao,
+  ExecucaoAtividadeItem,
+} from './execucao.js';
 
 // Checklist
 export type {

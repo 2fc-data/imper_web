@@ -8,14 +8,14 @@ export interface SeparacaoItem {
   codigo: string;
   status: string;
   statusNovo?: string;
-  osId: number | null;
+  obraId: number | null;
   dataPrevista: string | null;
   dataNecessidade?: string | null;
   dataConfirmacao: string | null;
   confirmadoPorId: number | null;
   totalItens?: number;
   criadoEm: string;
-  os?: { id: number; codigo: string; numero?: string };
+  executucaoAtividadeId?: number | null;
   confirmadoPor?: { id: number; nome: string } | null;
   itens?: SeparacaoItemDetalhe[];
 }
@@ -25,6 +25,7 @@ export interface SeparacaoItemDetalhe {
   materialId: number | null;
   epiId: number | null;
   equipamentoId: number | null;
+  colaboradorId?: number | null;
   descricaoItem?: string;
   quantidade?: number | string;
   quantidadeNecessaria: number | string;
@@ -36,17 +37,16 @@ export interface SeparacaoItemDetalhe {
   material?: MaterialItem;
   epi?: EpiItem;
   equipamento?: EquipamentoItem;
+  colaborador?: { id: number; nome: string } | null;
 }
 
 export async function listarSeparacoes(params?: {
-  osId?: number;
+  obraId?: number;
   status?: string;
-  q?: string;
 }): Promise<SeparacaoItem[]> {
   const searchParams = new URLSearchParams();
-  if (params?.osId) searchParams.set('osId', String(params.osId));
+  if (params?.obraId) searchParams.set('obraId', String(params.obraId));
   if (params?.status) searchParams.set('status', params.status);
-  if (params?.q) searchParams.set('q', params.q);
   const queryStr = searchParams.toString();
   return api.get<SeparacaoItem[]>(
     `/separacao${queryStr ? `?${queryStr}` : ''}`,

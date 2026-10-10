@@ -1,5 +1,5 @@
 import { Component, lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { LandingLayout } from './components/landing/LandingLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
@@ -20,7 +20,6 @@ import {
   MovimentacaoSidebar,
   ObrasSidebar,
   OrcamentosSidebar,
-  OSSidebar,
   RbacSidebar,
   RetiradaDeItensSidebar,
   ServicosSidebar,
@@ -71,9 +70,6 @@ const OrcamentosAdminPage = lazy(() =>
   import('./pages/OrcamentosAdminPage').then((m) => ({
     default: m.OrcamentosAdminPage,
   })),
-);
-const OSAdminPage = lazy(() =>
-  import('./pages/OSAdminPage').then((m) => ({ default: m.OSAdminPage })),
 );
 const PortalHomePage = lazy(() => import('./pages/portal/PortalHomePage'));
 const PortalDadosPage = lazy(() => import('./pages/portal/PortalDadosPage'));
@@ -354,32 +350,6 @@ function OrcamentosRoute() {
         initialView={viewAtiva}
         onNavegar={setViewAtiva}
         atendimentoInicial={atendimentoInicial}
-      />
-    </ProtectedLayout>
-  );
-}
-
-function OSRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    'lista',
-  );
-  const navigate = useNavigate();
-
-  return (
-    <ProtectedLayout
-      requiredPermissions={[
-        'criar_os',
-        'editar_os',
-        'iniciar_os',
-        'concluir_os',
-        'aprovar_os',
-        'entregar_os',
-      ]}
-      sidebar={<OSSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />}
-    >
-      <OSAdminPage
-        viewAtiva={viewAtiva}
-        onGoToOrcamentos={() => navigate('/orcamentos')}
       />
     </ProtectedLayout>
   );
@@ -771,7 +741,6 @@ export default function App() {
         <Route element={<OrcamentosRoute />} path="/orcamentos" />
         <Route element={<ObrasRoute />} path="/obras" />
         <Route element={<ObraDetalheRoute />} path="/obras/:id" />
-        <Route element={<OSRoute />} path="/os" />
         <Route element={<CatalogosRoute />} path="/catalogos" />
         <Route element={<EquipamentosRoute />} path="/equipamentos" />
         <Route element={<ManutencoesRoute />} path="/manutencoes" />
