@@ -245,30 +245,6 @@ export type {
   ResultadoCriacaoCombos,
 } from './vocabulario.js';
 
-// Catalogo de atividades
-export {
-  ESPECIALIDADES_CATALOGO,
-  TIPOS_RECURSO_ATIVIDADE,
-  listarCatalogoAtividades,
-  detalharCatalogoAtividade,
-  criarCatalogoAtividade,
-  atualizarCatalogoAtividade,
-  excluirCatalogoAtividade,
-  adicionarSubStepCatalogo,
-  removerSubStepCatalogo,
-  adicionarRecursoCatalogo,
-  removerRecursoCatalogo,
-} from './catalogo-atividades.js';
-export type {
-  CatalogoAtividadeItem,
-  SubStepItem,
-  RecursoAtividadeItem,
-  SubStepInput,
-  RecursoInput,
-  CriarCatalogoAtividadeInput,
-  AtualizarCatalogoAtividadeInput,
-} from './catalogo-atividades.js';
-
 // Agendamentos
 export {
   listarAgendamentos,

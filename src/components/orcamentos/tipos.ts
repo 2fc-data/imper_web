@@ -8,7 +8,6 @@ import type {
   OrcamentoAdminDetalhe,
   OrcamentoObraFichaDetalhe,
 } from '../../lib/api';
-import type { CatalogoAtividadeItem } from '../../lib/api';
 import type { Urgencia } from '../../schemas';
 import {
   calcularTotais,
@@ -54,13 +53,10 @@ export interface LinhaForm {
 export interface AtividadeForm {
   etapaId: number;
   subServicoId: number;
-  /** Omitido no wizard novo; backend auto-resolve a partir do sub-serviço. */
-  catalogoAtividadeId: string | null;
   etapaNome: string;
   /** `Etapa.ordem` — usado para ordenar a exibição das atividades. */
   etapaOrdem: number;
   subServicoNome: string;
-  catalogo?: CatalogoAtividadeItem | null;
   linhas: LinhaForm[];
 }
 
@@ -156,20 +152,6 @@ export function rotuloAtividade(a: {
   subServicoNome: string;
 }): string {
   return `${a.etapaNome} › ${a.subServicoNome}`;
-}
-
-export function catalogoPlaceholder(id: string): CatalogoAtividadeItem {
-  return {
-    id,
-    nome: `Atividade ${id.slice(0, 6)}`,
-    descricao: null,
-    especialidadeNecessaria: '',
-    tempoEstimadoHoras: null,
-    ativo: true,
-    criadoEm: '',
-    subSteps: [],
-    recursos: [],
-  };
 }
 
 // ---------- transições de estado ----------
@@ -349,9 +331,6 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
     atividades: state.atividades.map((a) => ({
       etapaId: a.etapaId,
       subServicoId: a.subServicoId,
-      ...(a.catalogoAtividadeId != null
-        ? { catalogoAtividadeId: a.catalogoAtividadeId }
-        : {}),
       linhas: a.linhas.map((l) => ({
         verboId: l.verboId,
         objetoId: l.objetoId,
@@ -412,7 +391,6 @@ export interface ResolverEdicao {
   etapaNome?: (id: number) => string | undefined;
   etapaOrdem?: (id: number) => number | undefined;
   subServicoNome?: (id: number) => string | undefined;
-  catalogo?: (id: string) => CatalogoAtividadeItem | undefined;
   termoNome?: (dim: DimensaoVocabulario, id: number) => string | undefined;
   materialNome?: (id: number) => string | undefined;
 }
@@ -451,21 +429,14 @@ export function estadoDeEdicao(
     const chave = `${row.etapaId}:${row.subServicoId}`;
     let atividade = porChave.get(chave);
     if (!atividade) {
-      const catalogo =
-        row.catalogoAtividadeId != null
-          ? resolver.catalogo?.(row.catalogoAtividadeId) ??
-            catalogoPlaceholder(row.catalogoAtividadeId)
-          : null;
       atividade = {
         etapaId: row.etapaId,
         subServicoId: row.subServicoId,
-        catalogoAtividadeId: row.catalogoAtividadeId ?? null,
         etapaNome:
           resolver.etapaNome?.(row.etapaId) ?? `#${row.etapaId}`,
         etapaOrdem: resolver.etapaOrdem?.(row.etapaId) ?? 0,
         subServicoNome:
           resolver.subServicoNome?.(row.subServicoId) ?? `#${row.subServicoId}`,
-        catalogo,
         linhas: [],
       };
       porChave.set(chave, atividade);

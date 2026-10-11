@@ -51,21 +51,9 @@ function atividade(parcial: Partial<AtividadeForm> = {}): Omit<
   return {
     etapaId: 5,
     subServicoId: 7,
-    catalogoAtividadeId: 'cat-1',
     etapaNome: 'Pintura',
     etapaOrdem: 0,
     subServicoNome: 'Pintura residencial',
-    catalogo: {
-      id: 'cat-1',
-      nome: 'Aplicar pintura',
-      descricao: null,
-      especialidadeNecessaria: 'Pintor',
-      tempoEstimadoHoras: null,
-      ativo: true,
-      criadoEm: '2026-01-01T00:00:00.000Z',
-      subSteps: [],
-      recursos: [],
-    },
     ...parcial,
   };
 }
@@ -76,7 +64,6 @@ function row(parcial: Partial<OrcamentoAtividadeRow> = {}): OrcamentoAtividadeRo
     ordem: 1,
     etapaId: 5,
     subServicoId: 7,
-    catalogoAtividadeId: 'cat-1',
     descricao: 'Aplicar pintura',
     verboId: 11,
     objetoId: 22,
@@ -324,7 +311,6 @@ describe('montarInput', () => {
     expect(input.atividades).toHaveLength(1);
 
     const a = input.atividades[0];
-    expect(a.catalogoAtividadeId).toBe('cat-1');
     expect(Object.keys(a)).not.toContain('etapaNome');
     expect(Object.keys(a)).not.toContain('catalogo');
 
@@ -332,19 +318,6 @@ describe('montarInput', () => {
     expect(l.descricao).toBe('Aplicar pintura');
     expect('verboNome' in l).toBe(false);
     expect(l.materiais).toEqual([{ materialId: 5, quantidade: 3 }]);
-  });
-
-  it('omite catalogoAtividadeId quando nulo (auto-resolve no backend)', () => {
-    const s = adicionarLinha(
-      estadoInicialWizard({ atendimentoId: 10, validade: '2026-10-01' }),
-      atividade({ catalogoAtividadeId: null, catalogo: null }),
-      linha(),
-    );
-    const input = montarInput(s);
-    const a = input.atividades[0];
-    expect('catalogoAtividadeId' in a).toBe(false);
-    expect(a.etapaId).toBe(5);
-    expect(a.subServicoId).toBe(7);
   });
 
   it('inclui ficha apenas quando há conteúdo e limpa campos de texto', () => {
@@ -450,7 +423,7 @@ describe('estadoDeEdicao', () => {
     expect(s.ficha).toEqual({});
   });
 
-  it('usa o resolver para nomes e catálogo; fallback #id', () => {
+  it('usa o resolver para nomes; fallback #id', () => {
     const det = detalhe({
       atividades: [
         row({
@@ -468,27 +441,12 @@ describe('estadoDeEdicao', () => {
     const s = estadoDeEdicao(det, {
       etapaNome: (id) => (id === 5 ? 'Pintura' : undefined),
       subServicoNome: (id) => (id === 7 ? 'Residencial' : undefined),
-      catalogo: (id) =>
-        id === 'cat-1'
-          ? {
-              id: 'cat-1',
-              nome: 'Aplicar pintura 2 demãos',
-              descricao: null,
-              especialidadeNecessaria: 'Pintor',
-              tempoEstimadoHoras: null,
-              ativo: true,
-              criadoEm: '2026-01-01T00:00:00.000Z',
-              subSteps: [],
-              recursos: [],
-            }
-          : undefined,
       termoNome: (dim, id) =>
         dim === 'verbos' && id === 11 ? 'Aplicar' : undefined,
     });
     const a = s.atividades[0];
     expect(a.etapaNome).toBe('Pintura');
     expect(a.subServicoNome).toBe('Residencial');
-    expect(a.catalogo?.nome).toBe('Aplicar pintura 2 demãos');
     const l = a.linhas[0];
     expect(l.verboNome).toBe('Aplicar');
     expect(l.objetoNome).toBe('#22');
@@ -502,11 +460,10 @@ describe('estadoDeEdicao', () => {
     });
   });
 
-  it('usa placeholder de catálogo e nome de material sem relation', () => {
+  it('nome de material sem relation usa #id', () => {
     const det = detalhe({
       atividades: [
         row({
-          catalogoAtividadeId: 'outro-id-abc',
           materiais: [
             { materialId: 9, quantidade: '1', custoUnitario: '4.5' },
           ],
@@ -514,20 +471,7 @@ describe('estadoDeEdicao', () => {
       ],
     });
     const s = estadoDeEdicao(det);
-    expect(s.atividades[0].catalogo?.id).toBe('outro-id-abc');
-    expect(s.atividades[0].catalogo?.nome).toMatch(/Atividade/);
     expect(s.atividades[0].linhas[0].materiais[0].nome).toBe('#9');
-  });
-
-  it('catalogo null quando a linha não tem catálogo (auto-resolve)', () => {
-    const det = detalhe({
-      atividades: [
-        row({ catalogoAtividadeId: null }),
-      ],
-    });
-    const s = estadoDeEdicao(det);
-    expect(s.atividades[0].catalogoAtividadeId).toBeNull();
-    expect(s.atividades[0].catalogo).toBeNull();
   });
 
   it('hidrata ficha quando existe', () => {

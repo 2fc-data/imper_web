@@ -19,7 +19,6 @@ interface ObraAtividade {
   areaM2: number | null; moValorTotal: number; materiaisValor: number;
   linhaValorTotal: number; cancelada: boolean;
   materiais: ObraMaterial[];
-  catalogoAtividade?: { recursos: { tipo: string; nome: string; quantidade: number }[] };
 }
 interface ObraEtapa { id: number; nome: string; ordem: number; inativo: boolean; atividades: ObraAtividade[] }
 interface Aditivo { id: number; descricao: string; valor: number; status: 'PENDENTE' | 'APROVADO' | 'RECUSADO'; createdAt: string }
@@ -102,9 +101,6 @@ function AbaEscopo({ etapas, canEdit }: { etapas: ObraEtapa[]; canEdit: boolean 
                         {ativ.quantidade != null && <span>Qtd: {ativ.quantidade}</span>}
                         {ativ.areaM2 != null && <span>Área: {ativ.areaM2} m²</span>}
                         {ativ.materiais?.length > 0 && <span>📦 {ativ.materiais.length} material(is)</span>}
-                        {(ativ.catalogoAtividade?.recursos?.length ?? 0) > 0 && (
-                          <span>🦺 {ativ.catalogoAtividade?.recursos?.length} recurso(s)</span>
-                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">

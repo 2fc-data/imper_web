@@ -41,7 +41,6 @@ export interface LinhaInput {
 export interface AtividadeInput {
   etapaId: number;
   subServicoId: number;
-  catalogoAtividadeId?: string;
   linhas: LinhaInput[];
 }
 
@@ -203,7 +202,6 @@ export interface OrcamentoAtividadeRow {
   ordem: number;
   etapaId: number;
   subServicoId: number;
-  catalogoAtividadeId: string | null;
   descricao: string;
   verboId: number;
   objetoId: number;

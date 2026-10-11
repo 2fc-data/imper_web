@@ -9,7 +9,6 @@ import {
   AlmoxarifeSidebar,
   AtendimentosSidebar,
   CalendarioSidebar,
-  CatalogoAtividadesSidebar,
   DashboardSidebar,
   EpisSidebar,
   EquipamentosSidebar,
@@ -94,11 +93,6 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const ServicosAdminPage = lazy(() => import('./pages/ServicosAdminPage'));
 const UsuariosPage = lazy(() => import('./pages/UsuariosPage'));
-const CatalogoAtividadesPage = lazy(() =>
-  import('./pages/CatalogoAtividadesPage').then((m) => ({
-    default: m.CatalogoAtividadesPage,
-  })),
-);
 const VocabularioAdminPage = lazy(() =>
   import('./pages/VocabularioAdminPage').then((m) => ({
     default: m.default,
@@ -512,26 +506,6 @@ function RbacRoute() {
   );
 }
 
-function CatalogoAtividadesRoute() {
-  const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'lista' | 'novo' | 'editar'
-  >('lista');
-
-  return (
-    <ProtectedLayout
-      requiredPermissions={['gerenciar_catalogo']}
-      sidebar={
-        <CatalogoAtividadesSidebar
-          viewAtiva={viewAtiva}
-          onNavegar={setViewAtiva}
-        />
-      }
-    >
-      <CatalogoAtividadesPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-    </ProtectedLayout>
-  );
-}
-
 function VocabularioRoute() {
   const [viewAtiva, setViewAtiva] = useState<
     'analises' | 'etapas' | 'termos' | 'sub-servicos' | 'combos'
@@ -750,10 +724,6 @@ export default function App() {
         />
         <Route element={<EpisRoute />} path="/epis" />
         <Route element={<MateriaisRoute />} path="/materiais" />
-        <Route
-          element={<CatalogoAtividadesRoute />}
-          path="/catalogo-atividades"
-        />
         <Route element={<VocabularioRoute />} path="/vocabulario" />
         <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
         <Route element={<MovimentacaoRoute />} path="/movimentacoes" />

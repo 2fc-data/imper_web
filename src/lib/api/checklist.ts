@@ -1,14 +1,12 @@
 import { api } from './core.js';
-import type { SubStepItem } from './catalogo-atividades.js';
 
 export interface ChecklistItem {
   id: string;
-  subStepAtividadeId: string;
   status: string;
-  descricao?: string;
+  descricao: string;
+  ordem: number;
   concluidoPorId: number | null;
   dataConclusao: string | null;
   observacao: string | null;
-  subStepAtividade?: SubStepItem;
   concluidoPor?: { id: number; nome: string } | null;
 }

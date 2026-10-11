@@ -4,13 +4,11 @@ import {
   criarOrcamentoAdmin,
   editarOrcamentoAdmin,
   enviarOrcamentoAdmin,
-  listarCatalogoAtividades,
   listarEtapas,
   listarSubServicos,
   listarTermos,
   obterOrcamentoAdminDetalhe,
   recusarOrcamentoAdmin,
-  type CatalogoAtividadeItem,
   type OrcamentoAdminItem,
 } from '../../lib/api';
 import { PassoClienteServico } from './PassoClienteServico';
@@ -134,7 +132,6 @@ export function NovoOrcamentoWizard({
         const [
           det,
           etapas,
-          catalogo,
           verbos,
           objetos,
           locais,
@@ -142,7 +139,6 @@ export function NovoOrcamentoWizard({
         ] = await Promise.all([
           obterOrcamentoAdminDetalhe(orcamentoEdicao.id),
           listarEtapas(),
-          listarCatalogoAtividades({}),
           listarTermos('verbos'),
           listarTermos('objetos'),
           listarTermos('locais'),
@@ -162,7 +158,6 @@ export function NovoOrcamentoWizard({
         const etapaOrdem = new Map(etapas.map((e) => [e.id, e.ordem]));
         const subNome = new Map<number, string>();
         subsPorEtapas.flat().forEach((s) => subNome.set(s.id, s.nome));
-        const catPorId = new Map(catalogo.map((c) => [c.id, c]));
         const termoNome = (
           dim: 'verbos' | 'objetos' | 'locais' | 'caracteristicas',
           id: number,
@@ -182,7 +177,6 @@ export function NovoOrcamentoWizard({
           etapaNome: (id) => etapaNome.get(id),
           etapaOrdem: (id) => etapaOrdem.get(id),
           subServicoNome: (id) => subNome.get(id),
-          catalogo: (id) => catPorId.get(id) as CatalogoAtividadeItem | undefined,
           termoNome: (dim, id) => termoNome(dim, id),
         };
 

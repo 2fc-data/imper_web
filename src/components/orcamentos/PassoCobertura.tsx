@@ -27,8 +27,7 @@ interface Props {
  * 1. Selecione o que será feito: só Etapa + Sub-serviço.
  * 2. Detalhe da atividade: Verbo/Objeto/Local/Característica + descrição
  *    + adicionar. Para cada combinação etapa+sub-serviço o usuário pode
- *    adicionar várias linhas. O backend auto-resolve `catalogoAtividadeId`
- *    a partir do sub-serviço.
+ *    adicionar várias linhas.
  * 3. Linhas adicionadas (agrupadas por etapa+sub-serviço).
  */
 export function PassoCobertura({ state, set }: Props) {
@@ -52,10 +51,8 @@ export function PassoCobertura({ state, set }: Props) {
           etapaId: cascata.etapaId as number,
           etapaOrdem: cascata.etapaOrdem ?? 0,
           subServicoId: cascata.subServicoId as number,
-          catalogoAtividadeId: null,
           etapaNome: cascata.etapaNome ?? `#${cascata.etapaId}`,
           subServicoNome: cascata.subServicoNome ?? `#${cascata.subServicoId}`,
-          catalogo: null,
         },
         linhaDaCascata(cascata, descricao.trim()),
       ),

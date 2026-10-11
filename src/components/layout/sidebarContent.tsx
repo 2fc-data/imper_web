@@ -576,43 +576,6 @@ export function RbacSidebar({
   );
 }
 
-export function CatalogoAtividadesSidebar({
-  viewAtiva,
-  onNavegar,
-}: {
-  viewAtiva: 'analises' | 'lista' | 'novo' | 'editar';
-  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'editar') => void;
-}) {
-  return (
-    <>
-      <SidebarButton
-        active={viewAtiva === 'analises'}
-        onClick={() => onNavegar('analises')}
-        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
-      >
-        Análises
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'lista'}
-        onClick={() => onNavegar('lista')}
-        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
-      >
-        Lista de Atividades
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'novo'}
-        onClick={() => onNavegar('novo')}
-        icon={icone('M12 4v16m8-8H4')}
-      >
-        Nova Atividade
-      </SidebarButton>
-      <SidebarNote>
-        Catálogo de atividades padrão para planejamento de execução.
-      </SidebarNote>
-    </>
-  );
-}
-
 export function VocabularioSidebar({
   viewAtiva,
   onNavegar,
