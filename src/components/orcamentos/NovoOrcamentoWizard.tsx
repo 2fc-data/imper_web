@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   aprovarOrcamentoAdmin,
   criarOrcamentoAdmin,
@@ -17,6 +17,12 @@ import { PassoFichaResumo } from './PassoFichaResumo';
 import { PassoPrecificacao } from './PassoPrecificacao';
 import { PendenciasAprovacaoModal } from './PendenciasAprovacaoModal';
 import { RecusaOrcamentoModal } from './RecusaOrcamentoModal';
+import {
+  acaoDeSalvar,
+  estadoAutosaveInicial,
+  formatarHora,
+  reducerAutosave,
+} from './autosave';
 import {
   PASSOS,
   btnPrimarioClasses,
@@ -94,11 +100,20 @@ export function NovoOrcamentoWizard({
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [salvoId, setSalvoId] = useState<number | null>(
-    orcamentoEdicao?.id ?? null,
-  );
+  const [autosave, setAutosave] = useState(estadoAutosaveInicial);
   const [pendencias, setPendencias] = useState<string[] | null>(null);
   const [recusaAberta, setRecusaAberta] = useState(false);
+
+  // Espelhos para o autosave não depender de closures obsoletas: o id criado
+  // na primeira gravação e o estado corrente (usado pelo "Tentar novamente").
+  const salvoIdRef = useRef<number | null>(orcamentoEdicao?.id ?? null);
+  const estadoRef = useRef<WizardState>(state);
+  const filaAutosaveRef = useRef<Promise<void>>(Promise.resolve());
+  const seqAutosaveRef = useRef(0);
+
+  useEffect(() => {
+    estadoRef.current = state;
+  }, [state]);
 
   const set: AtualizarEstado = useCallback(
     (fn) => setState((s) => fn(s)),
@@ -181,7 +196,7 @@ export function NovoOrcamentoWizard({
         };
 
         setState(estadoDeEdicao(det, resolver));
-        setSalvoId(det.id);
+        salvoIdRef.current = det.id;
       } catch (err) {
         if (vivo) setErro(mensagemDeErro(err));
       } finally {
@@ -193,6 +208,55 @@ export function NovoOrcamentoWizard({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orcamentoEdicao?.id]);
+
+  // ---- autosave ----------------------------------------------------------
+  // Serializa todas as gravações (autosave e salvar manual): um request por
+  // vez, para um PATCH atrasado não sobrescrever o mais recente.
+  function naFila<T>(tarefa: () => Promise<T>): Promise<T> {
+    const rodar = filaAutosaveRef.current.catch(() => undefined).then(tarefa);
+    filaAutosaveRef.current = rodar.then(
+      () => undefined,
+      () => undefined,
+    );
+    return rodar;
+  }
+
+  // Grava um snapshot do estado. A validação do avanço (validarAte) já foi
+  // feita em "Próximo"; aqui só o passo 4 completo é exigido no salvar manual.
+  const salvarEstado = async (s: WizardState): Promise<number> => {
+    const input = montarInput(s);
+    const acao = acaoDeSalvar(salvoIdRef.current);
+    const salvo =
+      acao.tipo === 'criar'
+        ? await criarOrcamentoAdmin(input)
+        : await editarOrcamentoAdmin(acao.id, input);
+    salvoIdRef.current = salvo.id;
+    return salvo.id;
+  };
+
+  // Falha não bloqueia a navegação — vira indicador no stepper e o próximo
+  // "Próximo" (ou o retry) tenta de novo com o estado corrente.
+  const enfileirarAutosave = (snapshot: WizardState) => {
+    if (carregando) return;
+    const seq = ++seqAutosaveRef.current;
+    setAutosave((e) => reducerAutosave(e, { tipo: 'iniciar' }));
+    naFila(() => salvarEstado(snapshot))
+      .then(() => {
+        if (seqAutosaveRef.current !== seq) return;
+        setAutosave((e) =>
+          reducerAutosave(e, { tipo: 'sucesso', em: Date.now() }),
+        );
+      })
+      .catch((err: unknown) => {
+        if (seqAutosaveRef.current !== seq) return;
+        setAutosave((e) =>
+          reducerAutosave(e, { tipo: 'falha', mensagem: mensagemDeErro(err) }),
+        );
+      });
+  };
+
+  const tentarAutosaveNovamente = () =>
+    enfileirarAutosave(estadoRef.current);
 
   // ---- navegação ----------------------------------------------------------
   const irPara = (destino: PassoWizard) => {
@@ -211,7 +275,9 @@ export function NovoOrcamentoWizard({
       return;
     }
     setErro(null);
-    setState((s) => ({ ...s, passo: destino }));
+    const proximoEstado = { ...state, passo: destino };
+    setState(proximoEstado);
+    enfileirarAutosave(proximoEstado);
   };
 
   const proximo = () => {
@@ -220,13 +286,16 @@ export function NovoOrcamentoWizard({
       setErro(erroBloqueio);
       return;
     }
-    const erroAte = validarAte(state, (state.passo + 1) as PassoWizard);
+    const destino = (state.passo + 1) as PassoWizard;
+    const erroAte = validarAte(state, destino);
     if (erroAte) {
       setErro(erroAte);
       return;
     }
     setErro(null);
-    setState((s) => ({ ...s, passo: (s.passo + 1) as PassoWizard }));
+    const proximoEstado = { ...state, passo: destino };
+    setState(proximoEstado);
+    enfileirarAutosave(proximoEstado);
   };
 
   // ---- ações --------------------------------------------------------------
@@ -239,12 +308,7 @@ export function NovoOrcamentoWizard({
     setSalvando(true);
     setErro(null);
     try {
-      const input = montarInput(state);
-      const salvo = orcamentoEdicao
-        ? await editarOrcamentoAdmin(orcamentoEdicao.id, input)
-        : await criarOrcamentoAdmin(input);
-      setSalvoId(salvo.id);
-      return salvo.id;
+      return await naFila(() => salvarEstado(state));
     } catch (err) {
       const msg = mensagemDeErro(err);
       setErro(msg);
@@ -256,7 +320,9 @@ export function NovoOrcamentoWizard({
 
   const comSalvo = async (fn: (id: number) => Promise<unknown>) => {
     try {
-      const id = salvoId ?? (await salvar());
+      // Sempre grava o estado corrente antes da transição: um id já criado
+      // pelo autosave vira PATCH, e não um segundo rascunho.
+      const id = await salvar();
       await fn(id);
       onSalvo();
     } catch {
@@ -304,30 +370,75 @@ export function NovoOrcamentoWizard({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* stepper */}
-      <ol className="flex flex-wrap gap-2">
-        {PASSOS.map((p) => {
-          const ativo = p.passo === state.passo;
-          const feito = p.passo < state.passo;
-          return (
-            <li key={p.passo}>
-              <button
-                type="button"
-                onClick={() => irPara(p.passo)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  ativo
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : feito
-                      ? 'border-input bg-muted text-foreground hover:bg-muted/70'
-                      : 'border-input bg-background text-muted-foreground hover:bg-muted'
-                }`}
-              >
-                {p.passo}. {p.titulo}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+      {/* stepper + status do autosave */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <ol className="flex flex-wrap gap-2">
+          {PASSOS.map((p) => {
+            const ativo = p.passo === state.passo;
+            const feito = p.passo < state.passo;
+            return (
+              <li key={p.passo}>
+                <button
+                  type="button"
+                  onClick={() => irPara(p.passo)}
+                  aria-current={ativo ? 'step' : undefined}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    ativo
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : feito
+                        ? 'border-input bg-muted text-foreground hover:bg-muted/70'
+                        : 'border-input bg-background text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  {feito ? '✓ ' : ''}
+                  {p.passo}. {p.titulo}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+
+        {autosave.status !== 'ocioso' ? (
+          <p
+            role="status"
+            aria-live="polite"
+            className={`flex flex-wrap items-center gap-2 text-xs font-medium ${
+              autosave.status === 'erro'
+                ? 'text-destructive'
+                : 'text-muted-foreground'
+            }`}
+          >
+            {autosave.status === 'salvando' ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="inline-block size-3 animate-spin rounded-full border-2 border-current border-t-transparent"
+                />
+                Salvando rascunho…
+              </>
+            ) : null}
+            {autosave.status === 'salvo' ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                Rascunho salvo às {formatarHora(autosave.ultimaSalvoEm)}
+              </>
+            ) : null}
+            {autosave.status === 'erro' ? (
+              <>
+                <span aria-hidden="true">⚠</span>
+                Rascunho não salvo: {autosave.erro}
+                <button
+                  type="button"
+                  className="underline underline-offset-2 hover:no-underline"
+                  onClick={tentarAutosaveNovamente}
+                >
+                  Tentar novamente
+                </button>
+              </>
+            ) : null}
+          </p>
+        ) : null}
+      </div>
 
       {/* passo ativo */}
       <div>

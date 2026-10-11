@@ -549,7 +549,11 @@ export function OrcamentosAdminPage({
                 fecharWizard();
                 carregarOrcamentos();
               }}
-              onCancel={fecharWizard}
+              onCancel={() => {
+                fecharWizard();
+                // O autosave pode ter criado um rascunho; reflete na lista ao sair.
+                void carregarOrcamentos();
+              }}
             />
           )}
         </div>
