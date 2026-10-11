@@ -1,90 +1,217 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useParams } from 'react-router-dom';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/card';
+import type {
+  EnderecoPortal,
+  ObraPortalDetalhe,
+} from '../../lib/api';
+import { obterObraPortal } from '../../lib/api';
+import {
+  progressoObra,
+  statusAtividadePortal,
+} from './PortalObrasPage';
 
-export function PortalObraDetalhePage() {
-  const { id } = useParams<{ id: string }>();
-  const [obra, setObra] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function formatarMoeda(valor: string | number): string {
+  return Number(valor).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
 
-  useEffect(() => {
-    const carregarObra = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get<any>(`/portal/obras/${id}`);
-        setObra(res.data.obra);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Erro ao carregar obra');
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) carregarObra();
-  }, [id]);
+function formatarEndereco(endereco: EnderecoPortal | null): string {
+  if (!endereco) return '—';
+  const partes = [endereco.logradouro, endereco.numero].filter(Boolean);
+  const cidadeUf = [endereco.cidade, endereco.estado]
+    .filter(Boolean)
+    .join('/');
+  return [partes.join(', '), endereco.bairro, cidadeUf]
+    .filter(Boolean)
+    .join(' — ');
+}
 
-  if (loading) return <div className="p-6 text-center text-gray-500">Carregando obra...</div>;
-  if (error || !obra) return <div className="p-6 text-red-600 bg-red-50">{error || 'Obra não encontrada'}</div>;
-
+function resumoProgresso(obra: ObraPortalDetalhe): React.ReactNode {
+  const { concluidas, total, percentual } = progressoObra(obra);
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <div className="bg-white p-6 rounded-lg shadow space-y-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Obra {obra.codigo}</h1>
-            <p className="text-sm text-gray-500">Endereço da obra: {obra.endereco?.logradouro || 'Não informado'}</p>
-          </div>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              obra.status === 'EM_PREPARACAO'
-                ? 'bg-yellow-100 text-yellow-800'
-                : obra.status === 'EM_EXECUCAO'
-                ? 'bg-blue-100 text-blue-800'
-                : obra.status === 'CONCLUIDA'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
-            }`}
-          >
-            {obra.status}
-          </span>
-        </div>
-
-        <div className="border-t pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-gray-500 block">Valor Contratado</span>
-            <span className="font-semibold text-gray-900 font-mono">
-              R$ {Number(obra.valorContratado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-500 block">Etapas Planejadas</span>
-            <span className="font-semibold text-gray-900">{obra.etapas?.length || 0}</span>
-          </div>
-          <div>
-            <span className="text-gray-500 block">Ordens de Serviço</span>
-            <span className="font-semibold text-gray-900">{obra.ordensServico?.length || 0}</span>
-          </div>
-        </div>
+    <div className="flex items-center gap-2">
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-all"
+          style={{ width: `${percentual}%` }}
+        />
       </div>
-
-      <div className="bg-white p-6 rounded-lg shadow space-y-4">
-        <h2 className="text-lg font-bold text-gray-800">Etapas do Planejamento</h2>
-        <div className="space-y-4">
-          {obra.etapas?.map((etapa: any) => (
-            <div key={etapa.id} className="border p-4 rounded-lg bg-gray-50 space-y-2">
-              <h3 className="font-semibold text-gray-900">{etapa.nome}</h3>
-              <div className="space-y-1">
-                {etapa.atividades?.map((ativ: any) => (
-                  <div key={ativ.id} className="text-xs text-gray-700 bg-white p-2 rounded border">
-                    <p className="font-medium">{ativ.descricao}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <span className="whitespace-nowrap text-xs text-muted-foreground">
+        {concluidas}/{total} atividades ({Math.round(percentual)}%)
+      </span>
     </div>
   );
 }
-export default PortalObraDetalhePage;
+
+export default function PortalObraDetalhePage() {
+  const { id } = useParams<{ id: string }>();
+  const numeroId = Number(id);
+  const [obra, setObra] = useState<ObraPortalDetalhe | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [naoEncontrado, setNaoEncontrado] = useState(false);
+
+  useEffect(() => {
+    if (!Number.isFinite(numeroId) || numeroId <= 0) {
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+    setError(null);
+    obterObraPortal(numeroId)
+      .then((dados) => {
+        if (active) setObra(dados);
+      })
+      .catch((err) => {
+        if (!active) return;
+        const status = (err as { status?: number }).status;
+        if (status === 404) {
+          setNaoEncontrado(true);
+        } else {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [numeroId]);
+
+  if (!Number.isFinite(numeroId) || numeroId <= 0) {
+    return <Navigate to="/portal/obras" replace />;
+  }
+
+  const etapas = obra ? [...obra.etapas].sort((a, b) => a.ordem - b.ordem) : [];
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-4">
+      <Link
+        to="/portal/obras"
+        className="text-sm text-muted-foreground hover:text-primary"
+      >
+        ← Voltar para obras
+      </Link>
+
+      {loading && (
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      )}
+
+      {!loading && naoEncontrado && (
+        <div className="space-y-3 rounded-md bg-destructive/10 px-3 py-3 text-sm text-destructive">
+          <p>Obra não encontrada.</p>
+          <Link to="/portal/obras" className="font-medium underline">
+            Voltar para obras
+          </Link>
+        </div>
+      )}
+
+      {!loading && error && (
+        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && !naoEncontrado && obra && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-semibold">{obra.codigo}</h1>
+            <StatusBadge status={obra.status} />
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-normal text-muted-foreground">
+                Resumo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <p>
+                <span className="text-muted-foreground">Valor contratado: </span>
+                <span className="font-semibold">
+                  {formatarMoeda(obra.valorContratado)}
+                </span>
+              </p>
+              <p>
+                <span className="text-muted-foreground">Urgência: </span>
+                {obra.urgencia || '—'}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Endereço: </span>
+                {formatarEndereco(obra.endereco)}
+              </p>
+              <div>
+                <div className="mb-1 text-muted-foreground">Progresso</div>
+                {resumoProgresso(obra)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-normal text-muted-foreground">
+                Etapas e atividades
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {etapas.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma etapa cadastrada.
+                </p>
+              ) : (
+                <ol className="space-y-3">
+                  {etapas.map((etapa) => (
+                    <li
+                      key={etapa.id}
+                      className="rounded-md border bg-background p-3 text-sm"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium text-foreground">
+                          {etapa.ordem}. {etapa.nome}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {etapa.atividades.length} atividades
+                        </span>
+                      </div>
+                      {etapa.atividades.length > 0 && (
+                        <ul className="mt-2 space-y-1 border-t pt-2">
+                          {[...etapa.atividades]
+                            .sort((a, b) => a.ordem - b.ordem)
+                            .map((atividade) => (
+                              <li
+                                key={atividade.id}
+                                className="flex flex-wrap items-center justify-between gap-2 text-xs"
+                              >
+                                <span className="text-muted-foreground">
+                                  • {atividade.descricao}
+                                </span>
+                                <StatusBadge
+                                  status={statusAtividadePortal(atividade)}
+                                  size="sm"
+                                />
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}

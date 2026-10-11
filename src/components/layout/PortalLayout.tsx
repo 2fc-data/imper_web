@@ -37,8 +37,8 @@ export function PortalLayout() {
           <NavLink to="/portal/orcamentos" className={linkClass}>
             Orçamentos
           </NavLink>
-          <NavLink to="/portal/os" className={linkClass}>
-            Ordens de serviço
+          <NavLink to="/portal/obras" className={linkClass}>
+            Obras
           </NavLink>
           <NavLink to="/portal/dados" className={linkClass}>
             Meus dados

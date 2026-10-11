@@ -88,10 +88,7 @@ const PortalOrcamentosPage = lazy(
 const PortalOrcamentoDetalhePage = lazy(
   () => import('./pages/portal/PortalOrcamentoDetalhePage'),
 );
-const PortalOsPage = lazy(() => import('./pages/portal/PortalOsPage'));
-const PortalOsDetalhePage = lazy(
-  () => import('./pages/portal/PortalOsDetalhePage'),
-);
+const PortalObrasPage = lazy(() => import('./pages/portal/PortalObrasPage'));
 const RbacAdminPage = lazy(() => import('./pages/RbacAdminPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
@@ -771,8 +768,10 @@ export default function App() {
           <Route path="agendamentos" element={<PortalAgendamentosPage />} />
           <Route path="orcamentos" element={<PortalOrcamentosPage />} />
           <Route path="orcamentos/:id" element={<PortalOrcamentoDetalhePage />} />
-          <Route path="os" element={<PortalOsPage />} />
-          <Route path="os/:id" element={<PortalOsDetalhePage />} />
+          <Route path="obras" element={<PortalObrasPage />} />
+          <Route path="obras/:id" element={<PortalObraDetalhePage />} />
+          <Route path="os" element={<Navigate to="/portal/obras" replace />} />
+          <Route path="os/:id" element={<Navigate to="/portal/obras" replace />} />
         </Route>
         <Route path="*" element={<CatchAllRedirect />} />
       </Routes>

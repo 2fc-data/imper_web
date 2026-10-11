@@ -1077,7 +1077,7 @@ export function AtendimentosAdminPage({
                 Funil Operacional de Atendimento
               </h2>
               <p className="text-sm text-muted-foreground">
-                Gerenciamento unificado de leads, visitas, orçamentos e ordens de serviço.
+                Gerenciamento unificado de leads, visitas, orçamentos e obras.
               </p>
             </div>
 

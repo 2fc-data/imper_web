@@ -18,56 +18,59 @@ export interface AtualizarPerfilInput {
   cpfCnpj?: string;
 }
 
-export type StatusEtapaPortal = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDA';
-export type StatusAtividadePortal =
+export type StatusObraPortal =
+  | 'EM_PREPARACAO'
+  | 'EM_EXECUCAO'
+  | 'CONCLUIDA'
+  | 'CANCELADA';
+export type StatusExecucaoPortal =
   | 'PENDENTE'
   | 'EM_ANDAMENTO'
   | 'CONCLUIDA'
   | 'CANCELADA';
 
+export interface EnderecoPortal {
+  logradouro: string;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  estado: string | null;
+  cep: string | null;
+}
+
+export interface ExecucaoPortal {
+  status: StatusExecucaoPortal;
+}
+
 export interface AtividadePortal {
   id: string;
-  status: StatusAtividadePortal;
-  dataPrevisao: string | null;
-  criadoEm: string;
-  atualizadoEm: string;
-  catalogoAtividade: { nome: string } | null;
+  descricao: string;
+  ordem: number;
+  cancelada: boolean;
+  execucoes: ExecucaoPortal[];
 }
 
 export interface EtapaPortal {
-  id: string;
+  id: number;
   nome: string;
   ordem: number;
-  status: StatusEtapaPortal;
-  dataInicioReal: string | null;
-  dataFimReal: string | null;
-  atividadesOS: AtividadePortal[];
+  atividades: AtividadePortal[];
 }
 
-export interface OsPortalItem {
+export interface ObraPortalItem {
   id: number;
   codigo: string;
-  orcamentoId: number | null;
-  userId: number | null;
-  atendimentoId: number | null;
   urgencia: string;
-  status: string;
-  valorTotal: string | number;
-  dataInicioPrevista: string | null;
-  tecnicoResponsavelId: number | null;
-  createdAt: string;
-  updatedAt: string;
-  user?: { id: number; nome: string } | null;
-  atendimento?: { id: number } | null;
-  tecnicoResponsavel?: { id: number; nome: string } | null;
-  endereco: string | null;
-  etapasConcluidas: number;
-  totalEtapas: number;
-  progresso: number;
+  status: StatusObraPortal;
+  valorContratado: string | number;
+  endereco: EnderecoPortal | null;
+  etapas: EtapaPortal[];
 }
 
-export interface OsPortalDetalhe extends OsPortalItem {
-  etapas: EtapaPortal[];
+export interface ObraPortalDetalhe extends ObraPortalItem {
+  atendimentoId: number;
+  createdAt: string;
 }
 
 export interface AtendimentoPortalDetalhe extends AtendimentoItem {
@@ -96,11 +99,11 @@ export function obterOrcamentoPortal(id: number): Promise<OrcamentoAdminDetalhe>
   return api.get(`/portal/orcamentos/${id}`);
 }
 
-export function listarOsPortal(): Promise<OsPortalItem[]> {
+export function listarObrasPortal(): Promise<ObraPortalItem[]> {
   return api.get('/portal/obras');
 }
 
-export function obterOsPortal(id: number): Promise<OsPortalDetalhe> {
+export function obterObraPortal(id: number): Promise<ObraPortalDetalhe> {
   return api.get(`/portal/obras/${id}`);
 }
 

@@ -87,7 +87,7 @@ export function ObrasAdminPage() {
                 <th className="p-4">Cliente</th>
                 <th className="p-4">Status</th>
                 <th className="p-4">Valor Contratado</th>
-                <th className="p-4">OSs</th>
+                <th className="p-4">Etapas</th>
                 <th className="p-4">Aditivos</th>
                 <th className="p-4">Ações</th>
               </tr>
@@ -122,7 +122,7 @@ export function ObrasAdminPage() {
                     <td className="p-4 font-mono">
                       R$ {Number(obra.valorContratado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="p-4">{obra._count?.ordensServico || 0}</td>
+                    <td className="p-4">{obra._count?.etapas || 0}</td>
                     <td className="p-4">{obra._count?.aditivos || 0}</td>
                     <td className="p-4">
                       <Link

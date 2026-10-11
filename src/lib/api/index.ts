@@ -25,18 +25,22 @@ export {
   listarAgendamentosPortal,
   listarOrcamentosPortal,
   obterOrcamentoPortal,
-  listarOsPortal,
-  obterOsPortal,
+  listarObrasPortal,
+  obterObraPortal,
   atualizarPerfil,
 } from './portal.js';
 export type {
   PerfilAtualizado,
   AtualizarPerfilInput,
   AtendimentoPortalDetalhe,
-  OsPortalItem,
-  OsPortalDetalhe,
+  ObraPortalItem,
+  ObraPortalDetalhe,
+  EnderecoPortal,
+  ExecucaoPortal,
   EtapaPortal,
   AtividadePortal,
+  StatusObraPortal,
+  StatusExecucaoPortal,
 } from './portal.js';
 
 // Usuarios
