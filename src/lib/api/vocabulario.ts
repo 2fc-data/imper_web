@@ -45,30 +45,6 @@ export type FiltrosCascata = {
   caracteristicaId?: number | null;
 };
 
-export interface ComboInput {
-  verboId: number;
-  objetoId: number;
-  localId?: number | null;
-  caracteristicaId?: number | null;
-}
-
-export interface ComboRow extends ComboInput {
-  id: number;
-  subServicoId: number;
-  ativo: boolean;
-  subServico?: SubServico;
-  verbo?: OpcaoCascata;
-  objeto?: OpcaoCascata;
-  local?: OpcaoCascata;
-  caracteristica?: OpcaoCascata;
-}
-
-export interface ResultadoCriacaoCombos {
-  criados: number;
-  reativados?: number;
-  ignorados: number;
-}
-
 export const listarEtapas = (ativo = true) =>
   api.get<Etapa[]>('/etapas', { ativo });
 
@@ -120,40 +96,3 @@ export const atualizarSubServico = (
 
 export const removerSubServico = (id: number) =>
   api.del<SubServico>(`/vocabulario/sub-servicos/${id}`);
-
-export const criarCombosLote = (
-  subServicoId: number,
-  combos: ComboInput[],
-): Promise<ResultadoCriacaoCombos> =>
-  api.post<ResultadoCriacaoCombos>('/vocabulario/combinaoes/lote', {
-    subServicoId,
-    combos,
-  });
-
-export const criarCombo = (
-  subServicoId: number,
-  combo: ComboInput,
-): Promise<ResultadoCriacaoCombos> =>
-  api.post<ResultadoCriacaoCombos>('/vocabulario/combinaoes', {
-    subServicoId,
-    ...combo,
-  });
-
-export const listarCombos = (params?: {
-  subServicoId?: number;
-  ativo?: boolean;
-}) => api.get<ComboRow[]>('/vocabulario/combinaoes', params);
-
-export const listarCombosDoSubServico = (
-  subServicoId: number,
-  ativo?: boolean,
-) =>
-  api.get<ComboRow[]>(`/vocabulario/sub-servicos/${subServicoId}/combos`, {
-    ...(ativo !== undefined && { ativo }),
-  });
-
-export const excluirCombo = (id: number) =>
-  api.del(`/vocabulario/combinaoes/${id}`);
-
-export const reativarCombo = (id: number) =>
-  api.patch(`/vocabulario/combinaoes/${id}/reativar`);

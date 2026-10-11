@@ -580,14 +580,9 @@ export function VocabularioSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva:
-    | 'analises'
-    | 'etapas'
-    | 'termos'
-    | 'sub-servicos'
-    | 'combos';
+  viewAtiva: 'analises' | 'etapas' | 'termos' | 'sub-servicos';
   onNavegar: (
-    view: 'analises' | 'etapas' | 'termos' | 'sub-servicos' | 'combos',
+    view: 'analises' | 'etapas' | 'termos' | 'sub-servicos',
   ) => void;
 }) {
   return (
@@ -620,16 +615,8 @@ export function VocabularioSidebar({
       >
         Sub-serviços
       </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'combos'}
-        onClick={() => onNavegar('combos')}
-        icon={icone('M13 10V3L4 14h7v7l9-11h-7z')}
-      >
-        Combos
-      </SidebarButton>
       <SidebarNote>
-        Vocabulário do orçamento: etapas, termos, sub-serviços e
-        combinações.
+        Vocabulário do orçamento: etapas, termos e sub-serviços.
       </SidebarNote>
     </>
   );
