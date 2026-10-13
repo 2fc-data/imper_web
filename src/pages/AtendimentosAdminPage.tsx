@@ -1043,7 +1043,7 @@ export function AtendimentosAdminPage({
     } catch (err: unknown) {
       console.error('[handleAgendarVisita] error:', err);
       if (err instanceof Error) throw err;
-      throw new Error('Erro ao agendar visita técnica.');
+      throw new Error('Erro ao agendar visita técnica.', { cause: err });
     }
   };
 

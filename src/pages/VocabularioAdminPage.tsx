@@ -13,14 +13,19 @@ import {
   atualizarEtapa,
   atualizarSubServico,
   atualizarTermo,
+  criarCombo,
   criarEtapa,
   criarSubServico,
   criarTermo,
+  listarCombos,
   listarEtapasTodas,
   listarSubServicosTodas,
   listarTermos,
+  removerCombo,
   removerEtapa,
   removerSubServico,
+  removerTermo,
+  type ComboSubServico,
   type DimensaoVocabulario,
   type Etapa,
   type SubServico,
@@ -28,7 +33,12 @@ import {
 } from '../lib/api';
 import { cn } from '../lib/utils';
 
-type ViewAtiva = 'analises' | 'etapas' | 'termos' | 'sub-servicos';
+type ViewAtiva =
+  | 'analises'
+  | 'etapas'
+  | 'termos'
+  | 'sub-servicos'
+  | 'combos';
 
 interface Props {
   viewAtiva: ViewAtiva;
@@ -91,6 +101,7 @@ export default function VocabularioAdminPage({
   const [termoNome, setTermoNome] = useState('');
   const [savingTermo, setSavingTermo] = useState(false);
   const [editandoTermo, setEditandoTermo] = useState<Termo | null>(null);
+  const [confirmandoTermo, setConfirmandoTermo] = useState<number | null>(null);
 
   // Sub-serviço form
   const [subForm, setSubForm] = useState<{ etapaId: string; nome: string }>({
@@ -101,6 +112,20 @@ export default function VocabularioAdminPage({
   const [savingSub, setSavingSub] = useState(false);
   const [confirmandoSub, setConfirmandoSub] = useState<number | null>(null);
   const [filtroSubEtapa, setFiltroSubEtapa] = useState<string>('');
+
+  // Combos form (detalhe da atividade)
+  const [filtroComboEtapa, setFiltroComboEtapa] = useState<string>('');
+  const [comboSubId, setComboSubId] = useState<string>('');
+  const [combos, setCombos] = useState<ComboSubServico[]>([]);
+  const [comboForm, setComboForm] = useState({
+    verboId: '',
+    objetoId: '',
+    localId: '',
+    caracteristicaId: '',
+  });
+  const [savingCombo, setSavingCombo] = useState(false);
+  const [confirmandoCombo, setConfirmandoCombo] = useState<number | null>(null);
+  const [carregandoCombos, setCarregandoCombos] = useState(false);
 
   const carregar = useCallback(async () => {
     setError(null);
@@ -131,6 +156,31 @@ export default function VocabularioAdminPage({
   useEffect(() => {
     carregar();
   }, [carregar]);
+
+  useEffect(() => {
+    if (viewAtiva !== 'combos' || !comboSubId) {
+      setCombos([]);
+      return;
+    }
+    let cancelado = false;
+    setCarregandoCombos(true);
+    listarCombos(Number(comboSubId))
+      .then((res) => {
+        if (!cancelado) setCombos(res);
+      })
+      .catch((err) => {
+        if (!cancelado)
+          setError(
+            err instanceof Error ? err.message : 'Falha ao carregar combos',
+          );
+      })
+      .finally(() => {
+        if (!cancelado) setCarregandoCombos(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [viewAtiva, comboSubId]);
 
   // ── Etapas ────────────────────────────────────────────────────────────────
 
@@ -243,22 +293,24 @@ export default function VocabularioAdminPage({
     }
   }
 
-  async function toggleTermo(t: Termo) {
+  async function excluirTermo(t: Termo) {
     setError(null);
     try {
-      const atualizado = await atualizarTermo(dimAtiva, t.id, {
-        ativo: !t.ativo,
-      });
+      await removerTermo(dimAtiva, t.id);
       setTermosPorDim((prev) => ({
         ...prev,
-        [dimAtiva]: prev[dimAtiva].map((x) =>
-          x.id === atualizado.id ? atualizado : x,
-        ),
+        [dimAtiva]: prev[dimAtiva].filter((x) => x.id !== t.id),
       }));
+      if (editandoTermo?.id === t.id) {
+        setEditandoTermo(null);
+        setTermoNome('');
+      }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Falha ao atualizar termo',
+        err instanceof Error ? err.message : 'Falha ao excluir termo',
       );
+    } finally {
+      setConfirmandoTermo(null);
     }
   }
 
@@ -343,6 +395,50 @@ export default function VocabularioAdminPage({
     }
   }
 
+  // ── Combos (detalhe da atividade) ───────────────────────────────────────
+
+  async function submitCombo(ev: FormEvent) {
+    ev.preventDefault();
+    if (!comboSubId || !comboForm.verboId || !comboForm.objetoId) return;
+    setSavingCombo(true);
+    setError(null);
+    try {
+      const criado = await criarCombo({
+        subServicoId: Number(comboSubId),
+        verboId: Number(comboForm.verboId),
+        objetoId: Number(comboForm.objetoId),
+        localId: comboForm.localId ? Number(comboForm.localId) : null,
+        caracteristicaId: comboForm.caracteristicaId
+          ? Number(comboForm.caracteristicaId)
+          : null,
+      });
+      setCombos((prev) => [...prev, criado]);
+      setComboForm({
+        verboId: '',
+        objetoId: '',
+        localId: '',
+        caracteristicaId: '',
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao criar combo');
+    } finally {
+      setSavingCombo(false);
+    }
+  }
+
+  async function excluirCombo(id: number) {
+    setError(null);
+    try {
+      await removerCombo(id);
+      setCombos((prev) => prev.filter((x) => x.id !== id));
+      setConfirmandoCombo(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Falha ao excluir combo',
+      );
+    }
+  }
+
   // ── Derivados ─────────────────────────────────────────────────────────────
 
   const etapasAtivas = etapas.filter((e) => e.ativo);
@@ -359,6 +455,19 @@ export default function VocabularioAdminPage({
   function nomeSub(id: number): string {
     return subServicos.find((s) => s.id === id)?.nome ?? `#${id}`;
   }
+
+  const subsDoFiltroCombo = subServicos.filter(
+    (s) =>
+      s.ativo &&
+      (!filtroComboEtapa || s.etapaId === Number(filtroComboEtapa)),
+  );
+
+  const verbosAtivos = termosPorDim.verbos.filter((t) => t.ativo);
+  const objetosAtivos = termosPorDim.objetos.filter((t) => t.ativo);
+  const locaisAtivos = termosPorDim.locais.filter((t) => t.ativo);
+  const caracteristicasAtivas = termosPorDim.caracteristicas.filter(
+    (t) => t.ativo,
+  );
 
   // ── Views ─────────────────────────────────────────────────────────────────
 
@@ -653,14 +762,6 @@ export default function VocabularioAdminPage({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => toggleTermo(t)}
-                  >
-                    {t.ativo ? 'Desativar' : 'Ativar'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
                     onClick={() => {
                       setEditandoTermo(t);
                       setTermoNome(t.nome);
@@ -669,6 +770,35 @@ export default function VocabularioAdminPage({
                   >
                     Editar
                   </Button>
+                  {confirmandoTermo === t.id ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => excluirTermo(t)}
+                      >
+                        Confirmar exclusão
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setConfirmandoTermo(null)}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setConfirmandoTermo(t.id)}
+                    >
+                      Excluir
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -679,6 +809,232 @@ export default function VocabularioAdminPage({
             </p>
           )}
         </div>
+      </div>
+    );
+  }
+
+  if (viewAtiva === 'combos') {
+    return (
+      <div className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Detalhe da atividade
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Pré-relacione verbo, objeto, local e característica por
+            sub-serviço. Na cascata do orçamento só aparecem as combinações
+            cadastradas aqui.
+          </p>
+        </header>
+        {error && (
+          <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={filtroComboEtapa}
+            onChange={(e) => {
+              setFiltroComboEtapa(e.target.value);
+              setComboSubId('');
+              setError(null);
+            }}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="">Todas as etapas</option>
+            {etapasAtivas.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nome}
+              </option>
+            ))}
+          </select>
+          <select
+            value={comboSubId}
+            onChange={(e) => {
+              setComboSubId(e.target.value);
+              setError(null);
+            }}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="">Selecione o sub-serviço…</option>
+            {subsDoFiltroCombo.map((s) => (
+              <option key={s.id} value={s.id}>
+                {nomeEtapa(s.etapaId)} — {s.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {comboSubId && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">
+                Novo combo em “{nomeSub(Number(comboSubId))}”
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={submitCombo} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="combo-verbo">Verbo *</Label>
+                    <select
+                      id="combo-verbo"
+                      required
+                      value={comboForm.verboId}
+                      onChange={(e) =>
+                        setComboForm((f) => ({
+                          ...f,
+                          verboId: e.target.value,
+                        }))
+                      }
+                      className={selectClasses}
+                    >
+                      <option value="">Selecione…</option>
+                      {verbosAtivos.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="combo-objeto">Objeto *</Label>
+                    <select
+                      id="combo-objeto"
+                      required
+                      value={comboForm.objetoId}
+                      onChange={(e) =>
+                        setComboForm((f) => ({
+                          ...f,
+                          objetoId: e.target.value,
+                        }))
+                      }
+                      className={selectClasses}
+                    >
+                      <option value="">Selecione…</option>
+                      {objetosAtivos.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="combo-local">Local (opcional)</Label>
+                    <select
+                      id="combo-local"
+                      value={comboForm.localId}
+                      onChange={(e) =>
+                        setComboForm((f) => ({
+                          ...f,
+                          localId: e.target.value,
+                        }))
+                      }
+                      className={selectClasses}
+                    >
+                      <option value="">Qualquer / não se aplica</option>
+                      {locaisAtivos.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="combo-caracteristica">
+                      Característica (opcional)
+                    </Label>
+                    <select
+                      id="combo-caracteristica"
+                      value={comboForm.caracteristicaId}
+                      onChange={(e) =>
+                        setComboForm((f) => ({
+                          ...f,
+                          caracteristicaId: e.target.value,
+                        }))
+                      }
+                      className={selectClasses}
+                    >
+                      <option value="">Qualquer / não se aplica</option>
+                      {caracteristicasAtivas.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <Button type="submit" disabled={savingCombo}>
+                  {savingCombo ? 'Salvando...' : 'Criar combo'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {comboSubId && (
+          <div className="space-y-2">
+            {carregandoCombos ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Carregando combos…
+              </p>
+            ) : (
+              combos.map((c) => (
+                <Card key={c.id}>
+                  <CardContent className="flex items-center justify-between gap-2 py-3">
+                    <p className="text-sm">
+                      <span className="font-medium">{c.verbo.nome}</span>{' '}
+                      {c.objeto.nome}
+                      {c.local && <> {c.local.nome}</>}
+                      {c.caracteristica && (
+                        <span className="text-muted-foreground">
+                          {' '}
+                          — {c.caracteristica.nome}
+                        </span>
+                      )}
+                    </p>
+                    {confirmandoCombo === c.id ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => excluirCombo(c.id)}
+                        >
+                          Confirmar exclusão
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmandoCombo(null)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmandoCombo(c.id)}
+                      >
+                        Excluir
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+            {!carregandoCombos && combos.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Nenhum combo cadastrado para este sub-serviço. Sem combos, a
+                cascata do orçamento lista os termos soltos.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }

@@ -219,7 +219,7 @@ export default function AbastecimentosPage() {
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
 
-      {(editando || true) && formulario}
+      {formulario}
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="space-y-1.5 flex-1">

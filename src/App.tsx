@@ -508,7 +508,7 @@ function RbacRoute() {
 
 function VocabularioRoute() {
   const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'etapas' | 'termos' | 'sub-servicos'
+    'analises' | 'etapas' | 'termos' | 'sub-servicos' | 'combos'
   >('etapas');
 
   return (

@@ -16,19 +16,20 @@ interface AdminSidebarProps {
 
 function ItemMenu({ item, end }: { item: NavItem; end?: boolean }) {
   const location = useLocation();
+  const isChildActive = Boolean(
+    item.children?.some(
+      (child) => child.to && location.pathname.startsWith(child.to),
+    ),
+  );
+  const [open, setOpen] = useState(isChildActive);
+
+  useEffect(() => {
+    if (isChildActive) {
+      setOpen(true);
+    }
+  }, [isChildActive]);
 
   if (item.children && item.children.length > 0) {
-    const isChildActive = item.children.some(
-      (child) => child.to && location.pathname.startsWith(child.to),
-    );
-    const [open, setOpen] = useState(isChildActive);
-
-    useEffect(() => {
-      if (isChildActive) {
-        setOpen(true);
-      }
-    }, [isChildActive]);
-
     return (
       <div className="flex flex-col">
         <button

@@ -26,6 +26,20 @@ export interface SubServico {
   ativo: boolean;
 }
 
+export interface ComboSubServico {
+  id: number;
+  subServicoId: number;
+  verboId: number;
+  objetoId: number;
+  localId: number | null;
+  caracteristicaId: number | null;
+  ativo: boolean;
+  verbo: OpcaoCascata;
+  objeto: OpcaoCascata;
+  local: OpcaoCascata | null;
+  caracteristica: OpcaoCascata | null;
+}
+
 export interface OpcaoCascata {
   id: number;
   nome: string;
@@ -71,6 +85,9 @@ export const atualizarTermo = (
   dados: { nome?: string; ativo?: boolean },
 ) => api.patch<Termo>(`/vocabulario/${dim}/${id}`, dados);
 
+export const removerTermo = (dim: DimensaoVocabulario, id: number) =>
+  api.del<Termo>(`/vocabulario/${dim}/${id}`);
+
 export const listarSubServicos = (etapaId?: number, ativo = true) =>
   api.get<SubServico[]>('/vocabulario/sub-servicos', {
     ...(etapaId !== undefined && { etapaId }),
@@ -96,3 +113,17 @@ export const atualizarSubServico = (
 
 export const removerSubServico = (id: number) =>
   api.del<SubServico>(`/vocabulario/sub-servicos/${id}`);
+
+export const listarCombos = (subServicoId: number) =>
+  api.get<ComboSubServico[]>(`/vocabulario/sub-servicos/${subServicoId}/combos`);
+
+export const criarCombo = (dados: {
+  subServicoId: number;
+  verboId: number;
+  objetoId: number;
+  localId?: number | null;
+  caracteristicaId?: number | null;
+}) => api.post<ComboSubServico>('/vocabulario/combos', dados);
+
+export const removerCombo = (id: number) =>
+  api.del<ComboSubServico>(`/vocabulario/combos/${id}`);
