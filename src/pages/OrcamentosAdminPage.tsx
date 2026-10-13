@@ -132,7 +132,7 @@ export function OrcamentoList({
   onVisualizar,
 }: OrcamentoListProps) {
   const { user } = useAuth();
-  const podeAprovar = user?.permissoes.includes('aprovar_os') ?? false;
+  const podeAprovar = user?.permissoes.includes('aprovar_orcamento') ?? false;
   const acaoClasses = (tom: 'neutro' | 'info' | 'sucesso' | 'perigo') =>
     tom === 'info'
       ? 'rounded-md border border-info/30 bg-info/10 px-2.5 py-1 text-xs font-medium text-info hover:bg-info/20 transition-colors'

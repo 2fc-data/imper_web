@@ -108,7 +108,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/execucao',
     label: 'Dashboard Execução',
     icon: <Icon d="M3 3v18h18M18 17V9M13 17V5M8 17v-3" />,
-    requiredPermissions: ['gerenciar_os', 'criar_os', 'iniciar_os'],
+    requiredPermissions: ['gerenciar_execucao', 'criar_execucao', 'iniciar_execucao'],
   },
   {
     label: 'Execução',
@@ -218,7 +218,7 @@ export const NAV_ITEMS: NavItem[] = [
         icon: (
           <Icon d="M20 8l1-4-1 4a4 4 0 006 0l-1 4M4 8l1-4-1 4a4 4 0 00-6 0l1 4" />
         ),
-        requiredPermissions: ['editar_os', 'iniciar_os', 'concluir_os'],
+        requiredPermissions: ['gerenciar_equipamentos'],
       },
       {
         to: '/materiais',

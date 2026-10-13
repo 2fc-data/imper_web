@@ -370,7 +370,7 @@ function ManutencoesRoute() {
 
   return (
     <ProtectedLayout
-      requiredPermissions={['editar_os', 'iniciar_os', 'concluir_os']}
+      requiredPermissions={['gerenciar_equipamentos']}
       sidebar={
         <ManutencoesSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
       }
@@ -567,7 +567,7 @@ function RetiradaDeItensRoute() {
 function ExecucaoDashboardRoute() {
   return (
     <ProtectedLayout
-      requiredPermissions={['gerenciar_os', 'criar_os', 'iniciar_os']}
+      requiredPermissions={['gerenciar_execucao', 'criar_execucao', 'iniciar_execucao']}
       sidebar={<DashboardSidebar />}
     >
       <ExecucaoDashboardPage viewAtiva="dashboard" />

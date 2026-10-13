@@ -23,7 +23,8 @@ import {
 const CORES: Record<string, string> = {
   usuarios: 'bg-primary/15 text-primary',
   atendimentos: 'bg-success/15 text-success',
-  ordens_servico: 'bg-warning/15 text-warning',
+  execucao: 'bg-warning/15 text-warning',
+  obras: 'bg-warning/15 text-warning',
   financeiro: 'bg-accent/15 text-accent',
   estoque: 'bg-info/15 text-info',
   equipamentos: 'bg-primary/15 text-primary',

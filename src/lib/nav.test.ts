@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { homeFor } from './nav';
 
-const cliente = { papeis: ['CLIENTE'], permissoes: ['ver_minha_os'] };
-const staff = { papeis: ['TECNICO'], permissoes: ['criar_os'] };
+const cliente = { papeis: ['CLIENTE'], permissoes: ['ver_obras'] };
+const staff = { papeis: ['TECNICO'], permissoes: ['criar_execucao'] };
 const misto = {
   papeis: ['CLIENTE', 'TECNICO'],
-  permissoes: ['ver_minha_os', 'criar_os'],
+  permissoes: ['ver_obras', 'criar_execucao'],
 };
 
 describe('homeFor', () => {
