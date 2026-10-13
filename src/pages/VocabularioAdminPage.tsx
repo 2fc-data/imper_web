@@ -10,6 +10,7 @@ import {
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import {
+  atualizarCombo,
   atualizarEtapa,
   atualizarSubServico,
   atualizarTermo,
@@ -117,11 +118,10 @@ export default function VocabularioAdminPage({
   const [filtroComboEtapa, setFiltroComboEtapa] = useState<string>('');
   const [comboSubId, setComboSubId] = useState<string>('');
   const [combos, setCombos] = useState<ComboSubServico[]>([]);
+  const [editandoCombo, setEditandoCombo] = useState<ComboSubServico | null>(null);
   const [comboForm, setComboForm] = useState({
     verboId: '',
     objetoId: '',
-    localId: '',
-    caracteristicaId: '',
   });
   const [savingCombo, setSavingCombo] = useState(false);
   const [confirmandoCombo, setConfirmandoCombo] = useState<number | null>(null);
@@ -397,30 +397,54 @@ export default function VocabularioAdminPage({
 
   // ── Combos (detalhe da atividade) ───────────────────────────────────────
 
+  function iniciarEdicaoCombo(c: ComboSubServico) {
+    setEditandoCombo(c);
+    setComboForm({
+      verboId: String(c.verboId),
+      objetoId: String(c.objetoId),
+    });
+    setConfirmandoCombo(null);
+  }
+
+  function cancelarEdicaoCombo() {
+    setEditandoCombo(null);
+    setComboForm({
+      verboId: '',
+      objetoId: '',
+    });
+  }
+
   async function submitCombo(ev: FormEvent) {
     ev.preventDefault();
     if (!comboSubId || !comboForm.verboId || !comboForm.objetoId) return;
     setSavingCombo(true);
     setError(null);
     try {
-      const criado = await criarCombo({
-        subServicoId: Number(comboSubId),
-        verboId: Number(comboForm.verboId),
-        objetoId: Number(comboForm.objetoId),
-        localId: comboForm.localId ? Number(comboForm.localId) : null,
-        caracteristicaId: comboForm.caracteristicaId
-          ? Number(comboForm.caracteristicaId)
-          : null,
-      });
-      setCombos((prev) => [...prev, criado]);
-      setComboForm({
-        verboId: '',
-        objetoId: '',
-        localId: '',
-        caracteristicaId: '',
-      });
+      if (editandoCombo) {
+        const atualizado = await atualizarCombo(editandoCombo.id, {
+          verboId: Number(comboForm.verboId),
+          objetoId: Number(comboForm.objetoId),
+        });
+        setCombos((prev) =>
+          prev.map((c) => (c.id === atualizado.id ? atualizado : c)),
+        );
+      } else {
+        const criado = await criarCombo({
+          subServicoId: Number(comboSubId),
+          verboId: Number(comboForm.verboId),
+          objetoId: Number(comboForm.objetoId),
+        });
+        setCombos((prev) => [...prev, criado]);
+      }
+      cancelarEdicaoCombo();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao criar combo');
+      setError(
+        err instanceof Error
+          ? err.message
+          : editandoCombo
+          ? 'Falha ao atualizar combo'
+          : 'Falha ao criar combo',
+      );
     } finally {
       setSavingCombo(false);
     }
@@ -431,6 +455,9 @@ export default function VocabularioAdminPage({
     try {
       await removerCombo(id);
       setCombos((prev) => prev.filter((x) => x.id !== id));
+      if (editandoCombo?.id === id) {
+        cancelarEdicaoCombo();
+      }
       setConfirmandoCombo(null);
     } catch (err) {
       setError(
@@ -821,9 +848,9 @@ export default function VocabularioAdminPage({
             Detalhe da atividade
           </h1>
           <p className="text-sm text-muted-foreground">
-            Pré-relacione verbo, objeto, local e característica por
-            sub-serviço. Na cascata do orçamento só aparecem as combinações
-            cadastradas aqui.
+            Pré-relacione verbo e objeto por sub-serviço. Na cascata do
+            orçamento só aparecem os pares de verbo e objeto cadastrados aqui.
+            Local e característica são definidos livremente no orçamento.
           </p>
         </header>
         {error && (
@@ -870,7 +897,9 @@ export default function VocabularioAdminPage({
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
-                Novo combo em “{nomeSub(Number(comboSubId))}”
+                {editandoCombo
+                  ? `Editar combo em “${nomeSub(Number(comboSubId))}”`
+                  : `Novo combo em “${nomeSub(Number(comboSubId))}”`}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -920,54 +949,25 @@ export default function VocabularioAdminPage({
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="combo-local">Local (opcional)</Label>
-                    <select
-                      id="combo-local"
-                      value={comboForm.localId}
-                      onChange={(e) =>
-                        setComboForm((f) => ({
-                          ...f,
-                          localId: e.target.value,
-                        }))
-                      }
-                      className={selectClasses}
-                    >
-                      <option value="">Qualquer / não se aplica</option>
-                      {locaisAtivos.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="combo-caracteristica">
-                      Característica (opcional)
-                    </Label>
-                    <select
-                      id="combo-caracteristica"
-                      value={comboForm.caracteristicaId}
-                      onChange={(e) =>
-                        setComboForm((f) => ({
-                          ...f,
-                          caracteristicaId: e.target.value,
-                        }))
-                      }
-                      className={selectClasses}
-                    >
-                      <option value="">Qualquer / não se aplica</option>
-                      {caracteristicasAtivas.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
-                <Button type="submit" disabled={savingCombo}>
-                  {savingCombo ? 'Salvando...' : 'Criar combo'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={savingCombo}>
+                    {savingCombo
+                      ? 'Salvando...'
+                      : editandoCombo
+                      ? 'Salvar alterações'
+                      : 'Criar combo'}
+                  </Button>
+                  {editandoCombo && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={cancelarEdicaoCombo}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -986,13 +986,6 @@ export default function VocabularioAdminPage({
                     <p className="text-sm">
                       <span className="font-medium">{c.verbo.nome}</span>{' '}
                       {c.objeto.nome}
-                      {c.local && <> {c.local.nome}</>}
-                      {c.caracteristica && (
-                        <span className="text-muted-foreground">
-                          {' '}
-                          — {c.caracteristica.nome}
-                        </span>
-                      )}
                     </p>
                     {confirmandoCombo === c.id ? (
                       <div className="flex items-center gap-2">
@@ -1014,14 +1007,24 @@ export default function VocabularioAdminPage({
                         </Button>
                       </div>
                     ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setConfirmandoCombo(c.id)}
-                      >
-                        Excluir
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => iniciarEdicaoCombo(c)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setConfirmandoCombo(c.id)}
+                        >
+                          Excluir
+                        </Button>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

@@ -125,5 +125,11 @@ export const criarCombo = (dados: {
   caracteristicaId?: number | null;
 }) => api.post<ComboSubServico>('/vocabulario/combos', dados);
 
+export const atualizarCombo = (
+  id: number,
+  dados: { verboId?: number; objetoId?: number },
+) => api.patch<ComboSubServico>(`/vocabulario/combos/${id}`, dados);
+
 export const removerCombo = (id: number) =>
   api.del<ComboSubServico>(`/vocabulario/combos/${id}`);
+

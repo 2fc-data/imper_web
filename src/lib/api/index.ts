@@ -228,6 +228,7 @@ export {
   removerSubServico,
   listarCombos,
   criarCombo,
+  atualizarCombo,
   removerCombo,
 } from './vocabulario.js';
 export type {
