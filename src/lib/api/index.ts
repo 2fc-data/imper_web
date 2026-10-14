@@ -162,23 +162,32 @@ export {
   encaminharParaOrcamento,
   listarLogsAtendimento,
   registrarLogAtendimento,
+  adicionarItemAtendimento,
+  removerItemAtendimento,
 } from './atendimentos.js';
 export type {
   AtendimentoItem,
+  AtendimentoItemVocabulario,
   AtendimentoLogItem,
   CriarAtendimentoInput,
+  CriarAtendimentoItemInput,
 } from './atendimentos.js';
 
 // Visitas
 export {
   listarVisitas,
+  detalharVisita,
   criarVisita,
   atualizarVisita,
+  adicionarItemVisita,
+  removerItemVisita,
 } from './visitas.js';
 export type {
   VisitaItem,
+  VisitaItemVocabulario,
   CriarVisitaInput,
   AtualizarVisitaInput,
+  CriarVisitaItemInput,
 } from './visitas.js';
 
 // Orcamentos Admin

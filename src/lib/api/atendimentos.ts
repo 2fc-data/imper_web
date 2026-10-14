@@ -8,6 +8,25 @@ import type {
 } from '../../schemas/index.js';
 import type { AcaoAtendimento } from '../proximas-acoes.js';
 
+export interface AtendimentoItemVocabulario {
+  id: number;
+  atendimentoId: number;
+  etapaId: number;
+  subServicoId: number;
+  verboId: number;
+  objetoId: number;
+  localId?: number | null;
+  caracteristicaId?: number | null;
+  observacoes?: string | null;
+  createdAt: string;
+  etapa?: { id: number; nome: string; ordem: number };
+  subServico?: { id: number; nome: string };
+  verbo?: { id: number; nome: string };
+  objeto?: { id: number; nome: string };
+  local?: { id: number; nome: string } | null;
+  caracteristica?: { id: number; nome: string } | null;
+}
+
 export interface AtendimentoItem {
   id: number;
   canal: CanalAtendimento;
@@ -18,8 +37,11 @@ export interface AtendimentoItem {
   user?: { id: number; nome: string; telefone: string | null } | null;
   atendenteId: number | null;
   atendente?: { id: number; nome: string } | null;
+  servicoMarketingId?: number | null;
+  servicoMarketing?: { id: number; titulo: string; icone?: string } | null;
   visitaSolicitada: boolean;
   proximasAcoes?: AcaoAtendimento[];
+  itens?: AtendimentoItemVocabulario[];
   agendamentos?: {
     id: number;
     dataPrevista: string;
@@ -71,6 +93,7 @@ export interface CriarAtendimentoInput {
   descricao?: string;
   enderecoNovo?: DadosEndereco;
   visitaSolicitada?: boolean;
+  servicoMarketingId?: number | null;
 }
 
 export async function listarAtendimentos(params?: {
@@ -145,3 +168,28 @@ export async function registrarLogAtendimento(
     descricao,
   });
 }
+
+export interface CriarAtendimentoItemInput {
+  etapaId: number;
+  subServicoId: number;
+  verboId: number;
+  objetoId: number;
+  localId?: number | null;
+  caracteristicaId?: number | null;
+  observacoes?: string | null;
+}
+
+export async function adicionarItemAtendimento(
+  atendimentoId: number,
+  input: CriarAtendimentoItemInput,
+): Promise<AtendimentoItem> {
+  return api.post<AtendimentoItem>(`/atendimentos/${atendimentoId}/itens`, input);
+}
+
+export async function removerItemAtendimento(
+  atendimentoId: number,
+  itemId: number,
+): Promise<AtendimentoItem> {
+  return api.del<AtendimentoItem>(`/atendimentos/${atendimentoId}/itens/${itemId}`);
+}
+

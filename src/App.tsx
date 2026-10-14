@@ -619,132 +619,132 @@ export default function App() {
     <ErrorBoundary>
       <Suspense fallback={<PageFallback />}>
         <Routes>
-        <Route
-          path="/login"
-          element={
-            <GuestsOnly>
-              <LoginPage />
-            </GuestsOnly>
-          }
-        />
-        <Route
-          path="/cadastro"
-          element={
-            <GuestsOnly>
-              <RegisterPage />
-            </GuestsOnly>
-          }
-        />
-        <Route
-          path="/recuperar-senha"
-          element={
-            <GuestsOnly>
-              <ForgotPasswordPage />
-            </GuestsOnly>
-          }
-        />
-        <Route
-          path="/redefinir-senha"
-          element={
-            <GuestsOnly>
-              <ResetPasswordPage />
-            </GuestsOnly>
-          }
-        />
-        <Route element={<UsuariosRoute />} path="/usuarios" />
-        <Route element={<ServicosRoute />} path="/servicos-admin" />
-        <Route element={<RbacRoute />} path="/rbac" />
-        <Route
-          element={
-            <LandingLayout>
-              <LandingContent />
-            </LandingLayout>
-          }
-          path="/"
-        />
-        <Route
-          element={
-            <LandingLayout>
-              <LandingContent />
-            </LandingLayout>
-          }
-          path="/servicos"
-        />
-        <Route
-          element={
-            <LandingLayout>
-              <LandingContent />
-            </LandingLayout>
-          }
-          path="/como-trabalhamos"
-        />
-        <Route
-          element={
-            <LandingLayout>
-              <LandingContent />
-            </LandingLayout>
-          }
-          path="/area-de-atuacao"
-        />
-        <Route
-          element={
-            <LandingLayout>
-              <OrcamentoPage />
-            </LandingLayout>
-          }
-          path="/contato"
-        />
-        <Route
-          element={<Navigate to="/contato" replace />}
-          path="/orcamento"
-        />
-        <Route
-          path="/painel"
-          element={
-            <ProtectedLayout sidebar={<DashboardSidebar />}>
-              <DashboardPage />
-            </ProtectedLayout>
-          }
-        />
-        <Route element={<AtendimentosRoute />} path="/atendimentos" />
-        <Route element={<AgendamentosRoute />} path="/agendamentos" />
-        <Route element={<CalendarioRoute />} path="/calendario" />
-        <Route element={<OrcamentosRoute />} path="/orcamentos" />
-        <Route element={<ObrasRoute />} path="/obras" />
-        <Route element={<ObraDetalheRoute />} path="/obras/:id" />
-        <Route element={<CatalogosRoute />} path="/catalogos" />
-        <Route element={<EquipamentosRoute />} path="/equipamentos" />
-        <Route element={<ManutencoesRoute />} path="/manutencoes" />
-        <Route element={<VeiculosRoute />} path="/veiculos" />
-        <Route element={<FrotaKmRoute />} path="/frota-km" />
-        <Route element={<AbastecimentosRoute />} path="/abastecimentos" />
-        <Route
-          element={<ManutencoesVeiculosRoute />}
-          path="/manutencoes-veiculos"
-        />
-        <Route element={<EpisRoute />} path="/epis" />
-        <Route element={<MateriaisRoute />} path="/materiais" />
-        <Route element={<VocabularioRoute />} path="/vocabulario" />
-        <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
-        <Route element={<MovimentacaoRoute />} path="/movimentacoes" />
-        <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
-        <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
-        <Route element={<Navigate to="/portal/dados" replace />} path="/minha-conta" />
-        <Route path="/portal" element={<PortalLayout />}>
-          <Route index element={<PortalHomePage />} />
-          <Route path="dados" element={<PortalDadosPage />} />
-          <Route path="atendimentos" element={<PortalAtendimentosPage />} />
-          <Route path="atendimentos/:id" element={<PortalAtendimentoDetalhePage />} />
-          <Route path="agendamentos" element={<PortalAgendamentosPage />} />
-          <Route path="orcamentos" element={<PortalOrcamentosPage />} />
-          <Route path="orcamentos/:id" element={<PortalOrcamentoDetalhePage />} />
-          <Route path="obras" element={<PortalObrasPage />} />
-          <Route path="obras/:id" element={<PortalObraDetalhePage />} />
-          <Route path="os" element={<Navigate to="/portal/obras" replace />} />
-          <Route path="os/:id" element={<Navigate to="/portal/obras" replace />} />
-        </Route>
-        <Route path="*" element={<CatchAllRedirect />} />
-      </Routes>
+          <Route
+            path="/login"
+            element={
+              <GuestsOnly>
+                <LoginPage />
+              </GuestsOnly>
+            }
+          />
+          <Route
+            path="/cadastro"
+            element={
+              <GuestsOnly>
+                <RegisterPage />
+              </GuestsOnly>
+            }
+          />
+          <Route
+            path="/recuperar-senha"
+            element={
+              <GuestsOnly>
+                <ForgotPasswordPage />
+              </GuestsOnly>
+            }
+          />
+          <Route
+            path="/redefinir-senha"
+            element={
+              <GuestsOnly>
+                <ResetPasswordPage />
+              </GuestsOnly>
+            }
+          />
+          <Route element={<UsuariosRoute />} path="/usuarios" />
+          <Route element={<ServicosRoute />} path="/servicos-admin" />
+          <Route element={<RbacRoute />} path="/rbac" />
+          <Route
+            element={
+              <LandingLayout>
+                <LandingContent />
+              </LandingLayout>
+            }
+            path="/"
+          />
+          <Route
+            element={
+              <LandingLayout>
+                <LandingContent />
+              </LandingLayout>
+            }
+            path="/servicos"
+          />
+          <Route
+            element={
+              <LandingLayout>
+                <LandingContent />
+              </LandingLayout>
+            }
+            path="/como-trabalhamos"
+          />
+          <Route
+            element={
+              <LandingLayout>
+                <LandingContent />
+              </LandingLayout>
+            }
+            path="/area-de-atuacao"
+          />
+          <Route
+            element={
+              <LandingLayout>
+                <OrcamentoPage />
+              </LandingLayout>
+            }
+            path="/contato"
+          />
+          <Route
+            element={<Navigate to="/contato" replace />}
+            path="/orcamento"
+          />
+          <Route
+            path="/painel"
+            element={
+              <ProtectedLayout sidebar={<DashboardSidebar />}>
+                <DashboardPage />
+              </ProtectedLayout>
+            }
+          />
+          <Route element={<AtendimentosRoute />} path="/atendimentos" />
+          <Route element={<AgendamentosRoute />} path="/agendamentos" />
+          <Route element={<CalendarioRoute />} path="/calendario" />
+          <Route element={<OrcamentosRoute />} path="/orcamentos" />
+          <Route element={<ObrasRoute />} path="/obras" />
+          <Route element={<ObraDetalheRoute />} path="/obras/:id" />
+          <Route element={<CatalogosRoute />} path="/catalogos" />
+          <Route element={<EquipamentosRoute />} path="/equipamentos" />
+          <Route element={<ManutencoesRoute />} path="/manutencoes" />
+          <Route element={<VeiculosRoute />} path="/veiculos" />
+          <Route element={<FrotaKmRoute />} path="/frota-km" />
+          <Route element={<AbastecimentosRoute />} path="/abastecimentos" />
+          <Route
+            element={<ManutencoesVeiculosRoute />}
+            path="/manutencoes-veiculos"
+          />
+          <Route element={<EpisRoute />} path="/epis" />
+          <Route element={<MateriaisRoute />} path="/materiais" />
+          <Route element={<VocabularioRoute />} path="/vocabulario" />
+          <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
+          <Route element={<MovimentacaoRoute />} path="/movimentacoes" />
+          <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
+          <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
+          <Route element={<Navigate to="/portal/dados" replace />} path="/minha-conta" />
+          <Route path="/portal" element={<PortalLayout />}>
+            <Route index element={<PortalHomePage />} />
+            <Route path="dados" element={<PortalDadosPage />} />
+            <Route path="atendimentos" element={<PortalAtendimentosPage />} />
+            <Route path="atendimentos/:id" element={<PortalAtendimentoDetalhePage />} />
+            <Route path="agendamentos" element={<PortalAgendamentosPage />} />
+            <Route path="orcamentos" element={<PortalOrcamentosPage />} />
+            <Route path="orcamentos/:id" element={<PortalOrcamentoDetalhePage />} />
+            <Route path="obras" element={<PortalObrasPage />} />
+            <Route path="obras/:id" element={<PortalObraDetalhePage />} />
+            <Route path="os" element={<Navigate to="/portal/obras" replace />} />
+            <Route path="os/:id" element={<Navigate to="/portal/obras" replace />} />
+          </Route>
+          <Route path="*" element={<CatchAllRedirect />} />
+        </Routes>
       </Suspense>
     </ErrorBoundary>
   );

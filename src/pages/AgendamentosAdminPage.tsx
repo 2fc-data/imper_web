@@ -5,6 +5,7 @@ import {
   type AgendamentoItem,
   type AtendimentoItem,
   type AtendimentoLogItem,
+  adicionarItemVisita,
   atualizarAgendamento,
   atualizarAtendimento,
   atualizarStatusAgendamento,
@@ -13,6 +14,7 @@ import {
   buscarUsuarios,
   criarAgendamento,
   criarVisita,
+  detalharVisita,
   encaminharParaOrcamento,
   getRotaAgendamento,
   listarAgendamentos,
@@ -20,11 +22,14 @@ import {
   listarLogsAtendimento,
   listarVisitas,
   type MeuUser,
+  removerItemVisita,
   type ResultadoVisita,
   type RotaAgendamento,
   type StatusAgendamento,
   type TipoAgendamento,
+  type VisitaItem,
 } from '../lib/api';
+import { GestorItensVocabulario } from '../components/atendimento-flow/GestorItensVocabulario';
 import { SlotPicker } from '../components/disponibilidade/SlotPicker';
 import { formatarDistancia, formatarDuracao } from '../lib/formato';
 
@@ -247,6 +252,7 @@ export function AgendamentoList({
     agendamentoId: number;
     visitaId: number | null;
   } | null>(null);
+  const [visitaDetalhe, setVisitaDetalhe] = useState<VisitaItem | null>(null);
   const [visitaStatus, setVisitaStatus] = useState<'REALIZADA' | 'CANCELADA'>(
     'REALIZADA',
   );
@@ -350,7 +356,7 @@ export function AgendamentoList({
     }
   };
 
-  const abrirVisita = (item: AgendamentoItem) => {
+  const abrirVisita = async (item: AgendamentoItem) => {
     const visita = item.visita;
     setVisitaErro(null);
     setVisitaStatus('REALIZADA');
@@ -363,6 +369,39 @@ export function AgendamentoList({
       agendamentoId: item.id,
       visitaId: visita?.id ?? null,
     });
+
+    if (visita?.id) {
+      try {
+        const det = await detalharVisita(visita.id);
+        setVisitaDetalhe(det);
+      } catch (err) {
+        console.error('Erro ao carregar detalhes da visita:', err);
+      }
+    } else {
+      setVisitaDetalhe(null);
+    }
+  };
+
+  const handleAdicionarItemVisita = async (
+    novo: import('../components/atendimento-flow/GestorItensVocabulario.js').NovoItemVocabularioInput,
+  ) => {
+    if (!visitaEdit) return;
+    let vId = visitaEdit.visitaId;
+    if (vId == null) {
+      const vCriada = await criarVisita({ agendamentoId: visitaEdit.agendamentoId });
+      vId = vCriada.id;
+      setVisitaEdit({ agendamentoId: visitaEdit.agendamentoId, visitaId: vId });
+    }
+    const detAtualizado = await adicionarItemVisita(vId, novo);
+    setVisitaDetalhe(detAtualizado);
+    await onRecarregar();
+  };
+
+  const handleRemoverItemVisita = async (itemId: number) => {
+    if (!visitaEdit?.visitaId) return;
+    const detAtualizado = await removerItemVisita(visitaEdit.visitaId, itemId);
+    setVisitaDetalhe(detAtualizado);
+    await onRecarregar();
   };
 
   const confirmarVisita = async () => {
@@ -844,6 +883,15 @@ export function AgendamentoList({
                                             />
                                             Obra necessária
                                           </label>
+                                        </div>
+                                        <div className="pt-2 border-t border-border/50">
+                                          <GestorItensVocabulario
+                                            modo="visita"
+                                            itens={visitaDetalhe?.itens || []}
+                                            onAdicionar={handleAdicionarItemVisita}
+                                            onRemover={handleRemoverItemVisita}
+                                            disabled={visitaSaving}
+                                          />
                                         </div>
                                       </>
                                     )}

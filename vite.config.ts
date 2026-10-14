@@ -11,14 +11,18 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: { enabled: true, suppressWarnings: true },
+      devOptions: { enabled: false },
       includeAssets: ['favicon_imper.webp'],
       manifest: false,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/manifest\.webmanifest$/],
+        navigateFallbackDenylist: [/^\/api\//, /^\/manifest\.webmanifest$/, /^\/@/],
         runtimeCaching: [
+          {
+            urlPattern: /^\/manifest\.webmanifest$/,
+            handler: 'NetworkOnly',
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'StaleWhileRevalidate',

@@ -11,6 +11,7 @@ import { ProcessFilters } from '../components/ui/ProcessFilters';
 import {
   type AtendimentoItem,
   type AtendimentoLogItem,
+  adicionarItemAtendimento,
   atualizarAtendimento,
   atualizarStatusAgendamento,
   atualizarStatusAtendimento,
@@ -22,9 +23,12 @@ import {
   encaminharParaOrcamento,
   listarAtendimentos,
   listarLogsAtendimento,
+  listarServicos,
   listarVisitas,
   type MeuUser,
+  removerItemAtendimento,
   registrarLogAtendimento,
+  type ServicoMarketing,
   type StatusAtendimento,
   type Urgencia,
 } from '../lib/api';
@@ -586,9 +590,23 @@ export function NovoAtendimentoForm({
   const [descricao, setDescricao] = useState('');
   const [canal, setCanal] = useState<CanalAtendimento | ''>('LOJA');
   const [urgencia, setUrgencia] = useState<Urgencia | ''>('NORMAL');
+  const [servicosMarketing, setServicosMarketing] = useState<ServicoMarketing[]>([]);
+  const [servicoMarketingId, setServicoMarketingId] = useState<number | null>(null);
   const agendarFormRef = useRef<AgendarVisitaHandle>(null);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    listarServicos()
+      .then((res) => {
+        if (ativo) setServicosMarketing(res.filter((s) => s.ativo));
+      })
+      .catch((e) => console.error('Erro ao listar servicos de marketing:', e));
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const [sugestoes, setSugestoes] = useState<MeuUser[]>([]);
   const [buscandoUsuarios, setBuscandoUsuarios] = useState(false);
@@ -668,6 +686,7 @@ export function NovoAtendimentoForm({
         descricao: descricao || undefined,
         canal,
         urgencia,
+        servicoMarketingId: servicoMarketingId ?? undefined,
         visitaSolicitada: agendarDados != null,
       });
 
@@ -801,6 +820,87 @@ export function NovoAtendimentoForm({
               className={campoInput}
               placeholder="000.000.000-00"
             />
+          </div>
+        </div>
+
+        {/* Serviço de Marketing / Especialidade */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between">
+            <label className={campoLabel}>Serviço de Marketing / Especialidade Solicitada</label>
+            {servicoMarketingId && (
+              <button
+                type="button"
+                onClick={() => setServicoMarketingId(null)}
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                Limpar seleção
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Selecione a especialidade solicitada pelo cliente. Isso guiará e pré-filtrará as atividades na Etapa 2 do Orçamento.
+          </p>
+
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+            {servicosMarketing.map((s) => {
+              const selecionado = servicoMarketingId === s.id;
+              return (
+                <button
+                  type="button"
+                  key={s.id}
+                  onClick={() =>
+                    setServicoMarketingId(selecionado ? null : s.id)
+                  }
+                  className={`group relative flex flex-col items-start gap-2 rounded-xl border p-3.5 text-left transition-all duration-200 ${
+                    selecionado
+                      ? 'border-primary bg-primary/10 shadow-sm ring-1 ring-primary'
+                      : 'border-border/80 bg-card/60 hover:border-primary/50 hover:bg-muted/40'
+                  }`}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                        selecionado
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground'
+                      }`}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d={s.icone} />
+                      </svg>
+                    </div>
+                    {selecionado && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shadow">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <h4
+                      className={`text-sm font-semibold leading-tight transition-colors ${
+                        selecionado ? 'text-primary' : 'text-foreground'
+                      }`}
+                    >
+                      {s.titulo}
+                    </h4>
+                    {s.descricao && (
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        {s.descricao}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -1051,6 +1151,21 @@ export function AtendimentosAdminPage({
     await atualizarStatusAgendamento(agendamentoId, 'CANCELADO');
   };
 
+  const handleAdicionarItem = async (
+    atendimentoId: number,
+    item: import('../components/atendimento-flow/GestorItensVocabulario.js').NovoItemVocabularioInput,
+  ) => {
+    const atualizado = await adicionarItemAtendimento(atendimentoId, item);
+    setItemSelecionadoModal(atualizado);
+    await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+  };
+
+  const handleRemoverItem = async (atendimentoId: number, itemId: number) => {
+    const atualizado = await removerItemAtendimento(atendimentoId, itemId);
+    setItemSelecionadoModal(atualizado);
+    await Promise.all([carregarAtendimentos(), carregarTodosAtendimentos()]);
+  };
+
   const handleAbrirModal = async (item: AtendimentoItem) => {
     setItemSelecionadoModal(item);
     setLogsModalLoading(true);
@@ -1184,6 +1299,8 @@ export function AtendimentosAdminPage({
           onAgendarVisita={handleAgendarVisita}
           onCancelarAgendamento={handleCancelarAgendamento}
           onCriarOrcamento={handleCriarOrcamento}
+          onAdicionarItem={handleAdicionarItem}
+          onRemoverItem={handleRemoverItem}
         />
       )}
     </div>

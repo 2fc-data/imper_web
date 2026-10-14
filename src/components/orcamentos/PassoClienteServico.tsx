@@ -10,6 +10,7 @@ import {
 import type { Urgencia } from '../../schemas';
 import {
   labelClasses,
+  mapearItensParaAtividades,
   selectClasses,
   textareaClasses,
   type AtualizarEstado,
@@ -107,12 +108,33 @@ export function PassoClienteServico({
         const proximaVisita = item.visitaSolicitada && realizada ? realizada.id : null;
         const proximoAgendamento =
           item.visitaSolicitada && realizada ? realizada.agendamentoId : null;
-        set(
-          (s) =>
-            s.visitaId === proximaVisita && s.agendamentoId === proximoAgendamento
-              ? s
-              : { ...s, visitaId: proximaVisita, agendamentoId: proximoAgendamento },
-        );
+        const servicoDoAtendimento = item.servicoMarketingId ?? item.servicoMarketing?.id ?? null;
+        
+        // Se houver visita com itens ou atendimento com itens, e o wizard ainda não tiver atividades
+        const itensDaVisita = realizada?.itens || [];
+        const itensParaHerdar = itensDaVisita.length > 0 ? itensDaVisita : (item.itens || []);
+
+        set((s) => {
+          const mudarVisita =
+            s.visitaId !== proximaVisita || s.agendamentoId !== proximoAgendamento;
+          const mudarServico =
+            s.servicoMarketingId == null && servicoDoAtendimento != null;
+          const herdarAtividades =
+            s.atividades.length === 0 && itensParaHerdar.length > 0;
+
+          if (!mudarVisita && !mudarServico && !herdarAtividades) return s;
+          return {
+            ...s,
+            ...(mudarVisita && {
+              visitaId: proximaVisita,
+              agendamentoId: proximoAgendamento,
+            }),
+            ...(mudarServico && { servicoMarketingId: servicoDoAtendimento }),
+            ...(herdarAtividades && {
+              atividades: mapearItensParaAtividades(itensParaHerdar),
+            }),
+          };
+        });
       })
       .catch(() => {});
     return () => {

@@ -19,6 +19,7 @@ import {
 interface Props {
   valor: ValorCascata;
   onChange: (v: ValorCascata) => void;
+  servicoMarketingId?: number | null;
   /**
    * `reduzida` — só Etapa + Sub-serviço (seleção do que será feito).
    * `termos` — só Verbo/Objeto/Local/Característica (etapa/sub vêm de fora).
@@ -60,6 +61,7 @@ function limparDownstream(
 export function CascataVocabulario({
   valor,
   onChange,
+  servicoMarketingId,
   modo = 'completa',
 }: Props) {
   const soEtapasSubs = modo === 'reduzida';
@@ -109,7 +111,7 @@ export function CascataVocabulario({
       return;
     }
     let vivo = true;
-    listarSubServicos(valor.etapaId, true)
+    listarSubServicos(valor.etapaId, true, servicoMarketingId)
       .then((r) => {
         if (vivo) setSubs(r);
       })
@@ -117,7 +119,7 @@ export function CascataVocabulario({
     return () => {
       vivo = false;
     };
-  }, [soTermos, valor.etapaId]);
+  }, [soTermos, valor.etapaId, servicoMarketingId]);
 
   // cascata: um único efeito, refaz a busca quando a seleção muda
   // (não busca em modo reduzida — não há dimensões expostas;

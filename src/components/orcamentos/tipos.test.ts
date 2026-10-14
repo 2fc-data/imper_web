@@ -18,6 +18,7 @@ import {
   totaisDoEstado,
   validarAte,
   validarPasso,
+  mapearItensParaAtividades,
   type AtividadeForm,
   type LinhaForm,
 } from './tipos';
@@ -505,3 +506,68 @@ describe('numero', () => {
     expect(numero('abc')).toBeNull();
   });
 });
+
+describe('mapearItensParaAtividades', () => {
+  it('agrupa itens por etapa e sub-serviço e mapeia medições para LinhaForm', () => {
+    const itens = [
+      {
+        etapaId: 1,
+        subServicoId: 10,
+        verboId: 100,
+        objetoId: 200,
+        localId: 300,
+        caracteristicaId: 400,
+        unidadeId: 5,
+        quantidade: 15,
+        areaM2: 50.5,
+        observacoes: 'Item 1 da etapa 1',
+        etapa: { id: 1, nome: 'Preparação', ordem: 1 },
+        subServico: { id: 10, nome: 'Limpeza de superfície' },
+        verbo: { id: 100, nome: 'Limpar' },
+        objeto: { id: 200, nome: 'Laje' },
+        local: { id: 300, nome: 'Cobertura' },
+        caracteristica: { id: 400, nome: 'Exposta' },
+      },
+      {
+        etapaId: 1,
+        subServicoId: 10,
+        verboId: 101,
+        objetoId: 201,
+        observacoes: 'Item 2 da etapa 1',
+        etapa: { id: 1, nome: 'Preparação', ordem: 1 },
+        subServico: { id: 10, nome: 'Limpeza de superfície' },
+        verbo: { id: 101, nome: 'Remover' },
+        objeto: { id: 201, nome: 'Resíduos' },
+      },
+      {
+        etapaId: 2,
+        subServicoId: 20,
+        verboId: 102,
+        objetoId: 202,
+        areaM2: 50.5,
+        observacoes: 'Item da etapa 2',
+        etapa: { id: 2, nome: 'Impermeabilização', ordem: 2 },
+        subServico: { id: 20, nome: 'Aplicação de Manta' },
+        verbo: { id: 102, nome: 'Aplicar' },
+        objeto: { id: 202, nome: 'Manta asfáltica' },
+      },
+    ];
+
+    const atividades = mapearItensParaAtividades(itens);
+    expect(atividades).toHaveLength(2);
+
+    expect(atividades[0].etapaId).toBe(1);
+    expect(atividades[0].subServicoId).toBe(10);
+    expect(atividades[0].linhas).toHaveLength(2);
+    expect(atividades[0].linhas[0].areaM2).toBe(50.5);
+    expect(atividades[0].linhas[0].quantidade).toBe(15);
+    expect(atividades[0].linhas[0].descricao).toBe('Item 1 da etapa 1');
+
+    expect(atividades[1].etapaId).toBe(2);
+    expect(atividades[1].subServicoId).toBe(20);
+    expect(atividades[1].linhas).toHaveLength(1);
+    expect(atividades[1].linhas[0].areaM2).toBe(50.5);
+    expect(atividades[1].linhas[0].descricao).toBe('Item da etapa 2');
+  });
+});
+

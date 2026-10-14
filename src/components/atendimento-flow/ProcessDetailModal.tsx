@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { StatusBadge } from '../ui/StatusBadge';
 import { AgendarVisita, type AgendarDados, type AgendarVisitaHandle } from '../agendamento/AgendarVisita';
+import { GestorItensVocabulario } from './GestorItensVocabulario';
 import { acaoPresente, type AcaoUI } from '../../lib/proximas-acoes';
 import type { AtendimentoItem, AtendimentoLogItem, StatusAtendimento } from '../../lib/api';
 
@@ -14,6 +15,8 @@ interface ProcessDetailModalProps {
   onAgendarVisita?: (atendimentoId: number, dados: AgendarDados) => Promise<void>;
   onCancelarAgendamento?: (agendamentoId: number) => Promise<void>;
   onCriarOrcamento?: (atendimentoId: number) => Promise<void> | void;
+  onAdicionarItem?: (atendimentoId: number, item: import('./GestorItensVocabulario.js').NovoItemVocabularioInput) => Promise<void>;
+  onRemoverItem?: (atendimentoId: number, itemId: number) => Promise<void>;
 }
 
 export function ProcessDetailModal({
@@ -26,8 +29,10 @@ export function ProcessDetailModal({
   onAgendarVisita,
   onCancelarAgendamento,
   onCriarOrcamento,
+  onAdicionarItem,
+  onRemoverItem,
 }: ProcessDetailModalProps) {
-  const [abaAtiva, setAbaAtiva] = useState<'geral' | 'historico' | 'agendamento'>('geral');
+  const [abaAtiva, setAbaAtiva] = useState<'geral' | 'itens' | 'historico' | 'agendamento'>('geral');
   const [descricaoDraft, setDescricaoDraft] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -242,6 +247,17 @@ export function ProcessDetailModal({
           </button>
           <button
             type="button"
+            onClick={() => setAbaAtiva('itens')}
+            className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+              abaAtiva === 'itens'
+                ? 'bg-primary text-primary-foreground shadow-md'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`}
+          >
+            Serviços & Vocabulário ({item.itens?.length || 0})
+          </button>
+          <button
+            type="button"
             onClick={() => setAbaAtiva('historico')}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
               abaAtiva === 'historico'
@@ -351,6 +367,26 @@ export function ProcessDetailModal({
                 <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{item.descricao}</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Conteúdo Aba Itens / Vocabulário */}
+        {abaAtiva === 'itens' && (
+          <div className="space-y-4">
+            <GestorItensVocabulario
+              modo="atendimento"
+              itens={item.itens || []}
+              onAdicionar={async (novo) => {
+                if (onAdicionarItem) {
+                  await onAdicionarItem(item.id, novo);
+                }
+              }}
+              onRemover={async (itemId) => {
+                if (onRemoverItem) {
+                  await onRemoverItem(item.id, itemId);
+                }
+              }}
+            />
           </div>
         )}
 

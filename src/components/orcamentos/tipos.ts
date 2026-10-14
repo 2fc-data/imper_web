@@ -548,3 +548,67 @@ export function linhaDaCascata(c: ValorCascata, descricao: string): LinhaForm {
     materiais: [],
   };
 }
+
+export interface ItemVocabularioBase {
+  etapaId: number;
+  subServicoId: number;
+  verboId: number;
+  objetoId: number;
+  localId?: number | null;
+  caracteristicaId?: number | null;
+  unidadeId?: number | null;
+  quantidade?: number | null;
+  areaM2?: number | null;
+  observacoes?: string | null;
+  etapa?: { id: number; nome: string; ordem?: number };
+  subServico?: { id: number; nome: string };
+  verbo?: { id: number; nome: string };
+  objeto?: { id: number; nome: string };
+  local?: { id: number; nome: string } | null;
+  caracteristica?: { id: number; nome: string } | null;
+}
+
+export function mapearItensParaAtividades(
+  itens: ItemVocabularioBase[],
+): AtividadeForm[] {
+  const mapa = new Map<string, AtividadeForm>();
+
+  for (const it of itens) {
+    const chave = `${it.etapaId}_${it.subServicoId}`;
+    if (!mapa.has(chave)) {
+      mapa.set(chave, {
+        etapaId: it.etapaId,
+        subServicoId: it.subServicoId,
+        etapaNome: it.etapa?.nome ?? `Etapa #${it.etapaId}`,
+        etapaOrdem: it.etapa?.ordem ?? 0,
+        subServicoNome: it.subServico?.nome ?? `Sub-serviço #${it.subServicoId}`,
+        linhas: [],
+      });
+    }
+
+    const atv = mapa.get(chave)!;
+    const linha: LinhaForm = {
+      verboId: it.verboId,
+      objetoId: it.objetoId,
+      localId: it.localId ?? null,
+      caracteristicaId: it.caracteristicaId ?? null,
+      verboNome: it.verbo?.nome ?? `#${it.verboId}`,
+      objetoNome: it.objeto?.nome ?? `#${it.objetoId}`,
+      localNome: it.local?.nome ?? null,
+      caracteristicaNome: it.caracteristica?.nome ?? null,
+      descricao: it.observacoes ?? '',
+      unidadeId: it.unidadeId ?? null,
+      quantidade: it.quantidade != null ? Number(it.quantidade) : null,
+      areaM2: it.areaM2 != null ? Number(it.areaM2) : null,
+      moValorHora: null,
+      moPessoas: null,
+      moHoras: null,
+      materiais: [],
+    };
+
+    atv.linhas.push(linha);
+  }
+
+  return Array.from(mapa.values()).sort((a, b) => a.etapaOrdem - b.etapaOrdem);
+}
+

@@ -22,6 +22,7 @@ export interface Etapa {
 export interface SubServico {
   id: number;
   etapaId: number;
+  servicoMarketingId?: number | null;
   nome: string;
   ativo: boolean;
 }
@@ -88,10 +89,16 @@ export const atualizarTermo = (
 export const removerTermo = (dim: DimensaoVocabulario, id: number) =>
   api.del<Termo>(`/vocabulario/${dim}/${id}`);
 
-export const listarSubServicos = (etapaId?: number, ativo = true) =>
+export const listarSubServicos = (
+  etapaId?: number,
+  ativo = true,
+  servicoMarketingId?: number | null,
+) =>
   api.get<SubServico[]>('/vocabulario/sub-servicos', {
     ...(etapaId !== undefined && { etapaId }),
     ativo,
+    ...(servicoMarketingId !== undefined &&
+      servicoMarketingId !== null && { servicoMarketingId }),
   });
 
 export const listarSubServicosTodas = () =>
