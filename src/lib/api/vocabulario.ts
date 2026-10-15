@@ -27,38 +27,10 @@ export interface SubServico {
   ativo: boolean;
 }
 
-export interface ComboSubServico {
-  id: number;
-  subServicoId: number;
-  verboId: number;
-  objetoId: number;
-  localId: number | null;
-  caracteristicaId: number | null;
-  ativo: boolean;
-  verbo: OpcaoCascata;
-  objeto: OpcaoCascata;
-  local: OpcaoCascata | null;
-  caracteristica: OpcaoCascata | null;
-}
-
 export interface OpcaoCascata {
   id: number;
   nome: string;
 }
-
-export type Cascata = {
-  verbo: (OpcaoCascata | null)[];
-  objeto: (OpcaoCascata | null)[];
-  local: (OpcaoCascata | null)[];
-  caracteristica: (OpcaoCascata | null)[];
-};
-
-export type FiltrosCascata = {
-  verboId?: number;
-  objetoId?: number;
-  localId?: number | null;
-  caracteristicaId?: number | null;
-};
 
 export const listarEtapas = (ativo = true) =>
   api.get<Etapa[]>('/etapas', { ativo });
@@ -104,9 +76,6 @@ export const listarSubServicos = (
 export const listarSubServicosTodas = () =>
   api.get<SubServico[]>('/vocabulario/sub-servicos');
 
-export const getCascata = (subServicoId: number, filtros?: FiltrosCascata) =>
-  api.get<Cascata>(`/vocabulario/sub-servicos/${subServicoId}/cascata`, filtros);
-
 export const criarTermo = (dim: DimensaoVocabulario, nome: string) =>
   api.post<Termo>(`/vocabulario/${dim}`, { nome });
 
@@ -120,23 +89,4 @@ export const atualizarSubServico = (
 
 export const removerSubServico = (id: number) =>
   api.del<SubServico>(`/vocabulario/sub-servicos/${id}`);
-
-export const listarCombos = (subServicoId: number) =>
-  api.get<ComboSubServico[]>(`/vocabulario/sub-servicos/${subServicoId}/combos`);
-
-export const criarCombo = (dados: {
-  subServicoId: number;
-  verboId: number;
-  objetoId: number;
-  localId?: number | null;
-  caracteristicaId?: number | null;
-}) => api.post<ComboSubServico>('/vocabulario/combos', dados);
-
-export const atualizarCombo = (
-  id: number,
-  dados: { verboId?: number; objetoId?: number },
-) => api.patch<ComboSubServico>(`/vocabulario/combos/${id}`, dados);
-
-export const removerCombo = (id: number) =>
-  api.del<ComboSubServico>(`/vocabulario/combos/${id}`);
 

@@ -1028,7 +1028,7 @@ export function NovoAgendamentoForm({
   const [userIdSelecionado, setUserIdSelecionado] = useState<
     number | null
   >(null);
-  const [tipo, setTipo] = useState<TipoAgendamento>('VISITA');
+  const [tipo, setTipo] = useState<TipoAgendamento>('RETORNO');
   const [dataPrevista, setDataPrevista] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [atendimentosCandidatos, setAtendimentosCandidatos] = useState<
@@ -1093,7 +1093,7 @@ export function NovoAgendamentoForm({
   }, []);
 
   // Atendimentos elegíveis do cliente selecionado (não-terminal com ações
-  // pendentes de agendamento/visita).
+  // pendentes de agendamento/retorno/reunião/orçamento).
   useEffect(() => {
     let vivo = true;
     if (userIdSelecionado == null) {
@@ -1119,13 +1119,6 @@ export function NovoAgendamentoForm({
       vivo = false;
     };
   }, [userIdSelecionado]);
-
-  const atendimentosDoTipo = atendimentosCandidatos.filter((a) => {
-    const acoes = a.proximasAcoes ?? [];
-    return tipo === 'VISITA'
-      ? acoes.includes('CRIAR_AGENDAMENTO')
-      : acoes.length > 0;
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1158,7 +1151,7 @@ export function NovoAgendamentoForm({
       <div>
         <h2 className="text-xl font-bold tracking-tight">Novo Agendamento</h2>
         <p className="text-sm text-muted-foreground">
-          Agende uma visita, orçamento, retorno ou reunião com um cliente.
+          Agende um retorno, reunião ou orçamento com um cliente.
         </p>
       </div>
 
@@ -1240,7 +1233,6 @@ export function NovoAgendamentoForm({
             onChange={(e) => setTipo(e.target.value as TipoAgendamento)}
             className={campoInput}
           >
-            <option value="VISITA">Visita</option>
             <option value="ORCAMENTO">Orçamento</option>
             <option value="RETORNO">Retorno</option>
             <option value="REUNIAO">Reunião</option>
@@ -1260,17 +1252,17 @@ export function NovoAgendamentoForm({
             required
           >
             <option value="">
-              {atendimentosDoTipo.length === 0
+              {atendimentosCandidatos.length === 0
                 ? 'Nenhum atendimento disponível…'
                 : 'Selecionar atendimento…'}
             </option>
-            {atendimentosDoTipo.map((a) => (
+            {atendimentosCandidatos.map((a) => (
               <option key={a.id} value={a.id}>
                 #{a.id} — {a.user?.nome ?? '—'} · {a.descricao ?? a.canal}
               </option>
             ))}
           </select>
-          {atendimentosDoTipo.length === 0 && (
+          {atendimentosCandidatos.length === 0 && (
             <p className="text-xs text-muted-foreground">
               Nenhum atendimento aberto para este cliente.
             </p>

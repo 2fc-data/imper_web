@@ -218,7 +218,7 @@ export type {
   CriarOrcamentoInputLegado,
 } from './orcamentos-admin.js';
 
-// Vocabulario (etapas, termos, sub-servicos, cascata)
+// Vocabulario (etapas, termos, sub-servicos)
 export {
   listarEtapas,
   listarEtapasTodas,
@@ -230,25 +230,17 @@ export {
   removerTermo,
   listarSubServicos,
   listarSubServicosTodas,
-  getCascata,
   criarTermo,
   criarSubServico,
   atualizarSubServico,
   removerSubServico,
-  listarCombos,
-  criarCombo,
-  atualizarCombo,
-  removerCombo,
 } from './vocabulario.js';
 export type {
   DimensaoVocabulario,
   Termo,
   Etapa,
   SubServico,
-  ComboSubServico,
   OpcaoCascata,
-  Cascata,
-  FiltrosCascata,
 } from './vocabulario.js';
 
 // Agendamentos

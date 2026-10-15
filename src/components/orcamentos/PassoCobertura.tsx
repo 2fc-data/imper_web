@@ -29,6 +29,9 @@ interface Props {
  *    + adicionar. Para cada combinação etapa+sub-serviço o usuário pode
  *    adicionar várias linhas.
  * 3. Linhas adicionadas (agrupadas por etapa+sub-serviço).
+ *
+ * Todos os selects são independentes entre si (cada um lista todas as
+ * opções ativas, sem filtragem cruzada nem bloqueio).
  */
 export function PassoCobertura({ state, set }: Props) {
   const [cascata, setCascata] = useState<ValorCascata>(cascataVazia);
@@ -78,7 +81,11 @@ export function PassoCobertura({ state, set }: Props) {
         <h3 className="mb-3 text-sm font-semibold">
           1. Selecione o que será feito
         </h3>
-        <CascataVocabulario valor={cascata} onChange={setCascata} modo="reduzida" />
+        <CascataVocabulario
+          valor={cascata}
+          onChange={setCascata}
+          modo="reduzida"
+        />
       </div>
 
       <div className={cardClasses}>
@@ -91,11 +98,16 @@ export function PassoCobertura({ state, set }: Props) {
             </span>
           ) : (
             <span className="text-xs text-muted-foreground">
-              Selecione etapa e sub-serviço em «1. Selecione o que será feito»
+              Os campos abaixo são independentes: escolha verbo e objeto para
+              adicionar a linha
             </span>
           )}
         </div>
-        <CascataVocabulario valor={cascata} onChange={setCascata} modo="termos" />
+        <CascataVocabulario
+          valor={cascata}
+          onChange={setCascata}
+          modo="termos"
+        />
         <div className="mt-3">
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>

@@ -411,6 +411,14 @@ export function OrcamentosAdminPage({
     if (onNavegar) onNavegar(novaView);
   };
 
+  // View "novo" sem atendimento (URL órfã — o botão de sidebar foi removido)
+  // ou em edição não aplicável: volta para a lista em vez de abrir o wizard vazio.
+  useEffect(() => {
+    if (initialView === 'novo' && atendimentoInicial == null && orcamentoEdicao == null) {
+      mudarView('lista');
+    }
+  }, [initialView, atendimentoInicial, orcamentoEdicao]);
+
   const carregarOrcamentos = useCallback(async () => {
     setLoading(true);
     try {

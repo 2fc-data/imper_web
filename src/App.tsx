@@ -308,16 +308,25 @@ function OrcamentosRoute() {
     const n = raw ? Number(raw) : Number.NaN;
     return Number.isFinite(n) && n > 0 ? n : null;
   });
-  const initialView =
-    (searchParams.get('view') as 'analises' | 'lista' | 'novo') || 'lista';
+  // "novo" sem atendimento é URL órfã (o botão de sidebar foi removido):
+  // normaliza na origem, pois o efeito de sync abaixo roda depois do guard
+  // da página e o sobrescreveria.
+  const normalizarView = (
+    v: 'analises' | 'lista' | 'novo' | null,
+  ): 'analises' | 'lista' | 'novo' => {
+    if (v === 'novo' && atendimentoInicial == null) return 'lista';
+    return v ?? 'lista';
+  };
   const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    initialView,
+    normalizarView(
+      searchParams.get('view') as 'analises' | 'lista' | 'novo' | null,
+    ),
   );
 
   useEffect(() => {
     const v = searchParams.get('view') as 'analises' | 'lista' | 'novo' | null;
-    if (v) setViewAtiva(v);
-  }, [searchParams]);
+    if (v) setViewAtiva(v === 'novo' && atendimentoInicial == null ? 'lista' : v);
+  }, [searchParams, atendimentoInicial]);
 
   // consome os params de origem (ex.: "Planejar orçamento" do agendamento)
   // uma única vez, para reabrir o wizard pela sidebar sem dados presos.
@@ -508,7 +517,7 @@ function RbacRoute() {
 
 function VocabularioRoute() {
   const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'etapas' | 'termos' | 'sub-servicos' | 'combos'
+    'analises' | 'etapas' | 'termos' | 'sub-servicos'
   >('etapas');
 
   return (
