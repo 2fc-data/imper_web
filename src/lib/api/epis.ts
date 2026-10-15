@@ -18,6 +18,7 @@ export interface EpiItem {
   id: number;
   codigo: string;
   nome: string;
+  custoUnitario?: string | number | null;
   numeroCa: string | null;
   numeroPatrimonio: string | null;
   dataValidade: string | null;
@@ -44,6 +45,7 @@ export interface EpiItem {
 export interface EpiInput {
   codigo: string;
   nome: string;
+  custoUnitario?: number | null;
   numeroCa?: string;
   numeroPatrimonio?: string;
   dataValidade?: string;

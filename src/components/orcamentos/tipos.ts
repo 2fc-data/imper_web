@@ -15,18 +15,25 @@ import {
   type TotaisOrcamento,
 } from '../../lib/orcamento-calculo';
 
-export type PassoWizard = 1 | 2 | 3 | 4;
+export type PassoWizard = 1 | 2 | 3;
 
 export const PASSOS: { passo: PassoWizard; titulo: string }[] = [
   { passo: 1, titulo: 'Cliente & Serviço' },
   { passo: 2, titulo: 'Cobertura' },
-  { passo: 3, titulo: 'Precificação' },
-  { passo: 4, titulo: 'Ficha & Resumo' },
+  { passo: 3, titulo: 'Ficha & Resumo' },
 ];
 
 export interface MaterialLinhaForm {
   materialId: number;
   nome: string;
+  quantidade: number;
+  custoUnitario: number | null;
+}
+
+export interface EpiLinhaForm {
+  epiId: number;
+  nome: string;
+  codigo?: string | null;
   quantidade: number;
   custoUnitario: number | null;
 }
@@ -48,6 +55,7 @@ export interface LinhaForm {
   moPessoas: number | null;
   moHoras: number | null;
   materiais: MaterialLinhaForm[];
+  epis: EpiLinhaForm[];
 }
 
 export interface AtividadeForm {
@@ -238,32 +246,12 @@ export function validarPasso(
     case 2:
       if (state.atividades.length === 0)
         return 'Adicione ao menos uma atividade (passo Cobertura).';
-      return null;
-    case 3: {
       for (const a of state.atividades) {
         if (a.linhas.length === 0)
           return `Atividade "${rotuloAtividade(a)}" sem linhas.`;
-        for (const l of a.linhas) {
-          const rotulo = l.descricao.trim() || `${l.verboNome} ${l.objetoNome}`;
-          if (l.areaM2 != null && l.areaM2 <= 0)
-            return `Linha "${rotulo}": área (m²) deve ser maior que zero.`;
-          if (l.quantidade != null && l.quantidade <= 0)
-            return `Linha "${rotulo}": quantidade deve ser maior que zero.`;
-          if (l.moPessoas != null && l.moPessoas < 1)
-            return `Linha "${rotulo}": mão de obra precisa de ao menos 1 pessoa.`;
-          if (l.moHoras != null && l.moHoras < 0)
-            return `Linha "${rotulo}": horas de mão de obra não podem ser negativas.`;
-          if (l.moValorHora != null && l.moValorHora < 0)
-            return `Linha "${rotulo}": valor/hora não pode ser negativo.`;
-          for (const m of l.materiais) {
-            if (!(m.quantidade > 0))
-              return `Material "${m.nome}" com quantidade inválida.`;
-          }
-        }
       }
       return null;
-    }
-    case 4: {
+    case 3: {
       if (!state.validade) return 'Informe a validade da proposta.';
       if (Number.isNaN(new Date(`${state.validade}T12:00:00`).getTime()))
         return 'Data de validade inválida.';
@@ -275,7 +263,7 @@ export function validarPasso(
 }
 
 export function validarAte(state: WizardState, ate: PassoWizard): string | null {
-  for (const p of [1, 2, 3, 4] as PassoWizard[]) {
+  for (const p of [1, 2, 3] as PassoWizard[]) {
     if (p >= ate) break;
     const erro = validarPasso(state, p);
     if (erro) return erro;
@@ -347,6 +335,11 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
           materialId: m.materialId,
           quantidade: m.quantidade,
         })),
+        epis: l.epis.map(({ epiId, quantidade, custoUnitario }) => ({
+          epiId,
+          quantidade,
+          custoUnitario,
+        })),
       })),
     })),
   };
@@ -370,6 +363,11 @@ export function subtotalLinha(l: LinhaForm): number {
       quantidade: m.quantidade,
       custoUnitario: m.custoUnitario ?? 0,
     })),
+    l.epis.map((e) => ({
+      epiId: e.epiId,
+      quantidade: e.quantidade,
+      custoUnitario: e.custoUnitario ?? 0,
+    })),
   );
 }
 
@@ -381,6 +379,11 @@ function linhasCalculo(a: AtividadeForm) {
     materiais: l.materiais.map((m) => ({
       quantidade: m.quantidade,
       custoUnitario: m.custoUnitario ?? 0,
+    })),
+    epis: l.epis.map((e) => ({
+      epiId: e.epiId,
+      quantidade: e.quantidade,
+      custoUnitario: e.custoUnitario ?? 0,
     })),
   }));
 }
@@ -471,6 +474,13 @@ export function estadoDeEdicao(
         quantidade: numero(m.quantidade) ?? 0,
         custoUnitario: numero(m.custoUnitario),
       })),
+      epis: (row.epis ?? []).map((e) => ({
+        epiId: e.epiId,
+        nome: e.epi?.nome ?? `#${e.epiId}`,
+        codigo: e.epi?.codigo ?? null,
+        quantidade: numero(e.quantidade) ?? 0,
+        custoUnitario: numero(e.custoUnitario),
+      })),
     });
   }
 
@@ -546,6 +556,7 @@ export function linhaDaCascata(c: ValorCascata, descricao: string): LinhaForm {
     moPessoas: null,
     moHoras: null,
     materiais: [],
+    epis: [],
   };
 }
 
@@ -604,6 +615,7 @@ export function mapearItensParaAtividades(
       moPessoas: null,
       moHoras: null,
       materiais: [],
+      epis: [],
     };
 
     atv.linhas.push(linha);

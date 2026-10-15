@@ -14,12 +14,11 @@ export function calcularEvolucaoOrcamento(input: {
 }): EvolucaoOrcamentoInfo {
   const passos = [
     true,
-    (input.atividades ?? 0) > 0,
-    Number(input.valorTotal ?? 0) > 0,
+    (input.atividades ?? 0) > 0 && Number(input.valorTotal ?? 0) > 0,
     input.ficha != null || Boolean(input.observacoes?.trim()),
   ];
   let etapa = 1;
-  while (etapa < 4 && passos[etapa]) {
+  while (etapa < 3 && passos[etapa]) {
     etapa += 1;
   }
   return {
@@ -58,7 +57,7 @@ export function EvolucaoOrcamento({
         ))}
       </span>
       <span className="font-medium whitespace-nowrap text-foreground/80">
-        {evolucao.etapa}/4 · {evolucao.rotulo}
+        {evolucao.etapa}/3 · {evolucao.rotulo}
       </span>
     </span>
   );

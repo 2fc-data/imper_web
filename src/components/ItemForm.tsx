@@ -26,6 +26,7 @@ export interface ItemFormData {
   numeroSerie?: string;
   numeroCa?: string;
   dataValidade?: string;
+  custoUnitario?: number;
   quantidade?: number;
   quantidadeMinima?: number;
   marcaId?: number;
@@ -225,6 +226,26 @@ export function ItemForm({
                     value={form.dataValidade ?? ''}
                     onChange={(e) =>
                       setForm({ ...form, dataValidade: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="custoUnitario">Custo unitário (R$)</Label>
+                  <Input
+                    id="custoUnitario"
+                    type="number"
+                    min={0}
+                    step="any"
+                    placeholder="Opcional — usado na precificação"
+                    value={form.custoUnitario ?? ''}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        custoUnitario:
+                          e.target.value === ''
+                            ? undefined
+                            : Number(e.target.value),
+                      })
                     }
                   />
                 </div>

@@ -428,13 +428,6 @@ export function OrcamentosSidebar({
       >
         Lista de Orçamentos
       </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'novo'}
-        onClick={() => onNavegar('novo')}
-        icon={icone('M12 4v16m8-8H4')}
-      >
-        Novo Orçamento
-      </SidebarButton>
     </>
   );
 }
@@ -580,14 +573,9 @@ export function VocabularioSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva:
-    | 'analises'
-    | 'etapas'
-    | 'termos'
-    | 'sub-servicos'
-    | 'combos';
+  viewAtiva: 'analises' | 'etapas' | 'termos' | 'sub-servicos';
   onNavegar: (
-    view: 'analises' | 'etapas' | 'termos' | 'sub-servicos' | 'combos',
+    view: 'analises' | 'etapas' | 'termos' | 'sub-servicos',
   ) => void;
 }) {
   return (
@@ -620,15 +608,8 @@ export function VocabularioSidebar({
       >
         Sub-serviços
       </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'combos'}
-        onClick={() => onNavegar('combos')}
-        icon={icone('M4 6h7M4 12h16M4 18h7M17 4l3 3-3 3M17 16l3 3-3 3')}
-      >
-        Detalhe da atividade
-      </SidebarButton>
       <SidebarNote>
-        Vocabulário do orçamento: etapas, termos, sub-serviços e combos.
+        Vocabulário do orçamento: etapas, termos e sub-serviços.
       </SidebarNote>
     </>
   );

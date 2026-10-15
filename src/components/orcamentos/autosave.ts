@@ -50,7 +50,7 @@ export function reducerAutosave(
 /**
  * Criar na primeira gravação; atualizar assim que existir id. É o que evita
  * um segundo rascunho quando o autosave já criou o registro e o usuário
- * clica em "Salvar rascunho" no passo 4.
+ * clica em "Salvar rascunho" no passo 3.
  */
 export type AcaoSalvar = { tipo: 'criar' } | { tipo: 'editar'; id: number };
 

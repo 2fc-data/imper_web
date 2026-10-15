@@ -1,16 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-  getCascata,
   listarEtapas,
   listarSubServicos,
   listarTermos,
-  type Cascata,
   type Etapa,
   type OpcaoCascata,
   type SubServico,
 } from '../../lib/api';
 import {
-  cascataVazia,
   labelClasses,
   selectClasses,
   type ValorCascata,
@@ -28,35 +25,10 @@ interface Props {
   modo?: 'reduzida' | 'completa' | 'termos';
 }
 
-/** Limpa as dimensões downstream de `dim` (mantém `dim` intacta). */
-function limparDownstream(
-  v: ValorCascata,
-  dim: 'verbo' | 'objeto' | 'local' | 'caracteristica',
-): ValorCascata {
-  const out: ValorCascata = { ...v };
-  if (dim === 'verbo') {
-    out.objetoId = null;
-    out.objetoNome = null;
-    out.localId = null;
-    out.localNome = null;
-    out.caracteristicaId = null;
-    out.caracteristicaNome = null;
-  } else if (dim === 'objeto') {
-    out.localId = null;
-    out.localNome = null;
-    out.caracteristicaId = null;
-    out.caracteristicaNome = null;
-  } else if (dim === 'local') {
-    out.caracteristicaId = null;
-    out.caracteristicaNome = null;
-  }
-  return out;
-}
-
 /**
- * Seletor cascata etapa → sub-serviço → verbo/objeto/local/característica.
- * Componente controlado: recebe `ValorCascata` e emite o novo valor já com
- * as dimensões downstream limpas (evita round-trips inválidos no servidor).
+ * Seletor etapa → sub-serviço → verbo/objeto/local/característica.
+ * Selects totalmente independentes: cada um lista todas as opções ativas,
+ * sem filtragem cruzada, sem `disabled` e sem limpar os demais ao mudar.
  */
 export function CascataVocabulario({
   valor,
@@ -68,20 +40,27 @@ export function CascataVocabulario({
   const soTermos = modo === 'termos';
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [subs, setSubs] = useState<SubServico[]>([]);
-  const [locaisLivres, setLocaisLivres] = useState<OpcaoCascata[]>([]);
-  const [caractsLivres, setCaractsLivres] = useState<OpcaoCascata[]>([]);
-  const [cascata, setCascata] = useState<Cascata | null>(null);
-  const [carregando, setCarregando] = useState(false);
+  const [locais, setLocais] = useState<OpcaoCascata[]>([]);
+  const [caracteristicas, setCaracteristicas] = useState<OpcaoCascata[]>([]);
+  const [verbos, setVerbos] = useState<OpcaoCascata[]>([]);
+  const [objetos, setObjetos] = useState<OpcaoCascata[]>([]);
 
-  // carrega locais e características para seleção livre
+  // termos (locais, características, verbos, objetos)
   useEffect(() => {
     if (soEtapasSubs) return;
     let vivo = true;
-    Promise.all([listarTermos('locais', { ativo: true }), listarTermos('caracteristicas', { ativo: true })])
-      .then(([locs, chars]) => {
+    Promise.all([
+      listarTermos('locais', { ativo: true }),
+      listarTermos('caracteristicas', { ativo: true }),
+      listarTermos('verbos', { ativo: true }),
+      listarTermos('objetos', { ativo: true }),
+    ])
+      .then(([locs, chars, vs, obs]) => {
         if (vivo) {
-          setLocaisLivres(locs);
-          setCaractsLivres(chars);
+          setLocais(locs);
+          setCaracteristicas(chars);
+          setVerbos(vs);
+          setObjetos(obs);
         }
       })
       .catch(() => {});
@@ -104,14 +83,11 @@ export function CascataVocabulario({
     };
   }, [soTermos]);
 
-  // sub-serviços por etapa
+  // sub-serviços: todos os ativos de uma vez (independente da etapa)
   useEffect(() => {
-    if (soTermos || valor.etapaId == null) {
-      setSubs([]);
-      return;
-    }
+    if (soTermos) return;
     let vivo = true;
-    listarSubServicos(valor.etapaId, true, servicoMarketingId)
+    listarSubServicos(undefined, true, servicoMarketingId)
       .then((r) => {
         if (vivo) setSubs(r);
       })
@@ -119,48 +95,13 @@ export function CascataVocabulario({
     return () => {
       vivo = false;
     };
-  }, [soTermos, valor.etapaId, servicoMarketingId]);
-
-  // cascata: um único efeito, refaz a busca quando a seleção muda
-  // (não busca em modo reduzida — não há dimensões expostas;
-  //  em modo `termos` busca pelo sub-serviço escolhido no cartão anterior)
-  useEffect(() => {
-    if (soEtapasSubs || valor.subServicoId == null) {
-      setCascata(null);
-      return;
-    }
-    let vivo = true;
-    setCarregando(true);
-    getCascata(valor.subServicoId, {
-      verboId: valor.verboId ?? undefined,
-      objetoId: valor.objetoId ?? undefined,
-      localId: valor.localId,
-      caracteristicaId: valor.caracteristicaId,
-    })
-      .then((r) => {
-        if (vivo) setCascata(r);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (vivo) setCarregando(false);
-      });
-    return () => {
-      vivo = false;
-    };
-  }, [
-    soEtapasSubs,
-    valor.subServicoId,
-    valor.verboId,
-    valor.objetoId,
-    valor.localId,
-    valor.caracteristicaId,
-  ]);
+  }, [soTermos, servicoMarketingId]);
 
   const mudarEtapa = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? Number(e.target.value) : null;
     const etapa = etapas.find((x) => x.id === id) ?? null;
     onChange({
-      ...cascataVazia(),
+      ...valor,
       etapaId: id,
       etapaNome: etapa?.nome ?? null,
       etapaOrdem: etapa?.ordem ?? null,
@@ -170,56 +111,37 @@ export function CascataVocabulario({
   const mudarSub = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? Number(e.target.value) : null;
     const nome = subs.find((x) => x.id === id)?.nome ?? null;
-    onChange({
-      ...valor,
-      subServicoId: id,
-      subServicoNome: nome,
-      verboId: null,
-      verboNome: null,
-      objetoId: null,
-      objetoNome: null,
-      localId: null,
-      localNome: null,
-      caracteristicaId: null,
-      caracteristicaNome: null,
-    });
+    onChange({ ...valor, subServicoId: id, subServicoNome: nome });
   };
 
-  const nomeOpcao = (dim: keyof Cascata, id: number | null): string | null => {
-    if (id == null) return null;
-    const emCascata = cascata?.[dim]?.find((o) => o?.id === id)?.nome;
-    if (emCascata) return emCascata;
-    if (dim === 'local') return locaisLivres.find((o) => o.id === id)?.nome ?? null;
-    if (dim === 'caracteristica') return caractsLivres.find((o) => o.id === id)?.nome ?? null;
-    return null;
+  const nomeOpcao = (
+    lista: OpcaoCascata[],
+    id: number | null,
+  ): string | null =>
+    id == null ? null : (lista.find((o) => o.id === id)?.nome ?? null);
+
+  const mudarOpcao = (
+    dim: 'verbo' | 'objeto' | 'local' | 'caracteristica',
+    lista: OpcaoCascata[],
+  ) => (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value ? Number(e.target.value) : null;
+    const nome = nomeOpcao(lista, id);
+    const base: ValorCascata = { ...valor };
+    if (dim === 'verbo') {
+      base.verboId = id;
+      base.verboNome = nome;
+    } else if (dim === 'objeto') {
+      base.objetoId = id;
+      base.objetoNome = nome;
+    } else if (dim === 'local') {
+      base.localId = id;
+      base.localNome = nome;
+    } else {
+      base.caracteristicaId = id;
+      base.caracteristicaNome = nome;
+    }
+    onChange(base);
   };
-
-  const mudarOpcao = (dim: 'verbo' | 'objeto' | 'local' | 'caracteristica') =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const id = e.target.value ? Number(e.target.value) : null;
-      const nome = nomeOpcao(dim, id);
-      const base: ValorCascata = { ...valor };
-      if (dim === 'verbo') {
-        base.verboId = id;
-        base.verboNome = nome;
-      } else if (dim === 'objeto') {
-        base.objetoId = id;
-        base.objetoNome = nome;
-      } else if (dim === 'local') {
-        base.localId = id;
-        base.localNome = nome;
-      } else {
-        base.caracteristicaId = id;
-        base.caracteristicaNome = nome;
-      }
-      onChange(limparDownstream(base, dim));
-    };
-
-  const opts = (lista: (OpcaoCascata | null)[] | undefined) =>
-    (lista ?? []).filter((o): o is OpcaoCascata => o != null);
-
-  const desabilitadoSub = valor.etapaId == null;
-  const desabilitadoDim = valor.subServicoId == null;
 
   return (
     <div
@@ -253,7 +175,6 @@ export function CascataVocabulario({
               className={selectClasses}
               value={valor.subServicoId ?? ''}
               onChange={mudarSub}
-              disabled={desabilitadoSub}
             >
               <option value="">Selecione o sub-serviço…</option>
               {subs.map((s) => (
@@ -273,11 +194,10 @@ export function CascataVocabulario({
             <select
               className={selectClasses}
               value={valor.verboId ?? ''}
-              onChange={mudarOpcao('verbo')}
-              disabled={desabilitadoDim}
+              onChange={mudarOpcao('verbo', verbos)}
             >
               <option value="">Selecione…</option>
-              {opts(cascata?.verbo).map((o) => (
+              {verbos.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
                 </option>
@@ -290,11 +210,10 @@ export function CascataVocabulario({
             <select
               className={selectClasses}
               value={valor.objetoId ?? ''}
-              onChange={mudarOpcao('objeto')}
-              disabled={desabilitadoDim || valor.verboId == null}
+              onChange={mudarOpcao('objeto', objetos)}
             >
               <option value="">Selecione…</option>
-              {opts(cascata?.objeto).map((o) => (
+              {objetos.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
                 </option>
@@ -307,11 +226,10 @@ export function CascataVocabulario({
             <select
               className={selectClasses}
               value={valor.localId ?? ''}
-              onChange={mudarOpcao('local')}
-              disabled={desabilitadoDim || valor.objetoId == null}
+              onChange={mudarOpcao('local', locais)}
             >
               <option value="">(qualquer)</option>
-              {(opts(cascata?.local).length > 0 ? opts(cascata?.local) : locaisLivres).map((o) => (
+              {locais.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
                 </option>
@@ -324,11 +242,10 @@ export function CascataVocabulario({
             <select
               className={selectClasses}
               value={valor.caracteristicaId ?? ''}
-              onChange={mudarOpcao('caracteristica')}
-              disabled={desabilitadoDim || valor.objetoId == null}
+              onChange={mudarOpcao('caracteristica', caracteristicas)}
             >
               <option value="">(qualquer)</option>
-              {(opts(cascata?.caracteristica).length > 0 ? opts(cascata?.caracteristica) : caractsLivres).map((o) => (
+              {caracteristicas.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
                 </option>
@@ -337,12 +254,6 @@ export function CascataVocabulario({
           </label>
         </>
       )}
-
-      {!soEtapasSubs && carregando ? (
-        <p className="text-xs text-muted-foreground sm:col-span-2 lg:col-span-3">
-          Carregando combinações…
-        </p>
-      ) : null}
     </div>
   );
 }
