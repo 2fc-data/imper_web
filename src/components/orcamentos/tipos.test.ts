@@ -4,6 +4,7 @@ import type {
   OrcamentoAtividadeRow,
 } from '../../lib/api';
 import {
+  PASSOS,
   adicionarLinha,
   atualizarLinha,
   chaveAtividade,
@@ -41,6 +42,7 @@ function linha(parcial: Partial<LinhaForm> = {}): LinhaForm {
     moPessoas: null,
     moHoras: null,
     materiais: [],
+    epis: [],
     ...parcial,
   };
 }
@@ -193,6 +195,17 @@ describe('transições de atividade/linha', () => {
   });
 });
 
+describe('PASSOS', () => {
+  it('tem 3 passos: Cobertura absorve a precificação', () => {
+    expect(PASSOS.map((p) => p.passo)).toEqual([1, 2, 3]);
+    expect(PASSOS.map((p) => p.titulo)).toEqual([
+      'Cliente & Serviço',
+      'Cobertura',
+      'Ficha & Resumo',
+    ]);
+  });
+});
+
 describe('validarPasso', () => {
   it('passo 1 exige atendimento e limite de observações', () => {
     expect(validarPasso(estadoInicialWizard(), 1)).toMatch(/atendimento/i);
@@ -205,31 +218,25 @@ describe('validarPasso', () => {
     expect(validarPasso(longo, 1)).toMatch(/2000/);
   });
 
-  it('passo 2 exige ao menos uma atividade', () => {
+  it('passo 2 exige ao menos uma atividade e linhas em cada atividade', () => {
     expect(validarPasso(estadoInicialWizard(), 2)).toMatch(/atividade/i);
     const s = adicionarLinha(estadoInicialWizard(), atividade(), linha());
     expect(validarPasso(s, 2)).toBeNull();
+
+    const semLinhas = estadoInicialWizard({
+      atividades: [{ ...atividade(), linhas: [] }],
+    });
+    expect(validarPasso(semLinhas, 2)).toMatch(/sem linhas/i);
   });
 
-  it('passo 3 aceita descrição vazia e valida MO, quantidade, área e materiais', () => {
-    const semDescricao = adicionarLinha(
-      estadoInicialWizard(),
-      atividade(),
-      linha({ descricao: '  ' }),
-    );
-    expect(validarPasso(semDescricao, 3)).toBeNull();
-
-    const mo = adicionarLinha(
-      estadoInicialWizard(),
-      atividade(),
-      linha({ moPessoas: 0 }),
-    );
-    expect(validarPasso(mo, 3)).toMatch(/mão de obra/i);
-
-    const mats = adicionarLinha(
+  it('passo 2 não valida medidas/preços (zod do servidor é a autoridade)', () => {
+    const s = adicionarLinha(
       estadoInicialWizard(),
       atividade(),
       linha({
+        areaM2: -5,
+        quantidade: -1,
+        moPessoas: 0,
         materiais: [
           {
             materialId: 1,
@@ -240,39 +247,18 @@ describe('validarPasso', () => {
         ],
       }),
     );
-    expect(validarPasso(mats, 3)).toMatch(/quantidade inválida/i);
-
-    const ok = adicionarLinha(
-      estadoInicialWizard(),
-      atividade(),
-      linha({
-        moPessoas: 2,
-        moHoras: 8,
-        moValorHora: 55,
-        areaM2: 10,
-        quantidade: 2,
-        materiais: [
-          {
-            materialId: 1,
-            nome: 'Tinta',
-            quantidade: 3,
-            custoUnitario: 10,
-          },
-        ],
-      }),
-    );
-    expect(validarPasso(ok, 3)).toBeNull();
+    expect(validarPasso(s, 2)).toBeNull();
   });
 
-  it('passo 4 exige validade parseável', () => {
-    expect(validarPasso(estadoInicialWizard({ validade: '' }), 4)).toMatch(
+  it('passo 3 exige validade parseável (ficha é opcional)', () => {
+    expect(validarPasso(estadoInicialWizard({ validade: '' }), 3)).toMatch(
       /validade/i,
     );
-    expect(validarPasso(estadoInicialWizard({ validade: 'foo' }), 4)).toMatch(
+    expect(validarPasso(estadoInicialWizard({ validade: 'foo' }), 3)).toMatch(
       /inválida/i,
     );
     expect(
-      validarPasso(estadoInicialWizard({ validade: '2026-10-01' }), 4),
+      validarPasso(estadoInicialWizard({ validade: '2026-10-01' }), 3),
     ).toBeNull();
   });
 
@@ -280,6 +266,8 @@ describe('validarPasso', () => {
     expect(validarAte(estadoInicialWizard(), 3)).toMatch(/atendimento/i);
     const s1 = estadoInicialWizard({ atendimentoId: 1 });
     expect(validarAte(s1, 3)).toMatch(/atividade/i);
+    const s2 = adicionarLinha(s1, atividade(), linha());
+    expect(validarAte(s2, 3)).toBeNull();
   });
 });
 
@@ -319,6 +307,40 @@ describe('montarInput', () => {
     expect(l.descricao).toBe('Aplicar pintura');
     expect('verboNome' in l).toBe(false);
     expect(l.materiais).toEqual([{ materialId: 5, quantidade: 3 }]);
+  });
+
+  it('mapeia epis sem campos de exibição', () => {
+    const s = estadoInicialWizard({
+      atendimentoId: 10,
+      validade: '2026-10-01',
+    });
+    const comEpi = adicionarLinha(
+      s,
+      atividade(),
+      linha({
+        epis: [
+          {
+            epiId: 7,
+            nome: 'Luva nitrílica',
+            codigo: 'EP-007',
+            quantidade: 2,
+            custoUnitario: 12.5,
+          },
+          {
+            epiId: 8,
+            nome: 'Óculos',
+            quantidade: 1,
+            custoUnitario: null,
+          },
+        ],
+      }),
+    );
+    const input = montarInput(comEpi);
+    expect(input.atividades[0].linhas[0].epis).toEqual([
+      { epiId: 7, quantidade: 2, custoUnitario: 12.5 },
+      { epiId: 8, quantidade: 1, custoUnitario: null },
+    ]);
+    expect('nome' in input.atividades[0].linhas[0].epis![0]).toBe(false);
   });
 
   it('inclui ficha apenas quando há conteúdo e limpa campos de texto', () => {
@@ -372,7 +394,23 @@ describe('totais', () => {
     expect(t.total).toBe(5918);
   });
 
-  it('subtotalLinha = MO + materiais', () => {
+  it('soma EPIs em valorEpis e no total', () => {
+    const s = adicionarLinha(
+      estadoInicialWizard(),
+      atividade(),
+      linha({
+        epis: [
+          { epiId: 1, nome: 'Luva', quantidade: 2, custoUnitario: 12.5 },
+          { epiId: 2, nome: 'Óculos', quantidade: 1, custoUnitario: 30 },
+        ],
+      }),
+    );
+    const t = totaisDoEstado(s);
+    expect(t.valorEpis).toBe(55);
+    expect(t.total).toBe(55);
+  });
+
+  it('subtotalLinha = MO + materiais + EPIs', () => {
     expect(
       subtotalLinha(
         linha({
@@ -382,9 +420,24 @@ describe('totais', () => {
           materiais: [
             { materialId: 1, nome: 'x', quantidade: 2, custoUnitario: 7.5 },
           ],
+          epis: [
+            { epiId: 3, nome: 'Capacete', quantidade: 2, custoUnitario: 5 },
+          ],
         }),
       ),
-    ).toBe(95);
+    ).toBe(105);
+  });
+
+  it('EPI sem preço cadastrado conta como 0', () => {
+    expect(
+      subtotalLinha(
+        linha({
+          epis: [
+            { epiId: 9, nome: 'Sem preço', quantidade: 3, custoUnitario: null },
+          ],
+        }),
+      ),
+    ).toBe(0);
   });
 });
 
@@ -473,6 +526,46 @@ describe('estadoDeEdicao', () => {
     });
     const s = estadoDeEdicao(det);
     expect(s.atividades[0].linhas[0].materiais[0].nome).toBe('#9');
+  });
+
+  it('hidrata epis do snapshot (nome via relation, fallback #id)', () => {
+    const det = detalhe({
+      atividades: [
+        row({
+          epis: [
+            {
+              epiId: 7,
+              quantidade: '2',
+              custoUnitario: '12.5',
+              epi: { id: 7, nome: 'Luva nitrílica', codigo: 'EP-007' },
+            },
+            { epiId: 9, quantidade: '1', custoUnitario: '0.75' },
+          ],
+        }),
+      ],
+    });
+    const s = estadoDeEdicao(det);
+    expect(s.atividades[0].linhas[0].epis).toEqual([
+      {
+        epiId: 7,
+        nome: 'Luva nitrílica',
+        codigo: 'EP-007',
+        quantidade: 2,
+        custoUnitario: 12.5,
+      },
+      {
+        epiId: 9,
+        nome: '#9',
+        codigo: null,
+        quantidade: 1,
+        custoUnitario: 0.75,
+      },
+    ]);
+  });
+
+  it('linha sem epis hidrata lista vazia', () => {
+    const s = estadoDeEdicao(detalhe({ atividades: [row()] }));
+    expect(s.atividades[0].linhas[0].epis).toEqual([]);
   });
 
   it('hidrata ficha quando existe', () => {

@@ -540,7 +540,7 @@ export function OrcamentosAdminPage({
             <p className="text-sm text-muted-foreground">
               {orcamentoEdicao
                 ? 'Ajuste as etapas do orçamento e use as ações do passo final para salvar e transicionar.'
-                : 'Preencha cliente, cobertura, precificação e ficha para gerar a proposta.'}
+                : 'Preencha cliente, cobertura e ficha para gerar a proposta.'}
             </p>
           </div>
           {retomandoRascunho ? (

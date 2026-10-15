@@ -23,6 +23,12 @@ export interface MaterialLinha {
   quantidade: number;
 }
 
+export interface EpiLinhaInput {
+  epiId: number;
+  quantidade: number;
+  custoUnitario?: number | null;
+}
+
 export interface LinhaInput {
   verboId: number;
   objetoId: number;
@@ -36,6 +42,7 @@ export interface LinhaInput {
   moPessoas?: number | null;
   moHoras?: number | null;
   materiais: MaterialLinha[];
+  epis?: EpiLinhaInput[];
 }
 
 export interface AtividadeInput {
@@ -197,6 +204,13 @@ export interface OrcamentoAtividadeMaterialRow {
   material?: { id: number; nome: string } | null;
 }
 
+export interface OrcamentoAtividadeEpiRow {
+  epiId: number;
+  quantidade: string | number;
+  custoUnitario: string | number;
+  epi?: { id: number; nome: string; codigo: string } | null;
+}
+
 export interface OrcamentoAtividadeRow {
   id: string;
   ordem: number;
@@ -214,6 +228,7 @@ export interface OrcamentoAtividadeRow {
   moPessoas: number | null;
   moHoras: string | number | null;
   materiais: OrcamentoAtividadeMaterialRow[];
+  epis?: OrcamentoAtividadeEpiRow[];
 }
 
 export interface OrcamentoObraFichaDetalhe {

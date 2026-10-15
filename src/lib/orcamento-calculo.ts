@@ -12,8 +12,14 @@ export type MateriaisLinha = {
   custoUnitario: number;
 };
 
+export type EpiLinha = {
+  quantidade: number;
+  custoUnitario: number;
+};
+
 export type LinhaCalculo = MOCampos & {
   materiais: MateriaisLinha[];
+  epis?: EpiLinha[];
 };
 
 export type BasePrecos = {
@@ -36,11 +42,16 @@ export function materiaisValor(m: MateriaisLinha[]): number {
   return round2(m.reduce((acc, x) => acc + x.quantidade * x.custoUnitario, 0));
 }
 
+export function episValor(e: EpiLinha[]): number {
+  return round2(e.reduce((acc, x) => acc + x.quantidade * x.custoUnitario, 0));
+}
+
 export function linhaValorTotal(
   l: MOCampos,
   mats: MateriaisLinha[],
+  epis: EpiLinha[] = [],
 ): number {
-  return round2(moValorTotal(l) + materiaisValor(mats));
+  return round2(moValorTotal(l) + materiaisValor(mats) + episValor(epis));
 }
 
 export function valorTotalOrcamento(p: {
@@ -55,6 +66,7 @@ export function valorTotalOrcamento(p: {
 export type TotaisOrcamento = {
   valorMO: number;
   valorMateriais: number;
+  valorEpis: number;
   total: number;
 };
 
@@ -69,10 +81,13 @@ export function calcularTotais(
   const valorMateriais = round2(
     linhas.reduce((acc, l) => acc + materiaisValor(l.materiais), 0),
   );
+  const valorEpis = round2(
+    linhas.reduce((acc, l) => acc + episValor(l.epis ?? []), 0),
+  );
   const total = valorTotalOrcamento({
     areaM2: base?.areaM2 ?? null,
     valorM2: base?.valorM2 ?? null,
-    linhas: linhas.map((l) => linhaValorTotal(l, l.materiais)),
+    linhas: linhas.map((l) => linhaValorTotal(l, l.materiais, l.epis ?? [])),
   });
-  return { valorMO, valorMateriais, total };
+  return { valorMO, valorMateriais, valorEpis, total };
 }

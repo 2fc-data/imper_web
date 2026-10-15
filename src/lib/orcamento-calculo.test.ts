@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   calcularTotais,
+  episValor,
   linhaValorTotal,
   materiaisValor,
   moValorTotal,
@@ -61,6 +62,21 @@ describe('materiaisValor', () => {
   });
 });
 
+describe('episValor', () => {
+  it('soma quantidade × custoUnitario com round2 (espelho do servidor)', () => {
+    expect(
+      episValor([
+        { quantidade: 2, custoUnitario: 12.5 },
+        { quantidade: 3, custoUnitario: 0.8 },
+      ]),
+    ).toBe(27.4);
+  });
+
+  it('retorna 0 para lista vazia', () => {
+    expect(episValor([])).toBe(0);
+  });
+});
+
 describe('linhaValorTotal', () => {
   it('soma mo + materiais', () => {
     const mo = { moPessoas: 2, moHoras: 3.5, moValorHora: 50 };
@@ -68,8 +84,16 @@ describe('linhaValorTotal', () => {
     expect(linhaValorTotal(mo, mats)).toBe(round2(350 + 26));
   });
 
-  it('funciona com MO e materiais vazios', () => {
+  it('soma mo + materiais + epis quando informado', () => {
+    const mo = { moPessoas: 2, moHoras: 3.5, moValorHora: 50 };
+    const mats = [{ quantidade: 2.5, custoUnitario: 10.4 }];
+    const epis = [{ quantidade: 2, custoUnitario: 12.5 }];
+    expect(linhaValorTotal(mo, mats, epis)).toBe(round2(350 + 26 + 25));
+  });
+
+  it('funciona com MO, materiais e epis vazios', () => {
     expect(linhaValorTotal({}, [])).toBe(0);
+    expect(linhaValorTotal({}, [], [])).toBe(0);
   });
 });
 
@@ -132,6 +156,32 @@ describe('calcularTotais', () => {
     expect(totais.valorMO).toBe(round2(350 + 100 + 0));
     expect(totais.valorMateriais).toBe(round2(20.8 + 3.3));
     expect(totais.total).toBe(round2(50 + 350 + 20.8 + 100 + 0 + 3.3));
+  });
+
+  it('agrega valorEpis e inclui EPIs no total', () => {
+    const atividades = [
+      {
+        linhas: [
+          {
+            moPessoas: 1,
+            moHoras: 1,
+            moValorHora: 100,
+            materiais: [{ quantidade: 1, custoUnitario: 50 }],
+            epis: [{ quantidade: 2, custoUnitario: 12.5 }],
+          },
+          {
+            moPessoas: null,
+            moHoras: null,
+            moValorHora: null,
+            materiais: [],
+            epis: [{ quantidade: 1, custoUnitario: 0.75 }],
+          },
+        ],
+      },
+    ];
+    const totais = calcularTotais(atividades, { areaM2: 10, valorM2: 5 });
+    expect(totais.valorEpis).toBe(round2(25 + 0.75));
+    expect(totais.total).toBe(round2(50 + 100 + 50 + 25 + 0.75));
   });
 
   it('sem base (areaM2/valorM2) usa apenas a soma das linhas', () => {

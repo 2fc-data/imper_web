@@ -215,6 +215,8 @@ export default function EpisAdminPage({
       numeroCa: e.numeroCa ?? '',
       numeroPatrimonio: e.numeroPatrimonio ?? '',
       dataValidade: toLocalDateTime(e.dataValidade),
+      custoUnitario:
+        e.custoUnitario == null ? undefined : Number(e.custoUnitario),
       quantidade: e.quantidade,
       quantidadeMinima: e.quantidadeMinima ?? 0,
       marcaId: e.marcaId ?? undefined,
@@ -246,6 +248,7 @@ export default function EpisAdminPage({
         numeroCa: form.numeroCa || undefined,
         numeroPatrimonio: form.numeroPatrimonio || undefined,
         dataValidade: fromLocalDateTime(form.dataValidade ?? ''),
+        custoUnitario: form.custoUnitario,
         quantidade: form.quantidade ?? 0,
         quantidadeMinima: form.quantidadeMinima,
         marcaId: form.marcaId,
@@ -259,6 +262,7 @@ export default function EpisAdminPage({
       if (editando) {
         const atualizado = await atualizarEpi(editando.id, {
           ...payload,
+          custoUnitario: form.custoUnitario ?? null,
           dataValidade: fromLocalDateTime(form.dataValidade ?? '') ?? null,
           quantidadeMinima: form.quantidadeMinima ?? null,
         });

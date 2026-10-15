@@ -14,7 +14,6 @@ import {
 import { PassoClienteServico } from './PassoClienteServico';
 import { PassoCobertura } from './PassoCobertura';
 import { PassoFichaResumo } from './PassoFichaResumo';
-import { PassoPrecificacao } from './PassoPrecificacao';
 import { PendenciasAprovacaoModal } from './PendenciasAprovacaoModal';
 import { RecusaOrcamentoModal } from './RecusaOrcamentoModal';
 import {
@@ -82,7 +81,7 @@ export function mensagemDeErro(err: unknown): string {
     : 'Erro inesperado. Tente novamente.';
 }
 
-/** Wizard de 4 passos para criar/editar orçamentos (T14/T15). */
+/** Wizard de 3 passos para criar/editar orçamentos (T14/T15). */
 export function NovoOrcamentoWizard({
   onSalvo,
   onCancel,
@@ -222,7 +221,7 @@ export function NovoOrcamentoWizard({
   }
 
   // Grava um snapshot do estado. A validação do avanço (validarAte) já foi
-  // feita em "Próximo"; aqui só o passo 4 completo é exigido no salvar manual.
+  // feita em "Próximo"; aqui só o passo 3 completo é exigido no salvar manual.
   const salvarEstado = async (s: WizardState): Promise<number> => {
     const input = montarInput(s);
     const acao = acaoDeSalvar(salvoIdRef.current);
@@ -300,7 +299,7 @@ export function NovoOrcamentoWizard({
 
   // ---- ações --------------------------------------------------------------
   const salvar = async (): Promise<number> => {
-    const erroValidacao = validarAte(state, 4) ?? validarPasso(state, 4);
+    const erroValidacao = validarAte(state, 3) ?? validarPasso(state, 3);
     if (erroValidacao) {
       setErro(erroValidacao);
       throw new Error(erroValidacao);
@@ -452,9 +451,6 @@ export function NovoOrcamentoWizard({
         ) : null}
         {state.passo === 2 ? <PassoCobertura state={state} set={set} /> : null}
         {state.passo === 3 ? (
-          <PassoPrecificacao state={state} set={set} />
-        ) : null}
-        {state.passo === 4 ? (
           <PassoFichaResumo state={state} set={set} />
         ) : null}
       </div>
@@ -491,7 +487,7 @@ export function NovoOrcamentoWizard({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {state.passo < 4 ? (
+          {state.passo < 3 ? (
             <button
               type="button"
               className={btnPrimarioClasses}
