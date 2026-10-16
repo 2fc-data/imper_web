@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { AuthShell } from '../components/auth/AuthShell';
-import { BackToLogin } from '../components/auth/BackToLogin';
+import { BackLink } from '../components/auth/BackLink';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
                   </p>
                 </div>
               )}
-              <BackToLogin />
+              <BackLink to="/login" label="Voltar para o login" />
             </div>
           ) : (
             <>
@@ -139,7 +139,7 @@ export default function ForgotPasswordPage() {
                 {loading ? 'Enviando...' : 'Enviar código'}
               </Button>
               </form>
-              <BackToLogin />
+              <BackLink to="/login" label="Voltar para o login" />
             </>
           )}
         </CardContent>

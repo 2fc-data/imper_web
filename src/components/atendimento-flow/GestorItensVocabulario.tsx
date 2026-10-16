@@ -7,7 +7,6 @@ import {
 } from '../../lib/api';
 import { CascataVocabulario } from '../orcamentos/CascataVocabulario';
 import {
-  btnPerigoClasses,
   btnPrimarioClasses,
   cascataVazia,
   inputClasses,

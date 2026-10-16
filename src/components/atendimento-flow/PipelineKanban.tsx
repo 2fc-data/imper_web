@@ -91,7 +91,6 @@ interface PipelineKanbanProps {
   items: AtendimentoItem[];
   loading?: boolean;
   onSelectCard: (item: AtendimentoItem) => void;
-  onNovoAtendimento?: () => void;
   /**
    * Mesmo fluxo do botão "Iniciar Orçamento" do modal (card Visita Agendada):
    * visita realizada + encaminhar p/ orçamento + abrir o wizard de novo

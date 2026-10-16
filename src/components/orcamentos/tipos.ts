@@ -78,8 +78,6 @@ export interface WizardState {
   urgencia: Urgencia;
   observacoes: string;
   validade: string; // yyyy-mm-dd
-  areaM2: number | null;
-  valorM2: number | null;
   atividades: AtividadeForm[];
   ficha: FichaInput;
 }
@@ -121,9 +119,33 @@ export function isoParaData(iso: string): string {
 }
 
 export function dataValidadePadrao(): string {
+  return validadeDiasParaData(30);
+}
+
+export const OPCOES_VALIDADE = [15, 20, 30] as const;
+
+export function validadeDiasParaData(dias: number): string {
   const d = new Date();
-  d.setDate(d.getDate() + 30);
+  d.setDate(d.getDate() + dias);
   return dataLocalIso(d);
+}
+
+/** Dias de validade se a data corresponder a 15/20/30; senão null. */
+export function diasDeValidade(validade: string): number | null {
+  if (!validade) return null;
+  const alvo = new Date(`${validade}T12:00:00`);
+  if (Number.isNaN(alvo.getTime())) return null;
+  const hoje = new Date();
+  hoje.setHours(12, 0, 0, 0);
+  const dias = Math.round((alvo.getTime() - hoje.getTime()) / 86400000);
+  return (OPCOES_VALIDADE as readonly number[]).includes(dias) ? dias : null;
+}
+
+export function dataBr(iso: string): string {
+  if (!iso) return '—';
+  const [a, m, d] = iso.slice(0, 10).split('-');
+  if (!a || !m || !d) return '—';
+  return `${d}/${m}/${a}`;
 }
 
 export function estadoInicialWizard(
@@ -139,8 +161,6 @@ export function estadoInicialWizard(
     urgencia: 'NORMAL',
     observacoes: '',
     validade: dataValidadePadrao(),
-    areaM2: null,
-    valorM2: null,
     atividades: [],
     ficha: {},
   };
@@ -255,6 +275,15 @@ export function validarPasso(
       if (!state.validade) return 'Informe a validade da proposta.';
       if (Number.isNaN(new Date(`${state.validade}T12:00:00`).getTime()))
         return 'Data de validade inválida.';
+      const f = state.ficha;
+      for (const n of [1, 2, 3] as const) {
+        const risco = f[`risco${n}`];
+        const acao = f[`acao${n}`];
+        if (risco?.trim() && !acao?.trim())
+          return `Risco ${n} sem a ação correspondente.`;
+        if (acao?.trim() && !risco?.trim())
+          return `Ação ${n} sem o risco correspondente.`;
+      }
       return null;
     }
     default:
@@ -314,8 +343,6 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
       ? state.observacoes.trim()
       : undefined,
     validade: new Date(`${state.validade}T12:00:00`).toISOString(),
-    areaM2: state.areaM2,
-    valorM2: state.valorM2,
     atividades: state.atividades.map((a) => ({
       etapaId: a.etapaId,
       subServicoId: a.subServicoId,
@@ -352,7 +379,6 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
 export function totaisDoEstado(state: WizardState): TotaisOrcamento {
   return calcularTotais(
     state.atividades.map((a) => ({ linhas: linhasCalculo(a) })),
-    { areaM2: state.areaM2, valorM2: state.valorM2 },
   );
 }
 
@@ -494,8 +520,6 @@ export function estadoDeEdicao(
     urgencia: det.urgencia,
     observacoes: det.observacoes ?? '',
     validade: isoParaData(det.validade),
-    areaM2: numero(det.areaM2),
-    valorM2: numero(det.valorM2),
     atividades,
     ficha: hydrataFicha(det.ficha),
   });

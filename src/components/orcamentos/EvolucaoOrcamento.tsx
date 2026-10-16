@@ -12,11 +12,8 @@ export function calcularEvolucaoOrcamento(input: {
   ficha?: { id?: number } | null;
   observacoes?: string | null;
 }): EvolucaoOrcamentoInfo {
-  const passos = [
-    true,
-    (input.atividades ?? 0) > 0 && Number(input.valorTotal ?? 0) > 0,
-    input.ficha != null || Boolean(input.observacoes?.trim()),
-  ];
+  const passo2 = (input.atividades ?? 0) > 0 && Number(input.valorTotal ?? 0) > 0;
+  const passos = [true, passo2, passo2];
   let etapa = 1;
   while (etapa < 3 && passos[etapa]) {
     etapa += 1;

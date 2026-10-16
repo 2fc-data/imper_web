@@ -615,66 +615,6 @@ export function VocabularioSidebar({
   );
 }
 
-export function AlmoxarifeSidebar({
-  viewAtiva,
-  onNavegar,
-}: {
-  viewAtiva: 'analises' | 'lista';
-  onNavegar: (view: 'analises' | 'lista') => void;
-}) {
-  return (
-    <>
-      <SidebarButton
-        active={viewAtiva === 'analises'}
-        onClick={() => onNavegar('analises')}
-        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
-      >
-        Análises
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'lista'}
-        onClick={() => onNavegar('lista')}
-        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
-      >
-        Separações
-      </SidebarButton>
-      <SidebarNote>
-        Gerencie separações e retiradas de materiais/equipamentos.
-      </SidebarNote>
-    </>
-  );
-}
-
-export function MovimentacaoSidebar({
-  viewAtiva,
-  onNavegar,
-}: {
-  viewAtiva: 'analises' | 'lista';
-  onNavegar: (view: 'analises' | 'lista') => void;
-}) {
-  return (
-    <>
-      <SidebarButton
-        active={viewAtiva === 'analises'}
-        onClick={() => onNavegar('analises')}
-        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
-      >
-        Análises
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'lista'}
-        onClick={() => onNavegar('lista')}
-        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
-      >
-        Movimentações
-      </SidebarButton>
-      <SidebarNote>
-        Acompanhe movimentações de equipamentos, EPIs e materiais.
-      </SidebarNote>
-    </>
-  );
-}
-
 export function RetiradaDeItensSidebar() {
   return (
     <>

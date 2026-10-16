@@ -82,10 +82,6 @@ export async function listarMateriais(params?: {
   return api.get<MaterialItem[]>(`/materiais${queryStr ? `?${queryStr}` : ''}`);
 }
 
-export async function detalharMaterial(id: number): Promise<MaterialItem> {
-  return api.get<MaterialItem>(`/materiais/${id}`);
-}
-
 export async function criarMaterial(
   input: MaterialInput,
 ): Promise<MaterialItem> {

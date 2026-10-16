@@ -11,7 +11,6 @@ import {
 import {
   atualizarMaterial,
   criarMaterial,
-  detalharMaterial,
   excluirMaterial,
   listarLookupsMateriais,
   listarMateriais,

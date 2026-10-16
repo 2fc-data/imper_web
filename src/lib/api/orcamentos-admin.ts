@@ -1,22 +1,8 @@
 import { api } from './core.js';
 import type {
-  TipoItemServico,
   Urgencia,
   StatusOrcamento,
 } from '../../schemas/index.js';
-
-/**
- * @deprecated Formato antigo de itens (T15 substitui pelo wizard de atividades).
- * Mantido até a página antiga ser migrada.
- */
-export interface ItemOrcamentoInput {
-  servicoItemId?: number | null;
-  nome: string;
-  tipo: TipoItemServico;
-  quantidade: number;
-  unidadeId: number;
-  valorUnitario: number;
-}
 
 export interface MaterialLinha {
   materialId: number;
@@ -80,23 +66,8 @@ export interface CriarOrcamentoInput {
   urgencia?: Urgencia;
   observacoes?: string;
   validade?: string;
-  areaM2?: number | null;
-  valorM2?: number | null;
   ficha?: FichaInput;
   atividades: AtividadeInput[];
-}
-
-/**
- * @deprecated Formato antigo com `itens` (T15 substitui pelo wizard de
- * atividades). Aceito temporariamente para a página atual continuar
- * compilando.
- */
-export interface CriarOrcamentoInputLegado {
-  atendimentoId: number;
-  visitaId?: number;
-  enderecoId?: number;
-  observacoes?: string;
-  itens: ItemOrcamentoInput[];
 }
 
 export interface OrcamentoAdminItem {
@@ -153,21 +124,15 @@ export function rascunhoParaRetomar(
   );
 }
 
-export async function obterOrcamentoAdmin(
-  id: number,
-): Promise<OrcamentoAdminItem> {
-  return api.get<OrcamentoAdminItem>(`/orcamentos/${id}`);
-}
-
 export async function criarOrcamentoAdmin(
-  input: CriarOrcamentoInput | CriarOrcamentoInputLegado,
+  input: CriarOrcamentoInput,
 ): Promise<OrcamentoAdminItem> {
   return api.post<OrcamentoAdminItem>('/orcamentos', input);
 }
 
 export async function editarOrcamentoAdmin(
   id: number,
-  input: CriarOrcamentoInput | CriarOrcamentoInputLegado,
+  input: CriarOrcamentoInput,
 ): Promise<OrcamentoAdminItem> {
   return api.patch<OrcamentoAdminItem>(`/orcamentos/${id}`, input);
 }

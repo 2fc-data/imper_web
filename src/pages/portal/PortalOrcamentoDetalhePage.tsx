@@ -9,18 +9,7 @@ import {
 } from '../../components/ui/card';
 import type { OrcamentoAdminDetalhe } from '../../lib/api';
 import { obterOrcamentoPortal } from '../../lib/api';
-
-function formatarMoeda(valor: string | number): string {
-  return Number(valor).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
-
-function formatarData(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('pt-BR');
-}
+import { brl, formatarData } from '../../lib/format';
 
 export default function PortalOrcamentoDetalhePage() {
   const { id } = useParams<{ id: string }>();
@@ -110,7 +99,7 @@ export default function PortalOrcamentoDetalhePage() {
               <p>
                 <span className="text-muted-foreground">Valor total: </span>
                 <span className="font-semibold">
-                  {formatarMoeda(orcamento.valorTotal)}
+                  {brl(orcamento.valorTotal)}
                 </span>
               </p>
               <p>

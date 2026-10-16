@@ -451,7 +451,11 @@ export function NovoOrcamentoWizard({
         ) : null}
         {state.passo === 2 ? <PassoCobertura state={state} set={set} /> : null}
         {state.passo === 3 ? (
-          <PassoFichaResumo state={state} set={set} />
+          <PassoFichaResumo
+            state={state}
+            set={set}
+            codigo={orcamentoEdicao?.codigo ?? null}
+          />
         ) : null}
       </div>
 

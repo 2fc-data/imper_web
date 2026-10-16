@@ -6,7 +6,6 @@ import { AdminLayout } from './components/layout/AdminLayout';
 import { PortalLayout } from './components/layout/PortalLayout';
 import {
   AgendamentosSidebar,
-  AlmoxarifeSidebar,
   AtendimentosSidebar,
   CalendarioSidebar,
   DashboardSidebar,
@@ -16,7 +15,6 @@ import {
   FrotaSidebar,
   ManutencoesSidebar,
   MateriaisSidebar,
-  MovimentacaoSidebar,
   ObrasSidebar,
   OrcamentosSidebar,
   RbacSidebar,
@@ -96,14 +94,6 @@ const UsuariosPage = lazy(() => import('./pages/UsuariosPage'));
 const VocabularioAdminPage = lazy(() =>
   import('./pages/VocabularioAdminPage').then((m) => ({
     default: m.default,
-  })),
-);
-const AlmoxarifePage = lazy(() =>
-  import('./pages/AlmoxarifePage').then((m) => ({ default: m.AlmoxarifePage })),
-);
-const MovimentacaoPage = lazy(() =>
-  import('./pages/MovimentacaoPage').then((m) => ({
-    default: m.MovimentacaoPage,
   })),
 );
 const RetiradaDeItensPage = lazy(() =>
@@ -532,36 +522,6 @@ function VocabularioRoute() {
   );
 }
 
-function AlmoxarifeRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
-
-  return (
-    <ProtectedLayout
-      requiredPermissions={['gerenciar_estoque', 'gerenciar_equipamentos']}
-      sidebar={
-        <AlmoxarifeSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-      }
-    >
-      <AlmoxarifePage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-    </ProtectedLayout>
-  );
-}
-
-function MovimentacaoRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
-
-  return (
-    <ProtectedLayout
-      requiredPermissions={['gerenciar_estoque', 'gerenciar_equipamentos']}
-      sidebar={
-        <MovimentacaoSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-      }
-    >
-      <MovimentacaoPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
-    </ProtectedLayout>
-  );
-}
-
 function RetiradaDeItensRoute() {
   return (
     <ProtectedLayout
@@ -734,8 +694,6 @@ export default function App() {
           <Route element={<EpisRoute />} path="/epis" />
           <Route element={<MateriaisRoute />} path="/materiais" />
           <Route element={<VocabularioRoute />} path="/vocabulario" />
-          <Route element={<AlmoxarifeRoute />} path="/almoxarife" />
-          <Route element={<MovimentacaoRoute />} path="/movimentacoes" />
           <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
           <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
           <Route element={<Navigate to="/portal/dados" replace />} path="/minha-conta" />

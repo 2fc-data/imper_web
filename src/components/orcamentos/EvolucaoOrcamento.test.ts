@@ -20,35 +20,28 @@ describe('calcularEvolucaoOrcamento', () => {
     });
   });
 
-  it('atividades e valorTotal → 2/3 Cobertura', () => {
+  it('atividades e valorTotal → 3/3 Ficha & Resumo (passo 3 acompanha o 2)', () => {
     const r = calcularEvolucaoOrcamento({ atividades: 2, valorTotal: '3700' });
-    expect(r.etapa).toBe(2);
-    expect(r.rotulo).toBe('Cobertura');
-    expect(r.passos).toEqual([true, true, false]);
+    expect(r.etapa).toBe(3);
+    expect(r.rotulo).toBe('Ficha & Resumo');
+    expect(r.passos).toEqual([true, true, true]);
   });
 
-  it('ficha ou observações preenchidas → 3/3 Ficha & Resumo', () => {
+  it('passo 3 acompanha o passo 2 (sem gate de ficha)', () => {
     expect(
       calcularEvolucaoOrcamento({
         atividades: 1,
         valorTotal: 10,
         ficha: { id: 1 },
-      }).etapa,
-    ).toBe(3);
-    expect(
-      calcularEvolucaoOrcamento({
-        atividades: 1,
-        valorTotal: 10,
-        observacoes: 'obs',
-      }).etapa,
-    ).toBe(3);
+      }).passos,
+    ).toEqual([true, true, true]);
     expect(
       calcularEvolucaoOrcamento({
         atividades: 1,
         valorTotal: 10,
         observacoes: '   ',
-      }).etapa,
-    ).toBe(2);
+      }).passos,
+    ).toEqual([true, true, true]);
   });
 
   it('etapa é consecutiva: lacuna em atividades não pula etapa', () => {
@@ -58,7 +51,7 @@ describe('calcularEvolucaoOrcamento', () => {
       ficha: { id: 2 },
     });
     expect(r.etapa).toBe(1);
-    expect(r.passos).toEqual([true, false, true]);
+    expect(r.passos).toEqual([true, false, false]);
   });
 
   it('aceita valorTotal como string decimal do Prisma (ORM-001 real)', () => {
@@ -84,6 +77,6 @@ describe('calcularEvolucaoOrcamento', () => {
   it('ficha sem atividades/valor mantém etapa 1 (consecutiva)', () => {
     const r = calcularEvolucaoOrcamento({ ficha: { id: 9 } });
     expect(r.etapa).toBe(1);
-    expect(r.passos).toEqual([true, false, true]);
+    expect(r.passos).toEqual([true, false, false]);
   });
 });

@@ -8,32 +8,14 @@ import {
   CardTitle,
 } from '../../components/ui/card';
 import type {
-  EnderecoPortal,
   ObraPortalDetalhe,
 } from '../../lib/api';
 import { obterObraPortal } from '../../lib/api';
+import { brl, formatarEnderecoObra } from '../../lib/format';
 import {
   progressoObra,
   statusAtividadePortal,
 } from './PortalObrasPage';
-
-function formatarMoeda(valor: string | number): string {
-  return Number(valor).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
-
-function formatarEndereco(endereco: EnderecoPortal | null): string {
-  if (!endereco) return '—';
-  const partes = [endereco.logradouro, endereco.numero].filter(Boolean);
-  const cidadeUf = [endereco.cidade, endereco.estado]
-    .filter(Boolean)
-    .join('/');
-  return [partes.join(', '), endereco.bairro, cidadeUf]
-    .filter(Boolean)
-    .join(' — ');
-}
 
 function resumoProgresso(obra: ObraPortalDetalhe): React.ReactNode {
   const { concluidas, total, percentual } = progressoObra(obra);
@@ -140,7 +122,7 @@ export default function PortalObraDetalhePage() {
               <p>
                 <span className="text-muted-foreground">Valor contratado: </span>
                 <span className="font-semibold">
-                  {formatarMoeda(obra.valorContratado)}
+                  {brl(obra.valorContratado)}
                 </span>
               </p>
               <p>
@@ -149,7 +131,7 @@ export default function PortalObraDetalhePage() {
               </p>
               <p>
                 <span className="text-muted-foreground">Endereço: </span>
-                {formatarEndereco(obra.endereco)}
+                {formatarEnderecoObra(obra.endereco)}
               </p>
               <div>
                 <div className="mb-1 text-muted-foreground">Progresso</div>

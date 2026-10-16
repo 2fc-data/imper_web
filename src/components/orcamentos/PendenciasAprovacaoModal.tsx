@@ -7,12 +7,8 @@ interface Props {
 }
 
 const ROTULOS: Record<string, string> = {
-  'ficha-ausente':
-    'Ficha de obra ausente — preencha no passo "Ficha & Resumo".',
   'analise-critica-incompleta':
-    'Análise crítica incompleta — há risco preenchido sem a ação correspondente.',
-  'medicao-ausentes':
-    'Medição ausente — informe a área (m²) e o valor por m².',
+    'Análise crítica incompleta — cada risco deve ter a ação correspondente (e vice-versa).',
 };
 
 /** Modal exibido quando a aprovação retorna 409 ANALISE_CRITICA. */

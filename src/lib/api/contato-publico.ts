@@ -44,9 +44,3 @@ export async function enviarContato(
 ): Promise<ContatoResult> {
   return api.post<ContatoResult>('/publico/contato', input);
 }
-
-export async function solicitarOrcamento(
-  input: ContatoInput,
-): Promise<ContatoResult> {
-  return enviarContato(input);
-}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import type { AgendamentoItem, StatusAgendamento } from '../../lib/api';
 import { listarAgendamentosPortal } from '../../lib/api';
+import { formatarDataHora } from '../../lib/format';
 
 const rotulosTipo: Record<string, string> = {
   VISITA: 'Visita',
@@ -17,11 +18,6 @@ const rotulosStatus: Record<StatusAgendamento, string> = {
   CANCELADO: 'Cancelado',
   NAO_COMPARECEU: 'Não compareceu',
 };
-
-function formatarData(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('pt-BR');
-}
 
 function resumoEndereco(item: AgendamentoItem): string {
   const e = item.endereco;
@@ -136,7 +132,7 @@ export default function PortalAgendamentosPage() {
                     />
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {formatarData(item.dataPrevista)}
+                    {formatarDataHora(item.dataPrevista)}
                   </td>
                   <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
                     {resumoEndereco(item)}

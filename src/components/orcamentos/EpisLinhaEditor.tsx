@@ -18,7 +18,9 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
   const [q, setQ] = useState('');
   const [resultados, setResultados] = useState<EpiItem[]>([]);
   const [carregando, setCarregando] = useState(false);
+  const [sel, setSel] = useState(0);
   const seq = useRef(0);
+  const selRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const termo = q.trim();
@@ -31,7 +33,10 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
     const t = window.setTimeout(() => {
       listarEpis({ q: termo })
         .then((r) => {
-          if (seq.current === id) setResultados(r.slice(0, 8));
+          if (seq.current === id) {
+            setResultados(r.slice(0, 8));
+            setSel(0);
+          }
         })
         .catch(() => {})
         .finally(() => {
@@ -40,6 +45,10 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
     }, 300);
     return () => window.clearTimeout(t);
   }, [q]);
+
+  useEffect(() => {
+    selRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [sel]);
 
   const adicionar = (e: EpiItem) => {
     if (epis.some((x) => x.epiId === e.id)) return;
@@ -55,6 +64,21 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
     ]);
     setQ('');
     setResultados([]);
+  };
+
+  const teclado = (ev: React.KeyboardEvent<HTMLInputElement>) => {
+    if (resultados.length === 0) return;
+    if (ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      setSel((s) => Math.min(s + 1, resultados.length - 1));
+    } else if (ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      setSel((s) => Math.max(s - 1, 0));
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const e = resultados[sel];
+      if (e) adicionar(e);
+    }
   };
 
   const atualizar = (idx: number, patch: Partial<EpiLinhaForm>) => {
@@ -75,6 +99,7 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
           placeholder="Buscar EPI (mín. 2 letras)…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onKeyDown={teclado}
         />
       </label>
 
@@ -88,11 +113,14 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
             </p>
           ) : (
             <ul>
-              {resultados.map((e) => (
+              {resultados.map((e, i) => (
                 <li key={e.id}>
                   <button
+                    ref={i === sel ? selRef : undefined}
                     type="button"
-                    className="flex w-full items-center justify-between px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-sm hover:bg-accent ${
+                      i === sel ? 'bg-accent' : ''
+                    }`}
                     onClick={() => adicionar(e)}
                   >
                     <span>

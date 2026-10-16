@@ -173,18 +173,6 @@ export function AtendimentosAnalises({
 interface AtendimentoListProps {
   atendimentos: AtendimentoItem[];
   loading: boolean;
-  busca: string;
-  onBuscaChange: (v: string) => void;
-  statusFiltro: string;
-  onStatusFiltroChange: (v: string) => void;
-  criadoDe: string;
-  onCriadoDeChange: (v: string) => void;
-  criadoAte: string;
-  onCriadoAteChange: (v: string) => void;
-  atualizadoDe: string;
-  onAtualizadoDeChange: (v: string) => void;
-  atualizadoAte: string;
-  onAtualizadoAteChange: (v: string) => void;
   onStatusChange: (
     id: number,
     status: StatusAtendimento,
@@ -203,18 +191,6 @@ interface AtendimentoListProps {
 export function AtendimentoList({
   atendimentos,
   loading,
-  busca,
-  onBuscaChange,
-  statusFiltro,
-  onStatusFiltroChange,
-  criadoDe,
-  onCriadoDeChange,
-  criadoAte,
-  onCriadoAteChange,
-  atualizadoDe,
-  onAtualizadoDeChange,
-  atualizadoAte,
-  onAtualizadoAteChange,
   onStatusChange,
   onCarregarLogs,
   onRegistrarLog,
@@ -994,8 +970,6 @@ export function AtendimentosAdminPage({
   const [statusFiltro, setStatusFiltro] = useState('');
   const [criadoDe, setCriadoDe] = useState('');
   const [criadoAte, setCriadoAte] = useState('');
-  const [atualizadoDe, setAtualizadoDe] = useState('');
-  const [atualizadoAte, setAtualizadoAte] = useState('');
   const [itemSelecionadoModal, setItemSelecionadoModal] =
     useState<AtendimentoItem | null>(null);
   const [logsModal, setLogsModal] = useState<AtendimentoLogItem[]>([]);
@@ -1013,8 +987,6 @@ export function AtendimentosAdminPage({
         q: busca || undefined,
         criadoDe: criadoDe || undefined,
         criadoAte: criadoAte || undefined,
-        atualizadoDe: atualizadoDe || undefined,
-        atualizadoAte: atualizadoAte || undefined,
       });
       setAtendimentos(data);
     } catch (err) {
@@ -1022,7 +994,7 @@ export function AtendimentosAdminPage({
     } finally {
       setLoading(false);
     }
-  }, [busca, statusFiltro, criadoDe, criadoAte, atualizadoDe, atualizadoAte]);
+  }, [busca, statusFiltro, criadoDe, criadoAte]);
 
   const carregarTodosAtendimentos = useCallback(async () => {
     try {
@@ -1243,7 +1215,7 @@ export function AtendimentosAdminPage({
           {modoVisao === 'kanban' ? (
             <PipelineKanban
               items={
-                (busca || statusFiltro || criadoDe || criadoAte || atualizadoDe || atualizadoAte)
+                (busca || statusFiltro || criadoDe || criadoAte)
                   ? atendimentos
                   : atendimentosTodos
               }
@@ -1255,18 +1227,6 @@ export function AtendimentosAdminPage({
             <AtendimentoList
               atendimentos={atendimentos}
               loading={loading}
-              busca={busca}
-              onBuscaChange={setBusca}
-              statusFiltro={statusFiltro}
-              onStatusFiltroChange={setStatusFiltro}
-              criadoDe={criadoDe}
-              onCriadoDeChange={setCriadoDe}
-              criadoAte={criadoAte}
-              onCriadoAteChange={setCriadoAte}
-              atualizadoDe={atualizadoDe}
-              onAtualizadoDeChange={setAtualizadoDe}
-              atualizadoAte={atualizadoAte}
-              onAtualizadoAteChange={setAtualizadoAte}
               onStatusChange={handleStatusInline}
               onCarregarLogs={handleCarregarLogs}
               onRegistrarLog={handleRegistrarLog}

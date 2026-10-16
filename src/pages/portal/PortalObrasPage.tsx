@@ -3,28 +3,10 @@ import { Link } from 'react-router-dom';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import type {
   AtividadePortal,
-  EnderecoPortal,
   ObraPortalItem,
 } from '../../lib/api';
 import { listarObrasPortal } from '../../lib/api';
-
-function formatarMoeda(valor: string | number): string {
-  return Number(valor).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
-
-function formatarEndereco(endereco: EnderecoPortal | null): string {
-  if (!endereco) return '—';
-  const partes = [endereco.logradouro, endereco.numero].filter(Boolean);
-  const cidadeUf = [endereco.cidade, endereco.estado]
-    .filter(Boolean)
-    .join('/');
-  return [partes.join(', '), endereco.bairro, cidadeUf]
-    .filter(Boolean)
-    .join(' — ');
-}
+import { brl, formatarEnderecoObra } from '../../lib/format';
 
 export function statusAtividadePortal(
   atividade: AtividadePortal,
@@ -148,7 +130,7 @@ export default function PortalObrasPage() {
                         {item.codigo}
                       </Link>
                       <div className="text-xs text-muted-foreground">
-                        {formatarMoeda(item.valorContratado)}
+                        {brl(item.valorContratado)}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -168,7 +150,7 @@ export default function PortalObrasPage() {
                       </span>
                     </td>
                     <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
-                      {formatarEndereco(item.endereco)}
+                      {formatarEnderecoObra(item.endereco)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

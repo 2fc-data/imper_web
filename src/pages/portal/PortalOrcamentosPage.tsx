@@ -3,18 +3,7 @@ import { Link } from 'react-router-dom';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import type { OrcamentoAdminDetalhe } from '../../lib/api';
 import { listarOrcamentosPortal } from '../../lib/api';
-
-function formatarMoeda(valor: string | number): string {
-  return Number(valor).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
-}
-
-function formatarData(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('pt-BR');
-}
+import { brl, formatarData } from '../../lib/format';
 
 export default function PortalOrcamentosPage() {
   const [orcamentos, setOrcamentos] = useState<OrcamentoAdminDetalhe[]>([]);
@@ -111,7 +100,7 @@ export default function PortalOrcamentosPage() {
                     <StatusBadge status={item.status} size="sm" />
                   </td>
                   <td className="px-4 py-3 font-medium">
-                    {formatarMoeda(item.valorTotal)}
+                    {brl(item.valorTotal)}
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
                     {formatarData(item.validade)}

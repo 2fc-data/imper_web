@@ -29,6 +29,7 @@ import {
   type TipoAgendamento,
   type VisitaItem,
 } from '../lib/api';
+import { formatarDataHora } from '../lib/format';
 import { GestorItensVocabulario } from '../components/atendimento-flow/GestorItensVocabulario';
 import { SlotPicker } from '../components/disponibilidade/SlotPicker';
 import { formatarDistancia, formatarDuracao } from '../lib/formato';
@@ -62,11 +63,6 @@ const rotulosResultado: Record<ResultadoVisita, string> = {
   OBRA_NECESSARIA: 'Obra necessária',
   CLIENTE_AUSENTE: 'Cliente ausente',
 };
-
-function formatarData(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('pt-BR');
-}
 
 interface AgendamentosAnalisesProps {
   agendamentos: AgendamentoItem[];
@@ -548,7 +544,7 @@ export function AgendamentoList({
                       {item.criadoPor?.nome ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {formatarData(item.dataPrevista)}
+                              {formatarDataHora(item.dataPrevista)}
                     </td>
                     <td className="px-4 py-3">
                       <select
@@ -592,13 +588,13 @@ export function AgendamentoList({
                               <span className="font-medium text-foreground">
                                 Prevista:
                               </span>{' '}
-                              {formatarData(item.dataPrevista)}
+                      {formatarDataHora(item.dataPrevista)}
                             </p>
                             <p className="text-muted-foreground">
                               <span className="font-medium text-foreground">
                                 Realizada:
                               </span>{' '}
-                              {formatarData(item.dataRealizada)}
+                              {formatarDataHora(item.dataRealizada)}
                             </p>
                             {item.atendimento && (
                               <p className="text-muted-foreground">
@@ -765,7 +761,7 @@ export function AgendamentoList({
                                         ? 'Realizada'
                                         : 'Cancelada'}
                                       {item.visita.dataRealizada
-                                        ? ` em ${formatarData(item.visita.dataRealizada)}`
+                                        ? ` em ${formatarDataHora(item.visita.dataRealizada)}`
                                         : ''}
                                     </p>
                                     {item.visita.resultado && (
@@ -973,7 +969,7 @@ export function AgendamentoList({
                                     >
                                       <div className="flex justify-between gap-2 text-muted-foreground">
                                         <span>
-                                          {formatarData(log.createdAt)}
+                                          {formatarDataHora(log.createdAt)}
                                         </span>
                                         <span className="font-medium text-foreground">
                                           {log.tipo === 'STATUS'

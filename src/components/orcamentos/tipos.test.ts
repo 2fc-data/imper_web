@@ -5,9 +5,12 @@ import type {
 } from '../../lib/api';
 import {
   PASSOS,
+  OPCOES_VALIDADE,
   adicionarLinha,
   atualizarLinha,
   chaveAtividade,
+  dataBr,
+  diasDeValidade,
   estadoDeEdicao,
   estadoInicialWizard,
   isoParaData,
@@ -19,6 +22,7 @@ import {
   totaisDoEstado,
   validarAte,
   validarPasso,
+  validadeDiasParaData,
   mapearItensParaAtividades,
   type AtividadeForm,
   type LinhaForm,
@@ -250,7 +254,7 @@ describe('validarPasso', () => {
     expect(validarPasso(s, 2)).toBeNull();
   });
 
-  it('passo 3 exige validade parseável (ficha é opcional)', () => {
+  it('passo 3 exige validade e pares risco/ação', () => {
     expect(validarPasso(estadoInicialWizard({ validade: '' }), 3)).toMatch(
       /validade/i,
     );
@@ -260,6 +264,45 @@ describe('validarPasso', () => {
     expect(
       validarPasso(estadoInicialWizard({ validade: '2026-10-01' }), 3),
     ).toBeNull();
+    expect(
+      validarPasso(
+        estadoInicialWizard({
+          validade: '2026-10-01',
+          ficha: { risco1: 'Queda', acao1: null },
+        }),
+        3,
+      ),
+    ).toMatch(/risco 1 sem a ação/i);
+    expect(
+      validarPasso(
+        estadoInicialWizard({
+          validade: '2026-10-01',
+          ficha: { risco1: null, acao1: 'Proteger' },
+        }),
+        3,
+      ),
+    ).toMatch(/ação 1 sem o risco/i);
+    expect(
+      validarPasso(
+        estadoInicialWizard({
+          validade: '2026-10-01',
+          ficha: { risco1: 'Queda', acao1: 'Proteger' },
+        }),
+        3,
+      ),
+    ).toBeNull();
+  });
+
+  it('OPCOES_VALIDADE e helpers de validade', () => {
+    expect([...OPCOES_VALIDADE]).toEqual([15, 20, 30]);
+    const d15 = validadeDiasParaData(15);
+    expect(diasDeValidade(d15)).toBe(15);
+    expect(diasDeValidade(validadeDiasParaData(20))).toBe(20);
+    expect(diasDeValidade(validadeDiasParaData(30))).toBe(30);
+    expect(diasDeValidade('2026-11-01')).toBeNull();
+    expect(diasDeValidade('')).toBeNull();
+    expect(dataBr('2026-10-01')).toBe('01/10/2026');
+    expect(dataBr('')).toBe('—');
   });
 
   it('validarAte falha no primeiro passo com erro', () => {
@@ -370,10 +413,8 @@ describe('montarInput', () => {
 });
 
 describe('totais', () => {
-  it('soma MO, materiais e base área×valor/m²', () => {
+  it('soma MO, materiais e EPIs sem base área×valor/m²', () => {
     const s = estadoInicialWizard({
-      areaM2: 100,
-      valorM2: 50,
       atividades: [],
     });
     const comAtividade = adicionarLinha(
@@ -391,7 +432,7 @@ describe('totais', () => {
     const t = totaisDoEstado(comAtividade);
     expect(t.valorMO).toBe(888);
     expect(t.valorMateriais).toBe(30);
-    expect(t.total).toBe(5918);
+    expect(t.total).toBe(918);
   });
 
   it('soma EPIs em valorEpis e no total', () => {
@@ -468,8 +509,6 @@ describe('estadoDeEdicao', () => {
     expect(s.atividades[0].linhas[1].descricao).toBe('Segunda');
     expect(s.atividades[1].subServicoId).toBe(9);
     expect(s.validade).toBe('2026-10-25');
-    expect(s.areaM2).toBe(100);
-    expect(s.valorM2).toBe(50);
     expect(s.urgencia).toBe('URGENTE');
     expect(s.observacoes).toBe('Obra no centro');
     expect(s.enderecoId).toBe(2);

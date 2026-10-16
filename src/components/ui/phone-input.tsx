@@ -1,6 +1,5 @@
 import { Input } from './input';
 import { formatPhone } from '../../lib/format';
-import { cn } from '../../lib/utils';
 
 interface PhoneInputProps {
   id?: string;

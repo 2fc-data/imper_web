@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AuthShell } from '../components/auth/AuthShell';
-import { BackToLogin } from '../components/auth/BackToLogin';
+import { BackLink } from '../components/auth/BackLink';
 import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
 import {
@@ -60,7 +60,7 @@ export default function ResetPasswordPage() {
               <p className="text-sm text-muted-foreground">
                 Senha redefinida com sucesso. Já pode acessar o sistema.
               </p>
-              <BackToLogin />
+              <BackLink to="/login" label="Voltar para o login" />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

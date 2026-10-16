@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
-import { BackToHome } from '../components/auth/BackToHome';
+import { BackLink } from '../components/auth/BackLink';
 import { homeFor } from '../lib/nav';
 import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
@@ -106,7 +106,7 @@ export default function LoginPage() {
                 Criar conta
               </Link>
             </p>
-            <BackToHome className="w-full text-xs" />
+            <BackLink style="button" icon="home" className="w-full text-xs" />
           </div>
         </CardContent>
       </Card>

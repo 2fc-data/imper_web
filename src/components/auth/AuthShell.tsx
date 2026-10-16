@@ -1,8 +1,8 @@
 import { m } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { fadeUp, stagger } from '../../lib/motion';
 import { ThemeToggle } from '../../theme/ThemeToggle';
+import { BackLink } from './BackLink';
 
 const CALLOUTS: string[] = [
   'Lajes, terraços e coberturas',
@@ -15,29 +15,6 @@ const STATS: { value: string; label: string }[] = [
   { value: 'NBR 9574', label: 'norma de execução' },
   { value: '5.000+', label: 'm² impermeabilizados' },
 ];
-
-function BackHomeLink() {
-  return (
-    <Link
-      to="/"
-      className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition-all hover:bg-primary/10 hover:text-primary focus-gold"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-4 w-4 text-primary"
-        aria-hidden="true"
-      >
-        <path d="M19 12H5M12 19l-7-7 7-7" />
-      </svg>
-      Voltar para Home
-    </Link>
-  );
-}
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -113,7 +90,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col bg-background">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <BackHomeLink />
+          <BackLink style="inline" />
           <ThemeToggle />
         </div>
 

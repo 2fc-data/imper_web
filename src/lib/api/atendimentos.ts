@@ -34,7 +34,7 @@ export interface AtendimentoItem {
   status: StatusAtendimento;
   descricao: string | null;
   userId: number | null;
-  user?: { id: number; nome: string; telefone: string | null } | null;
+  user?: { id: number; nome: string; telefone: string | null; email?: string | null } | null;
   atendenteId: number | null;
   atendente?: { id: number; nome: string } | null;
   servicoMarketingId?: number | null;

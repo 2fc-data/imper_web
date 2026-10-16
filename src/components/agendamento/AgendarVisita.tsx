@@ -17,14 +17,12 @@ export interface AgendarVisitaHandle {
   getDados: () => AgendarDados | null;
   isValid: () => boolean;
   isAgendar: () => boolean;
-  getErros: () => { cep?: string; slot?: string };
   tentarValidar: () => boolean;
 }
 
 interface AgendarVisitaProps {
   disabled?: boolean;
   titulo?: string;
-  onValidChange?: (valid: boolean, isAgendar: boolean) => void;
   modoReagendar?: boolean;
   enderecoInicial?: {
     logradouro?: string;
@@ -42,11 +40,10 @@ const campoInput =
 const campoLabel = 'text-xs font-semibold text-foreground';
 
 export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>(
-  function AgendarVisita(
+    function AgendarVisita(
     {
       disabled = false,
       titulo = 'Horários Disponíveis',
-      onValidChange,
       modoReagendar = false,
       enderecoInicial,
     },
@@ -82,9 +79,8 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
 
     useEffect(() => {
       const valid = agendar ? !!agendarSlot && cepValido : false;
-      onValidChange?.(valid, agendar);
       if (valid || !agendar) setMostrarErros(false);
-    }, [agendar, cepValido, agendarSlot, onValidChange]);
+    }, [agendar, cepValido, agendarSlot]);
 
     useImperativeHandle(ref, () => ({
       getDados: () => {
@@ -93,12 +89,6 @@ export const AgendarVisita = forwardRef<AgendarVisitaHandle, AgendarVisitaProps>
       },
       isValid: () => agendar && !!agendarSlot && cepValido,
       isAgendar: () => agendar,
-      getErros: () => {
-        const erros: { cep?: string; slot?: string } = {};
-        if (agendar && !cepValido) erros.cep = 'Informe um CEP válido';
-        if (agendar && !agendarSlot) erros.slot = 'Selecione um horário disponível';
-        return erros;
-      },
       tentarValidar: () => {
         if (!agendar) return true;
         const valid = !!agendarSlot && cepValido;

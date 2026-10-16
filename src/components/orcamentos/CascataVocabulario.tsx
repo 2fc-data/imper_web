@@ -16,7 +16,6 @@ import {
 interface Props {
   valor: ValorCascata;
   onChange: (v: ValorCascata) => void;
-  servicoMarketingId?: number | null;
   /**
    * `reduzida` — só Etapa + Sub-serviço (seleção do que será feito).
    * `termos` — só Verbo/Objeto/Local/Característica (etapa/sub vêm de fora).
@@ -33,7 +32,6 @@ interface Props {
 export function CascataVocabulario({
   valor,
   onChange,
-  servicoMarketingId,
   modo = 'completa',
 }: Props) {
   const soEtapasSubs = modo === 'reduzida';
@@ -87,7 +85,7 @@ export function CascataVocabulario({
   useEffect(() => {
     if (soTermos) return;
     let vivo = true;
-    listarSubServicos(undefined, true, servicoMarketingId)
+    listarSubServicos(undefined, true)
       .then((r) => {
         if (vivo) setSubs(r);
       })
@@ -95,7 +93,7 @@ export function CascataVocabulario({
     return () => {
       vivo = false;
     };
-  }, [soTermos, servicoMarketingId]);
+  }, [soTermos]);
 
   const mudarEtapa = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? Number(e.target.value) : null;

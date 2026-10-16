@@ -87,7 +87,6 @@ export type {
 export {
   listarCidades,
   enviarContato,
-  solicitarOrcamento,
 } from './contato-publico.js';
 export type {
   CidadeAtendida,
@@ -193,7 +192,6 @@ export type {
 // Orcamentos Admin
 export {
   listarOrcamentosAdmin,
-  obterOrcamentoAdmin,
   obterOrcamentoAdminDetalhe,
   criarOrcamentoAdmin,
   editarOrcamentoAdmin,
@@ -204,18 +202,12 @@ export {
   rascunhoParaRetomar,
 } from './orcamentos-admin.js';
 export type {
-  ItemOrcamentoInput,
-  MaterialLinha,
-  LinhaInput,
-  AtividadeInput,
   FichaInput,
   OrcamentoAdminItem,
   OrcamentoAdminDetalhe,
   OrcamentoAtividadeRow,
-  OrcamentoAtividadeMaterialRow,
   OrcamentoObraFichaDetalhe,
   CriarOrcamentoInput,
-  CriarOrcamentoInputLegado,
 } from './orcamentos-admin.js';
 
 // Vocabulario (etapas, termos, sub-servicos)
@@ -302,7 +294,6 @@ export type {
 export {
   listarLookupsMateriais,
   listarMateriais,
-  detalharMaterial,
   criarMaterial,
   atualizarMaterial,
   excluirMaterial,
@@ -340,11 +331,6 @@ export type {
   StatusExecucao,
   ExecucaoAtividadeItem,
 } from './execucao.js';
-
-// Checklist
-export type {
-  ChecklistItem,
-} from './checklist.js';
 
 // Separacao
 export {

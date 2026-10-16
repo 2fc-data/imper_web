@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CascataVocabulario } from './CascataVocabulario';
 import { EpisLinhaEditor } from './EpisLinhaEditor';
 import { MateriaisLinhaEditor } from './MateriaisLinhaEditor';
+import { brl } from '../../lib/format';
 import {
   adicionarLinha,
   atualizarLinha,
@@ -28,9 +29,6 @@ interface Props {
   set: AtualizarEstado;
 }
 
-const brl = (n: number) =>
-  n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
 /**
  * Passo 2 — cobertura.
  *
@@ -38,9 +36,10 @@ const brl = (n: number) =>
  * 2. Detalhe da atividade: Verbo/Objeto/Local/Característica + descrição
  *    + adicionar. Para cada combinação etapa+sub-serviço o usuário pode
  *    adicionar várias linhas.
- * 3. Linhas adicionadas (agrupadas por etapa+sub-serviço): cada linha é um
- *    card expansível com Medidas, Mão de obra, Produtos e EPIs.
- * 4. Totais: MO + Produtos + EPIs + medição (m² × valor/m²).
+ * 3. Atividades adicionadas (agrupadas por etapa+sub-serviço): cada atividade
+ *    é um card-acordeão; ao expandir, cada linha expõe Medidas, Mão de obra,
+ *    Produtos e EPIs.
+ * 4. Totais: MO + Produtos + EPIs.
  *
  * Todos os selects são independentes entre si (cada um lista todas as
  * opções ativas, sem filtragem cruzada nem bloqueio).
@@ -59,7 +58,6 @@ export function PassoCobertura({ state, set }: Props) {
     cascata.objetoId != null;
 
   const totais = totaisDoEstado(state);
-  const temBase = state.areaM2 != null && state.valorM2 != null;
 
   const alternar = (chave: string) =>
     setAbertas((prev) => {
@@ -74,15 +72,13 @@ export function PassoCobertura({ state, set }: Props) {
 
   const adicionar = () => {
     if (!podeAdicionar) return;
-    // abre o card da linha recém-adicionada
+    // abre o acordeão da atividade recém-adicionada
     const idx = state.atividades.findIndex(
       (a) =>
         a.etapaId === cascata.etapaId &&
         a.subServicoId === cascata.subServicoId,
     );
-    const chaveNova = `${idx === -1 ? state.atividades.length : idx}:${
-      idx === -1 ? 0 : state.atividades[idx].linhas.length
-    }`;
+    const chaveNova = String(idx === -1 ? state.atividades.length : idx);
     set((s) =>
       adicionarLinha(
         s,
@@ -173,14 +169,14 @@ export function PassoCobertura({ state, set }: Props) {
             disabled={!podeAdicionar}
             onClick={adicionar}
           >
-            Adicionar linha
+            Adicionar atividade
           </button>
         </div>
       </div>
 
       <div>
         <h3 className="mb-2 text-sm font-semibold">
-          3. Linhas adicionadas ({state.atividades.length})
+          3. Atividades adicionadas ({state.atividades.length})
         </h3>
         {state.atividades.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -195,44 +191,56 @@ export function PassoCobertura({ state, set }: Props) {
               .sort(
                 (x, y) => x.a.etapaOrdem - y.a.etapaOrdem || x.aIdx - y.aIdx,
               )
-              .map(({ a, aIdx }) => (
-                <div
-                  key={`${a.etapaId}:${a.subServicoId}`}
-                  className={cardClasses}
-                >
-                  <div className="mb-2 flex items-start justify-between gap-2">
-                    <div className="text-sm">
-                      <span className="font-medium">{rotuloAtividade(a)}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {brl(
-                          a.linhas.reduce(
-                            (acc, l) => acc + subtotalLinha(l),
-                            0,
-                          ),
-                        )}
-                      </span>
+              .map(({ a, aIdx }) => {
+                const chaveAtividade = String(aIdx);
+                const atividadeAberta = abertas.has(chaveAtividade);
+                const subtotalAtividade = a.linhas.reduce(
+                  (acc, l) => acc + subtotalLinha(l),
+                  0,
+                );
+                return (
+                  <div
+                    key={`${a.etapaId}:${a.subServicoId}`}
+                    className={cardClasses}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        className="flex flex-1 items-center justify-between gap-2 text-left text-sm"
+                        onClick={() => alternar(chaveAtividade)}
+                      >
+                        <span className="font-medium">
+                          {rotuloAtividade(a)}
+                        </span>
+                        <span className="flex items-center gap-2 whitespace-nowrap">
+                          <span className="text-xs text-muted-foreground">
+                            {a.linhas.length}{' '}
+                            {a.linhas.length === 1 ? 'linha' : 'linhas'} ·{' '}
+                            {brl(subtotalAtividade)}
+                          </span>
+                          <span className="text-2xl leading-none text-muted-foreground">
+                            {atividadeAberta ? '▾' : '▸'}
+                          </span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-destructive hover:underline"
+                        onClick={() => set((s) => removerAtividade(s, aIdx))}
+                      >
+                        remover atividade
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="text-xs text-destructive hover:underline"
-                      onClick={() => set((s) => removerAtividade(s, aIdx))}
-                    >
-                      remover atividade
-                    </button>
-                  </div>
-                  <ul className="flex flex-col gap-2">
-                    {a.linhas.map((l, lIdx) => {
-                      const chave = `${aIdx}:${lIdx}`;
-                      const aberta = abertas.has(chave);
-                      return (
-                        <li key={lIdx} className="rounded-lg border">
-                          <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-                            <button
-                              type="button"
-                              className="flex flex-1 items-center justify-between gap-2 text-left text-sm"
-                              onClick={() => alternar(chave)}
-                            >
-                              <span>
+
+                    {atividadeAberta ? (
+                      <ul className="mt-3 flex flex-col gap-3">
+                        {a.linhas.map((l, lIdx) => (
+                          <li
+                            key={lIdx}
+                            className="rounded-lg border p-2"
+                          >
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <span className="text-sm">
                                 {l.verboNome} {l.objetoNome}
                                 {l.localNome ? ` ${l.localNome}` : ''}
                                 {l.caracteristicaNome
@@ -249,24 +257,19 @@ export function PassoCobertura({ state, set }: Props) {
                                 <span className="text-xs font-medium text-muted-foreground">
                                   {brl(subtotalLinha(l))}
                                 </span>
-                                <span className="text-muted-foreground">
-                                  {aberta ? '▾' : '▸'}
-                                </span>
+                                <button
+                                  type="button"
+                                  className="text-xs text-destructive hover:underline"
+                                  onClick={() =>
+                                    set((s) => removerLinha(s, aIdx, lIdx))
+                                  }
+                                >
+                                  remover
+                                </button>
                               </span>
-                            </button>
-                            <button
-                              type="button"
-                              className="text-xs text-destructive hover:underline"
-                              onClick={() =>
-                                set((s) => removerLinha(s, aIdx, lIdx))
-                              }
-                            >
-                              remover
-                            </button>
-                          </div>
+                            </div>
 
-                          {aberta ? (
-                            <div className="flex flex-col gap-4 border-t px-2 py-3">
+                            <div className="flex flex-col gap-4">
                               <section>
                                 <h4 className="mb-2 text-xs font-semibold">
                                   Medidas
@@ -392,13 +395,13 @@ export function PassoCobertura({ state, set }: Props) {
                                 />
                               </section>
                             </div>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
@@ -418,14 +421,6 @@ export function PassoCobertura({ state, set }: Props) {
             <span className="text-muted-foreground">EPIs</span>
             <span>{brl(totais.valorEpis)}</span>
           </div>
-          {temBase ? (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                Medição (m² × valor/m²)
-              </span>
-              <span>{brl((state.areaM2 as number) * (state.valorM2 as number))}</span>
-            </div>
-          ) : null}
           <div className="mt-1 flex justify-between border-t pt-1 text-base font-semibold">
             <span>Total</span>
             <span>{brl(totais.total)}</span>

@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthShell } from '../components/auth/AuthShell';
-import { BackToLogin } from '../components/auth/BackToLogin';
+import { BackLink } from '../components/auth/BackLink';
 import Turnstile from '../components/Turnstile';
 import { PasswordInput } from '../components/auth/PasswordInput';
 import { Button } from '../components/ui/button';
@@ -116,7 +116,7 @@ export default function RegisterPage() {
               {loading ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
-          <BackToLogin />
+          <BackLink to="/login" label="Voltar para o login" />
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Já tem conta?{' '}
             <Link

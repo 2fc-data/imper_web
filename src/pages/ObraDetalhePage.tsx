@@ -11,6 +11,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/button';
 import { api } from '../lib/api';
 import { listarExecucoes, type ExecucaoAtividadeItem } from '../lib/api';
+import { brl } from '../lib/format';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface ObraMaterial { id: string; material: { nome: string }; quantidade: number; custoUnitario: number }
@@ -37,9 +38,6 @@ interface Comparacao {
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────
-const brl = (v: number) =>
-  Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
 const STATUS_OBRA_LABEL: Record<string, string> = {
   EM_PREPARACAO: 'Em Preparação', EM_EXECUCAO: 'Em Execução',
   CONCLUIDA: 'Concluída', CANCELADA: 'Cancelada',
