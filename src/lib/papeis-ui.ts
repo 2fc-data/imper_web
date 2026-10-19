@@ -1,24 +1,25 @@
 export const ROTULO_PAPEL: Record<string, string> = {
-  ADMIN: 'Administrador',
-  SUPERVISOR: 'Supervisor',
-  ATENDENTE: 'Atendente',
-  TECNICO: 'Técnico',
+  ADMINISTRATIVO: 'Administrativo',
+  FINANCEIRO: 'Financeiro',
+  CONTABIL: 'Contábil',
+  VENDAS: 'Vendas',
+  ATENDIMENTO: 'Atendimento',
   ALMOXARIFE: 'Almoxarife',
-  CONTABILIDADE: 'Contabilidade',
-  CLIENTE: 'Cliente',
   COLABORADOR: 'Colaborador',
+  CLIENTE: 'Cliente',
 };
 
 export function badgetColor(nomePapel: string) {
   switch (nomePapel) {
-    case 'ADMIN':
+    case 'ADMINISTRATIVO':
       return 'bg-destructive/10 text-destructive';
-    case 'SUPERVISOR':
+    case 'VENDAS':
       return 'bg-primary/10 text-primary';
-    case 'ATENDENTE':
-    case 'TECNICO':
+    case 'ATENDIMENTO':
+    case 'COLABORADOR':
     case 'ALMOXARIFE':
-    case 'CONTABILIDADE':
+    case 'CONTABIL':
+    case 'FINANCEIRO':
       return 'bg-secondary text-secondary-foreground';
     default:
       return 'bg-muted text-muted-foreground';

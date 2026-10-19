@@ -129,6 +129,10 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
   };
 }
 
+export async function listarColaboradores(): Promise<{ id: number; nome: string }[]> {
+  return api.get<{ id: number; nome: string }[]>('/epis/lookups/colaboradores');
+}
+
 function criarLookupApi<R extends BaseLookup>(base: string) {
   return {
     listar: () => api.get<R[]>(`${base}`),

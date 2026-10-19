@@ -18,6 +18,7 @@ export interface Usuario {
   cargo?: { id: number; nome: string } | null;
   createdAt: string;
   cpfCnpj?: string | null;
+  rg?: string | null;
   endereco?: {
     id: number;
     logradouro: string;
@@ -55,6 +56,7 @@ export async function atualizarUsuario(
     cargoId?: number | null;
     ativo?: boolean;
     cpfCnpj?: string;
+    rg?: string;
     cep?: string;
     endereco?: string;
     bairro?: string;
@@ -74,7 +76,9 @@ export interface CriarUsuarioInput {
   telefone?: string;
   papelIds: number[];
   cargoId?: number | null;
+  ativo?: boolean;
   cpfCnpj?: string;
+  rg?: string;
   cep?: string;
   endereco?: string;
   bairro?: string;

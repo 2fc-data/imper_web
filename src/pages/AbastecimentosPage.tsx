@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
+import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
 import {
   atualizarAbastecimento,
@@ -20,6 +21,7 @@ import {
   type VeiculoItem,
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
+import { formatarKm, parseKm } from '../lib/km';
 
 const selectClasses =
   'flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
@@ -142,13 +144,17 @@ export default function AbastecimentosPage() {
                 id="veiculoId"
                 required
                 value={form.veiculoId || ''}
-                onChange={(e) => setForm({ ...form, veiculoId: Number(e.target.value) })}
+                onChange={(e) => {
+                  const id = Number(e.target.value);
+                  const v = veiculos.find((x) => x.id === id);
+                  setForm({ ...form, veiculoId: id, odometro: v?.odometroAtual || undefined });
+                }}
                 className={selectClasses}
               >
                 <option value="" disabled>Selecione o veículo...</option>
                 {veiculos.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.codigo} — {v.placa}
+                    {v.nome} — {v.placa}
                   </option>
                 ))}
               </select>
@@ -157,12 +163,11 @@ export default function AbastecimentosPage() {
               <Label htmlFor="odometro">Odômetro (km) — opcional</Label>
               <Input
                 id="odometro"
-                type="number"
-                min={0}
-                step="0.1"
+                inputMode="numeric"
+                readOnly
                 placeholder="Usa odômetro atual se vazio"
-                value={form.odometro ?? ''}
-                onChange={(e) => setForm({ ...form, odometro: e.target.value ? Number(e.target.value) : undefined })}
+                value={formatarKm(form.odometro)}
+                onChange={(e) => setForm({ ...form, odometro: parseKm(e.target.value) })}
               />
             </div>
             <div className="space-y-1.5">
@@ -179,14 +184,11 @@ export default function AbastecimentosPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="valorTotal">Valor total (R$)</Label>
-              <Input
+              <InputMoeda
                 id="valorTotal"
-                type="number"
-                min={0.01}
-                step="0.01"
                 required
-                value={form.valorTotal || ''}
-                onChange={(e) => setForm({ ...form, valorTotal: Number(e.target.value) })}
+                value={form.valorTotal || undefined}
+                onChange={(v) => setForm({ ...form, valorTotal: v ?? 0 })}
               />
             </div>
           </div>
@@ -233,7 +235,7 @@ export default function AbastecimentosPage() {
             <option value="">Todos os veículos</option>
             {veiculos.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.codigo} — {v.placa}
+                {v.nome} — {v.placa}
               </option>
             ))}
           </select>
@@ -251,22 +253,22 @@ export default function AbastecimentosPage() {
                 <CardHeader className="pb-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <CardTitle className="text-base">
-                      {a.veiculo ? `${a.veiculo.codigo} — ${a.veiculo.placa}` : `Veículo #${a.veiculoId}`}
+                      {a.veiculo ? `${a.veiculo.nome} — ${a.veiculo.placa}` : `Veículo #${a.veiculoId}`}
                     </CardTitle>
                     <span className="text-xs text-muted-foreground">{formatarData(a.data)}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="text-sm text-muted-foreground">
-                    <span>{a.litros.toFixed(2)} L · {formatarValor(a.valorTotal)}</span>
+                    <span>{Number(a.litros).toFixed(2)} L · {formatarValor(a.valorTotal)}</span>
                     <span> · R$/L: {formatarValor(a.precoLitro)}</span>
                     {a.kmDesdeUltimo != null && (
                       <span> · {a.kmDesdeUltimo.toLocaleString('pt-BR')} km desde último</span>
                     )}
                     {a.kmPorLitro != null && (
-                      <span> · {a.kmPorLitro.toFixed(2)} km/L</span>
+                      <span> · {Number(a.kmPorLitro).toFixed(2)} km/L</span>
                     )}
-                    <span> · Odômetro: {a.odometro.toLocaleString('pt-BR')} km</span>
+                    <span> · Odômetro: {formatarKm(a.odometro)} km</span>
                     {a.fornecedor && <span> · {a.fornecedor.nome}</span>}
                     {a.registradoPor && (
                       <span className="text-xs"> · por {a.registradoPor.nome}</span>

@@ -22,13 +22,22 @@ export interface CadastroInput {
   nome: string;
   telefone: string;
   email?: string;
+  rg?: string;
   senha: string;
   turnstileToken?: string;
 }
 
-export async function cadastrar(input: CadastroInput): Promise<LoginResponse> {
-  const data = await api.post<LoginResponse>('/auth/cadastro', input);
-  setToken(data.token);
+export interface CadastroResponse {
+  token?: string | null;
+  user: LoginResponse['user'];
+  pendenteAtivacao?: boolean;
+}
+
+export async function cadastrar(
+  input: CadastroInput,
+): Promise<CadastroResponse> {
+  const data = await api.post<CadastroResponse>('/auth/cadastro', input);
+  if (data.token) setToken(data.token);
   return data;
 }
 

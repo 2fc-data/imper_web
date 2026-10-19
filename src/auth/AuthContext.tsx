@@ -30,7 +30,9 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, senha: string) => Promise<User>;
-  cadastrar: (input: CadastroInput) => Promise<User>;
+  cadastrar: (
+    input: CadastroInput,
+  ) => Promise<{ user: User | null; pendente: boolean }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -61,8 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const cadastrar = useCallback(async (input: CadastroInput) => {
     const data = await apiCadastrar(input);
+    if (data.pendenteAtivacao || !data.token) {
+      apiLogout();
+      return { user: null, pendente: true };
+    }
     setUser(data.user);
-    return data.user;
+    return { user: data.user, pendente: false };
   }, []);
 
   const logout = useCallback(() => {

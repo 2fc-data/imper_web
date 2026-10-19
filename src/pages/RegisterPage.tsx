@@ -25,9 +25,11 @@ export default function RegisterPage() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [rg, setRg] = useState('');
   const [senha, setSenha] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [sucesso, setSucesso] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
@@ -35,14 +37,19 @@ export default function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
-      const authed = await cadastrar({
+      const resultado = await cadastrar({
         nome,
         telefone,
         email: email || undefined,
+        rg: rg.trim() || undefined,
         senha,
         turnstileToken: turnstileToken || undefined,
       });
-      navigate(homeFor(authed), { replace: true });
+      if (resultado.pendente || !resultado.user) {
+        setSucesso(true);
+        return;
+      }
+      navigate(homeFor(resultado.user), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha no cadastro');
     } finally {
@@ -60,7 +67,22 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {sucesso ? (
+            <div className="space-y-4" role="status">
+              <div className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
+                Cadastro recebido! Seu acesso será liberado após a ativação
+                pelo administrador.
+              </div>
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={() => navigate('/login')}
+              >
+                Ir para o login
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome *</Label>
               <Input
@@ -90,6 +112,16 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="rg">RG (opcional)</Label>
+              <Input
+                id="rg"
+                maxLength={20}
+                placeholder="Somente números e traços"
+                value={rg}
+                onChange={(e) => setRg(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="senha">Senha *</Label>
               <PasswordInput
                 id="senha"
@@ -116,6 +148,7 @@ export default function RegisterPage() {
               {loading ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </form>
+          )}
           <BackLink to="/login" label="Voltar para o login" />
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Já tem conta?{' '}
