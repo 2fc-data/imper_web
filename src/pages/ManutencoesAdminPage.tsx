@@ -25,8 +25,8 @@ import {
 import {
   formatarData,
   formatarValor,
-  fromLocalDateTime,
-  toLocalDateTime,
+  fromLocalDate,
+  toLocalDate,
 } from '../lib/datetime';
 import { cn } from '../lib/utils';
 
@@ -271,11 +271,11 @@ export default function ManutencoesAdminPage({
     setForm({
       equipamentoId: m.equipamentoId,
       tipoId: m.tipoId,
-      data: toLocalDateTime(m.data),
+      data: toLocalDate(m.data),
       descricao: m.descricao,
       custo: m.custo ?? undefined,
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
-      proximaManutencao: toLocalDateTime(m.proximaManutencao),
+      proximaManutencao: toLocalDate(m.proximaManutencao),
     });
     setError(null);
   }
@@ -295,12 +295,12 @@ export default function ManutencoesAdminPage({
         const atualizado = await atualizarManutencao(editando.id, {
           equipamentoId: form.equipamentoId,
           tipoId: form.tipoId,
-          data: fromLocalDateTime(form.data) ?? editando.data,
+          data: fromLocalDate(form.data) ?? editando.data,
           descricao: form.descricao,
           custo: form.custo ?? null,
           responsavelManutencaoId: form.responsavelManutencaoId ?? null,
           proximaManutencao: form.proximaManutencao
-            ? (fromLocalDateTime(form.proximaManutencao) ?? null)
+            ? (fromLocalDate(form.proximaManutencao) ?? null)
             : null,
         });
         setManutencoes((prev) =>
@@ -311,12 +311,12 @@ export default function ManutencoesAdminPage({
         const criado = await criarManutencao({
           equipamentoId: form.equipamentoId,
           tipoId: form.tipoId,
-          data: fromLocalDateTime(form.data) ?? new Date().toISOString(),
+          data: fromLocalDate(form.data) ?? new Date().toISOString(),
           descricao: form.descricao,
           custo: form.custo,
           responsavelManutencaoId: form.responsavelManutencaoId,
           proximaManutencao: form.proximaManutencao
-            ? fromLocalDateTime(form.proximaManutencao)
+            ? fromLocalDate(form.proximaManutencao)
             : undefined,
         });
         setManutencoes((prev) => [criado, ...prev]);
@@ -438,7 +438,7 @@ export default function ManutencoesAdminPage({
               <Label htmlFor="data">Data</Label>
               <Input
                 id="data"
-                type="datetime-local"
+                type="date"
                 required
                 value={form.data}
                 onChange={(e) => setForm({ ...form, data: e.target.value })}
@@ -491,7 +491,7 @@ export default function ManutencoesAdminPage({
               <Label htmlFor="proximaManutencao">Próxima manutenção</Label>
               <Input
                 id="proximaManutencao"
-                type="datetime-local"
+                type="date"
                 value={form.proximaManutencao ?? ''}
                 onChange={(e) =>
                   setForm({ ...form, proximaManutencao: e.target.value })
@@ -585,7 +585,7 @@ export default function ManutencoesAdminPage({
               <Label htmlFor="data">Data</Label>
               <Input
                 id="data"
-                type="datetime-local"
+                type="date"
                 required
                 value={form.data}
                 onChange={(e) => setForm({ ...form, data: e.target.value })}
@@ -638,7 +638,7 @@ export default function ManutencoesAdminPage({
               <Label htmlFor="proximaManutencao">Próxima manutenção</Label>
               <Input
                 id="proximaManutencao"
-                type="datetime-local"
+                type="date"
                 value={form.proximaManutencao ?? ''}
                 onChange={(e) =>
                   setForm({ ...form, proximaManutencao: e.target.value })

@@ -23,6 +23,7 @@ import {
   type VeiculoLookups,
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
+import { formatarKm, parseKm } from '../lib/km';
 import { cn } from '../lib/utils';
 
 const selectClasses =
@@ -53,20 +54,25 @@ interface Props {
   onViewChange: (view: View) => void;
 }
 
+function formatarPlaca(valor: string): string {
+  const bruto = valor.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+  if (bruto.length <= 3) return bruto;
+  return `${bruto.slice(0, 3)}-${bruto.slice(3)}`;
+}
+
 const emptyForm: VeiculoInput = {
   codigo: '',
   placa: '',
-  descricao: '',
+  nome: '',
   modelo: '',
   ano: undefined,
   combustivel: 'GASOLINA',
   odometroAtual: undefined,
   observacoes: '',
-  marcaId: undefined,
   corId: undefined,
+  fabricanteId: undefined,
   tipoId: 0,
   statusId: 0,
-  responsavelId: undefined,
 };
 
 function AnalisesFrota({ analises }: { analises: AnalisesFrota | null }) {
@@ -116,7 +122,7 @@ function AnalisesFrota({ analises }: { analises: AnalisesFrota | null }) {
           <ul className="space-y-1">
             {veiculosSemKm.map((v) => (
               <li key={v.id} className="flex justify-between text-sm">
-                <span>{v.codigo} — {v.placa}</span>
+                <span>{v.nome} — {v.placa}</span>
                 <span className="text-muted-foreground">
                   Último: {formatarData(v.ultimoRegistro)}
                 </span>
@@ -183,17 +189,16 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
     setForm({
       codigo: v.codigo,
       placa: v.placa,
-      descricao: v.descricao,
+      nome: v.nome,
       modelo: v.modelo ?? '',
       ano: v.ano ?? undefined,
       combustivel: v.combustivel,
       odometroAtual: v.odometroAtual,
       observacoes: v.observacoes ?? '',
-      marcaId: v.marcaId ?? undefined,
       corId: v.corId ?? undefined,
+      fabricanteId: v.fabricanteId ?? undefined,
       tipoId: v.tipoId,
       statusId: v.statusId,
-      responsavelId: v.responsavelId ?? undefined,
     });
     setError(null);
   }
@@ -271,16 +276,21 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="codigo">Código</Label>
-              <Input id="codigo" required value={form.codigo} onChange={(e) => setForm({ ...form, codigo: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="placa">Placa</Label>
-              <Input id="placa" required value={form.placa} onChange={(e) => setForm({ ...form, placa: e.target.value })} />
+              <Input id="placa" required maxLength={8} placeholder="HHE-8265" value={form.placa} onChange={(e) => setForm({ ...form, placa: formatarPlaca(e.target.value) })} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Input id="descricao" required value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+              <Label htmlFor="nome">Nome</Label>
+              <Input id="nome" required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fabricanteId">Fabricante</Label>
+              <select id="fabricanteId" value={form.fabricanteId || ''} onChange={(e) => setForm({ ...form, fabricanteId: e.target.value ? Number(e.target.value) : undefined })} className={selectClasses}>
+                <option value="">Sem fabricante</option>
+                {(lookups?.marcas ?? []).filter((m) => m.ativo).map((m) => (
+                  <option key={m.id} value={m.id}>{m.nome}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="modelo">Modelo</Label>
@@ -288,7 +298,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ano">Ano</Label>
-              <Input id="ano" type="number" min={1900} max={2100} value={form.ano ?? ''} onChange={(e) => setForm({ ...form, ano: e.target.value ? Number(e.target.value) : undefined })} />
+              <Input id="ano" inputMode="numeric" maxLength={4} placeholder="2027" value={form.ano ?? ''} onChange={(e) => setForm({ ...form, ano: e.target.value.replace(/\D/g, '').slice(0, 4) ? Number(e.target.value.replace(/\D/g, '').slice(0, 4)) : undefined })} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="combustivel">Combustível</Label>
@@ -304,7 +314,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="odometroAtual">Odômetro atual (km)</Label>
-              <Input id="odometroAtual" type="number" min={0} step="0.1" value={form.odometroAtual ?? ''} onChange={(e) => setForm({ ...form, odometroAtual: e.target.value ? Number(e.target.value) : undefined })} />
+              <Input id="odometroAtual" inputMode="numeric" placeholder="Ex.: 280.607" value={formatarKm(form.odometroAtual)} onChange={(e) => setForm({ ...form, odometroAtual: parseKm(e.target.value) })} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="tipoId">Tipo</Label>
@@ -325,29 +335,11 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="marcaId">Marca</Label>
-              <select id="marcaId" value={form.marcaId || ''} onChange={(e) => setForm({ ...form, marcaId: e.target.value ? Number(e.target.value) : undefined })} className={selectClasses}>
-                <option value="">Sem marca</option>
-                {(lookups?.marcas ?? []).filter((m) => m.ativo).map((m) => (
-                  <option key={m.id} value={m.id}>{m.nome}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="corId">Cor</Label>
               <select id="corId" value={form.corId || ''} onChange={(e) => setForm({ ...form, corId: e.target.value ? Number(e.target.value) : undefined })} className={selectClasses}>
                 <option value="">Sem cor</option>
                 {(lookups?.cores ?? []).filter((c) => c.ativo).map((c) => (
                   <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="responsavelId">Responsável</Label>
-              <select id="responsavelId" value={form.responsavelId || ''} onChange={(e) => setForm({ ...form, responsavelId: e.target.value ? Number(e.target.value) : undefined })} className={selectClasses}>
-                <option value="">Sem responsável</option>
-                {(lookups?.responsaveis ?? []).map((r) => (
-                  <option key={r.id} value={r.id}>{r.nome}</option>
                 ))}
               </select>
             </div>
@@ -387,7 +379,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Buscar por código, placa ou descrição..."
+                placeholder="Buscar por código, placa ou nome..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -421,7 +413,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
                 (!statusFiltro || v.statusId === statusFiltro) &&
                 (!tipoFiltro || v.tipoId === tipoFiltro) &&
                 (!busca ||
-                  `${v.codigo} ${v.placa} ${v.descricao}`.toLowerCase().includes(busca.toLowerCase())),
+                  `${v.codigo} ${v.placa} ${v.nome}`.toLowerCase().includes(busca.toLowerCase())),
             );
             return (
               <div className="space-y-3">
@@ -430,23 +422,22 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <CardTitle className="text-base">{v.descricao}</CardTitle>
+                          <CardTitle className="text-base">{v.nome}</CardTitle>
                           <BadgeAtivo ativo={v.ativo} />
                         </div>
                         <span className="text-xs text-muted-foreground">{v.status?.nome}</span>
                       </div>
                       <CardDescription className="text-sm">
-                        {v.codigo} · {v.placa}
+                        {v.placa}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <div className="text-xs text-muted-foreground">
                         {v.tipo && <span>Tipo: {v.tipo.nome} · </span>}
-                        {v.marca && <span>Marca: {v.marca.nome} · </span>}
+                        {v.fabricante && <span>Fabricante: {v.fabricante.nome} · </span>}
                         {v.modelo && <span>{v.modelo}</span>}
                         {v.ano && <span> · {v.ano}</span>}
-                        <span> · Odômetro: {v.odometroAtual.toLocaleString('pt-BR')} km</span>
-                        {v.responsavel && <span> · Resp.: {v.responsavel.nome}</span>}
+                        <span> · Odômetro: {formatarKm(v.odometroAtual)} km</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Button type="button" variant="outline" size="sm" onClick={() => comecarEdicao(v)}>Editar</Button>

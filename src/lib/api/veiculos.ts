@@ -5,7 +5,7 @@ export interface VeiculoItem {
   id: number;
   codigo: string;
   placa: string;
-  descricao: string;
+  nome: string;
   modelo: string | null;
   ano: number | null;
   combustivel: string;
@@ -21,6 +21,8 @@ export interface VeiculoItem {
   status?: LookupItem;
   responsavelId: number | null;
   responsavel?: { id: number; nome: string } | null;
+  fabricanteId?: number | null;
+  fabricante?: LookupItem | null;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -29,7 +31,7 @@ export interface VeiculoItem {
 export interface VeiculoInput {
   codigo: string;
   placa: string;
-  descricao: string;
+  nome: string;
   modelo?: string;
   ano?: number;
   combustivel?: string;
@@ -40,6 +42,7 @@ export interface VeiculoInput {
   tipoId: number;
   statusId: number;
   responsavelId?: number;
+  fabricanteId?: number;
   ativo?: boolean;
 }
 
@@ -52,13 +55,16 @@ export interface RegistroKmItem {
   observacao: string | null;
   registradoPorId: number | null;
   registradoPor?: { id: number; nome: string } | null;
+  colaboradorId: number | null;
+  colaborador?: { id: number; nome: string } | null;
   veiculo?: { id: number; codigo: string; placa: string };
 }
 
 export interface RegistroKmInput {
   data?: string;
-  kmPercorrido: number;
+  odometro: number;
   observacao?: string;
+  colaboradorId?: number;
 }
 
 export interface AbastecimentoItem {
@@ -75,7 +81,7 @@ export interface AbastecimentoItem {
   fornecedor?: LookupItem | null;
   registradoPorId: number | null;
   registradoPor?: { id: number; nome: string } | null;
-  veiculo?: { id: number; codigo: string; placa: string };
+  veiculo?: { id: number; codigo: string; nome: string; placa: string };
 }
 
 export interface AbastecimentoInput {
@@ -100,7 +106,7 @@ export interface ManutencaoVeiculoItem {
   proximaManutencao: string | null;
   status: string;
   responsavelManutencaoId: number | null;
-  veiculo?: { id: number; codigo: string; placa: string };
+  veiculo?: { id: number; codigo: string; nome: string; placa: string };
   tipo?: LookupItem | null;
   responsavelManutencao?: { id: number; nome: string } | null;
 }
@@ -129,6 +135,7 @@ export interface AnalisesFrota {
   veiculosSemKm: {
     id: number;
     codigo: string;
+    nome: string;
     placa: string;
     ultimoRegistro: string | null;
   }[];
@@ -146,7 +153,7 @@ export interface VeiculoLookups {
 }
 
 export interface ManutencoesVeiculosLookups {
-  veiculos: { id: number; codigo: string; placa: string }[];
+  veiculos: { id: number; codigo: string; nome: string; placa: string }[];
   tiposManutencao: LookupItem[];
   responsaveis: { id: number; nome: string }[];
 }

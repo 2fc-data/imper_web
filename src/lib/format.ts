@@ -17,6 +17,29 @@ export function brl(v: number | string | null | undefined): string {
   });
 }
 
+/**
+ * Extrai o valor numérico de texto digitado em campo de moeda.
+ * Aceita "1.600,00", "1600,00", "1600" → 1600. Retorna undefined se vazio.
+ */
+export function parseMoedaInput(texto: string): number | undefined {
+  if (!texto.trim()) return undefined;
+  const limpo = texto.replace(/[^\d,.-]/g, '');
+  if (!limpo) return undefined;
+  const n = Number(limpo.replace(/\./g, '').replace(',', '.'));
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** Formata número para exibição em input de moeda (R$ 1.600,00). */
+export function formatarMoedaInput(v: number | undefined | null): string {
+  if (v === undefined || v === null || Number.isNaN(v)) return '';
+  return v.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 /** Normaliza telefone para formato wa.me (55 + dígitos). */
 export function telefoneWhatsApp(
   tel: string | null | undefined,

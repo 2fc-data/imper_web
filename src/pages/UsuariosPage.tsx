@@ -184,6 +184,8 @@ interface NovoUsuarioFormProps {
 }
 
 function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
+  const { user } = useAuth();
+  const podeAtivar = user?.permissoes.includes('ativar_usuario') ?? false;
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -196,6 +198,7 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
   const [saving, setSaving] = useState(false);
 
   const [cpfCnpj, setCpfCnpj] = useState('');
+  const [rg, setRg] = useState('');
   const [cep, setCep] = useState('');
   const [endereco, setEndereco] = useState('');
   const [bairro, setBairro] = useState('');
@@ -204,6 +207,7 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
   const [numero, setNumero] = useState('');
   const [complemento, setComplemento] = useState('');
   const [cepValido, setCepValido] = useState(false);
+  const [ativo, setAtivo] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -235,7 +239,9 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
         telefone: telefone || undefined,
         papelIds,
         cargoId: cargoId ?? undefined,
+        ativo,
         cpfCnpj: cpfCnpj || undefined,
+        rg: rg.trim() || undefined,
         cep: cep || undefined,
         endereco: endereco || undefined,
         bairro: bairro || undefined,
@@ -344,6 +350,18 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
                   name="cpfCnpj_novo"
                   value={cpfCnpj}
                   onChange={setCpfCnpj}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rg_novo">RG</Label>
+                <Input
+                  id="rg_novo"
+                  name="rg_novo"
+                  value={rg}
+                  onChange={(e) => setRg(e.target.value)}
+                  maxLength={20}
                   disabled={saving}
                 />
               </div>
@@ -473,6 +491,26 @@ function NovoUsuarioForm({ onVoltar, onCriado }: NovoUsuarioFormProps) {
               </div>
             </div>
 
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="novo-ativo"
+                checked={ativo}
+                onChange={(e) => setAtivo(e.target.checked)}
+                disabled={saving || !podeAtivar}
+                className="h-4 w-4 rounded border-input"
+              />
+              <Label htmlFor="novo-ativo" className="font-normal">
+                Ativo
+              </Label>
+            </div>
+            {!podeAtivar && (
+              <p className="text-xs text-muted-foreground">
+                Sem a permissão &quot;ativar_usuario&quot; — o usuário será
+                criado inativo e deverá ser ativado por um administrador.
+              </p>
+            )}
+
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -506,9 +544,13 @@ function ModalEditarUsuario({
   onFechar: () => void;
   onSalvo: () => void;
 }) {
+  const { user } = useAuth();
+  const podeAtivar = user?.permissoes.includes('ativar_usuario') ?? false;
   const [nome, setNome] = useState(usuario.nome);
   const [email, setEmail] = useState(usuario.email ?? '');
   const [telefone, setTelefone] = useState(usuario.telefone ?? '');
+  const [cpfCnpj, setCpfCnpj] = useState(usuario.cpfCnpj ?? '');
+  const [rg, setRg] = useState(usuario.rg ?? '');
   const [papelIds, setPapelIds] = useState<number[]>(
     usuario.papeis?.map((p) => p.id) ?? [],
   );
@@ -543,6 +585,8 @@ function ModalEditarUsuario({
         nome: nome.trim(),
         email: email.trim() || undefined,
         telefone: telefone.trim() || undefined,
+        cpfCnpj: cpfCnpj.trim(),
+        rg: rg.trim(),
         papelIds,
         cargoId: cargoId ?? null,
         ativo,
@@ -569,7 +613,7 @@ function ModalEditarUsuario({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <form
         onSubmit={handleSalvar}
-        className="w-full max-w-lg space-y-4 rounded-xl bg-background p-6 shadow-xl border"
+        className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-xl bg-background p-6 shadow-xl border"
       >
         <h3 className="text-lg font-bold">Editar Usuário</h3>
         {err && (
@@ -602,6 +646,27 @@ function ModalEditarUsuario({
             id="edit-email"
             value={email}
             onChange={setEmail}
+            disabled={saving}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-cpfCnpj">CPF/CNPJ</Label>
+          <CpfCnpjInput
+            id="edit-cpfCnpj"
+            name="cpfCnpj_edit"
+            value={cpfCnpj}
+            onChange={setCpfCnpj}
+            disabled={saving}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-rg">RG</Label>
+          <Input
+            id="edit-rg"
+            name="rg_edit"
+            value={rg}
+            onChange={(e) => setRg(e.target.value)}
+            maxLength={20}
             disabled={saving}
           />
         </div>
@@ -745,13 +810,19 @@ function ModalEditarUsuario({
             id="edit-ativo"
             checked={ativo}
             onChange={(e) => setAtivo(e.target.checked)}
-            disabled={saving}
+            disabled={saving || (!podeAtivar && !ativo)}
             className="h-4 w-4 rounded border-input"
           />
           <Label htmlFor="edit-ativo" className="font-normal">
             Ativo
           </Label>
         </div>
+        {!podeAtivar && (
+          <p className="text-xs text-muted-foreground">
+            Sem a permissão &quot;ativar_usuario&quot; — você pode desativar,
+            mas não reativar um usuário.
+          </p>
+        )}
         <div className="flex justify-end gap-2">
           <Button
             type="button"
@@ -1121,6 +1192,7 @@ export default function UsuariosPage({
                 <th className="px-4 py-3">Nome</th>
                 <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Telefone</th>
+                <th className="px-4 py-3">RG</th>
                 <th className="px-4 py-3">Perfil</th>
                 <th className="px-4 py-3">Cargo</th>
                 <th className="px-4 py-3">Criado em</th>
@@ -1131,7 +1203,7 @@ export default function UsuariosPage({
               {filtrados.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-muted-foreground"
                   >
                     Nenhum usuário encontrado.
@@ -1151,9 +1223,12 @@ export default function UsuariosPage({
                       <td className="px-4 py-3 text-muted-foreground">
                         {u.telefone ?? '—'}
                       </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {u.rg ?? '—'}
+                      </td>
                       <td className="px-4 py-3">
                         {podeDefinirPerfil ? (
-                          <div className="flex items-center gap-1">
+                          <div className="space-y-1">
                             <MultiSelectPapeis
                               papeis={papeis}
                               value={valorDe(u)}

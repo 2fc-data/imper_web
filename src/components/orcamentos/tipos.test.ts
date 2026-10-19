@@ -299,7 +299,7 @@ describe('validarPasso', () => {
     expect(diasDeValidade(d15)).toBe(15);
     expect(diasDeValidade(validadeDiasParaData(20))).toBe(20);
     expect(diasDeValidade(validadeDiasParaData(30))).toBe(30);
-    expect(diasDeValidade('2026-11-01')).toBeNull();
+    expect(diasDeValidade('2000-01-01')).toBeNull();
     expect(diasDeValidade('')).toBeNull();
     expect(dataBr('2026-10-01')).toBe('01/10/2026');
     expect(dataBr('')).toBe('—');

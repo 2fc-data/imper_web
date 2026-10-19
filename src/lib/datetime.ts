@@ -12,8 +12,32 @@ export function fromLocalDateTime(value: string): string | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
 }
 
+const CALENDARIO =
+  /^(\d{4}-\d{2}-\d{2})(?:T00:00:00(?:\.000)?(?:Z|[+-]\d{2}:\d{2}))?$/;
+
+export function toLocalDate(iso: string | null): string {
+  if (!iso) return '';
+  const calendario = CALENDARIO.exec(iso);
+  if (calendario) return calendario[1];
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function fromLocalDate(value: string): string | undefined {
+  const v = value.trim();
+  if (!v) return undefined;
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
+}
+
 export function formatarData(value: string | null): string {
   if (!value) return '—';
+  const calendario = CALENDARIO.exec(value);
+  if (calendario) {
+    const [ano, mes, dia] = calendario[1].split('-').map(Number);
+    return new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR');
+  }
   return new Date(value).toLocaleDateString('pt-BR');
 }
 

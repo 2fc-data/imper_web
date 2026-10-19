@@ -158,7 +158,7 @@ export function AdminSidebar({
   const { user } = useAuth();
 
   const defaultModo: MenuModo =
-    user?.papel === 'ADMIN' ? 'analitico' : 'operacional';
+    user?.papel === 'ADMINISTRATIVO' ? 'analitico' : 'operacional';
 
   const [menuAtivo, setMenuAtivo] = useState<MenuModo>(() => {
     const salvo = localStorage.getItem(STORAGE_KEY) as MenuModo | null;

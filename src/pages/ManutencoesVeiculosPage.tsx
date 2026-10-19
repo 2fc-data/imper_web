@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
+import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
 import {
   atualizarManutencaoVeiculo,
@@ -19,7 +20,7 @@ import {
   listarManutencoesVeiculos,
   type ManutencoesVeiculosLookups,
 } from '../lib/api';
-import { formatarData, formatarValor, fromLocalDateTime, toLocalDateTime } from '../lib/datetime';
+import { formatarData, formatarValor, fromLocalDate, toLocalDate } from '../lib/datetime';
 import { cn } from '../lib/utils';
 
 const selectClasses =
@@ -58,7 +59,7 @@ const emptyForm: ManutencaoVeiculoInput = {
   custoPecas: undefined,
   custoMaoDeObra: undefined,
   proximaManutencao: '',
-  status: 'PENDENTE',
+  status: '',
   responsavelManutencaoId: undefined,
 };
 
@@ -97,12 +98,12 @@ export default function ManutencoesVeiculosPage() {
     setForm({
       veiculoId: m.veiculoId,
       tipoId: m.tipoId,
-      data: toLocalDateTime(m.data),
+      data: toLocalDate(m.data),
       descricao: m.descricao,
       local: m.local ?? undefined,
       custoPecas: m.custoPecas,
       custoMaoDeObra: m.custoMaoDeObra,
-      proximaManutencao: toLocalDateTime(m.proximaManutencao),
+      proximaManutencao: toLocalDate(m.proximaManutencao),
       status: m.status,
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
     });
@@ -123,12 +124,14 @@ export default function ManutencoesVeiculosPage() {
       const payload: ManutencaoVeiculoInput = {
         veiculoId: form.veiculoId || 0,
         tipoId: form.tipoId || 0,
-        data: fromLocalDateTime(form.data) ?? new Date().toISOString(),
+        data: fromLocalDate(form.data) ?? new Date().toISOString(),
         descricao: form.descricao,
         local: form.local || undefined,
         custoPecas: form.custoPecas,
         custoMaoDeObra: form.custoMaoDeObra,
-        proximaManutencao: form.proximaManutencao ? fromLocalDateTime(form.proximaManutencao) : undefined,
+        proximaManutencao: form.proximaManutencao
+          ? fromLocalDate(form.proximaManutencao)
+          : undefined,
         status: form.status,
         responsavelManutencaoId: form.responsavelManutencaoId,
       };
@@ -179,6 +182,7 @@ export default function ManutencoesVeiculosPage() {
     return [
       m.descricao,
       m.veiculo?.codigo,
+      m.veiculo?.nome,
       m.veiculo?.placa,
       m.tipo?.nome,
       m.local,
@@ -211,7 +215,7 @@ export default function ManutencoesVeiculosPage() {
                 <option value="" disabled>Selecione o veículo...</option>
                 {(lookups?.veiculos ?? []).map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.codigo} — {v.placa}
+                    {v.nome} — {v.placa}
                   </option>
                 ))}
               </select>
@@ -235,7 +239,7 @@ export default function ManutencoesVeiculosPage() {
               <Label htmlFor="data">Data</Label>
               <Input
                 id="data"
-                type="datetime-local"
+                type="date"
                 required
                 value={form.data}
                 onChange={(e) => setForm({ ...form, data: e.target.value })}
@@ -245,10 +249,12 @@ export default function ManutencoesVeiculosPage() {
               <Label htmlFor="status">Status</Label>
               <select
                 id="status"
-                value={form.status ?? 'PENDENTE'}
+                required
+                value={form.status ?? ''}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
                 className={selectClasses}
               >
+                <option value="" disabled>Selecione o status</option>
                 {Object.entries(STATUS_LABEL).map(([key, label]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
@@ -256,65 +262,38 @@ export default function ManutencoesVeiculosPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="custoPecas">Custo peças (R$)</Label>
-              <Input
+              <InputMoeda
                 id="custoPecas"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                value={form.custoPecas ?? ''}
-                onChange={(e) => setForm({ ...form, custoPecas: e.target.value === '' ? undefined : Number(e.target.value) })}
+                value={form.custoPecas}
+                onChange={(v) => setForm({ ...form, custoPecas: v })}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="custoMaoDeObra">Custo mão de obra (R$)</Label>
-              <Input
+              <InputMoeda
                 id="custoMaoDeObra"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                value={form.custoMaoDeObra ?? ''}
-                onChange={(e) => setForm({ ...form, custoMaoDeObra: e.target.value === '' ? undefined : Number(e.target.value) })}
+                value={form.custoMaoDeObra}
+                onChange={(v) => setForm({ ...form, custoMaoDeObra: v })}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="proximaManutencao">Próxima manutenção</Label>
               <Input
                 id="proximaManutencao"
-                type="datetime-local"
+                type="date"
                 value={form.proximaManutencao ?? ''}
                 onChange={(e) => setForm({ ...form, proximaManutencao: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="responsavelManutencaoId">Responsável</Label>
-              <select
-                id="responsavelManutencaoId"
-                value={form.responsavelManutencaoId || ''}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    responsavelManutencaoId: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                className={selectClasses}
-              >
-                <option value="">Sem responsável</option>
-                {(lookups?.responsaveis ?? []).map((u) => (
-                  <option key={u.id} value={u.id}>{u.nome}</option>
-                ))}
-              </select>
+              <Label htmlFor="local">Local da manutenção</Label>
+              <Input
+                id="local"
+                placeholder="Ex.: Oficina Central, Oficina Parceira..."
+                value={form.local ?? ''}
+                onChange={(e) => setForm({ ...form, local: e.target.value })}
+              />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="local">Local da manutenção</Label>
-            <Input
-              id="local"
-              placeholder="Ex.: Oficina Central, Oficina Parceira..."
-              value={form.local ?? ''}
-              onChange={(e) => setForm({ ...form, local: e.target.value })}
-            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="descricao">Descrição</Label>
@@ -386,7 +365,7 @@ export default function ManutencoesVeiculosPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <CardTitle className="text-base">
-                    {m.veiculo ? `${m.veiculo.codigo} — ${m.veiculo.placa}` : `Veículo #${m.veiculoId}`}
+                    {m.veiculo ? `${m.veiculo.nome} — ${m.veiculo.placa}` : `Veículo #${m.veiculoId}`}
                   </CardTitle>
                   <BadgeStatus status={m.status} />
                 </div>
@@ -405,7 +384,7 @@ export default function ManutencoesVeiculosPage() {
                   <span> · Próx.: {formatarData(m.proximaManutencao)}</span>
                 )}
                 {m.responsavelManutencao && (
-                  <span> · Resp.: {m.responsavelManutencao.nome}</span>
+                  <span> · Motorista: {m.responsavelManutencao.nome}</span>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
