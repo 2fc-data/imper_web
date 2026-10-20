@@ -20,6 +20,7 @@ import {
   RbacSidebar,
   RetiradaDeItensSidebar,
   ServicosSidebar,
+  SupermercadosSidebar,
   UsuariosSidebar,
   VocabularioSidebar,
 } from './components/layout/sidebarContent';
@@ -62,6 +63,9 @@ const LandingContent = lazy(() => import('./pages/LandingContent'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const ManutencoesAdminPage = lazy(() => import('./pages/ManutencoesAdminPage'));
 const MateriaisAdminPage = lazy(() => import('./pages/MateriaisAdminPage'));
+const SupermercadosAdminPage = lazy(
+  () => import('./pages/SupermercadosAdminPage'),
+);
 const OrcamentoPage = lazy(() => import('./pages/OrcamentoPage'));
 const OrcamentosAdminPage = lazy(() =>
   import('./pages/OrcamentosAdminPage').then((m) => ({
@@ -460,6 +464,23 @@ function MateriaisRoute() {
   );
 }
 
+function SupermercadosRoute() {
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'lista' | 'novo'
+  >('lista');
+
+  return (
+    <ProtectedLayout
+      requiredPermissions={['gerenciar_estoque']}
+      sidebar={
+        <SupermercadosSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+      }
+    >
+      <SupermercadosAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+    </ProtectedLayout>
+  );
+}
+
 function CatalogosRoute() {
   return (
     <ProtectedLayout
@@ -693,6 +714,7 @@ export default function App() {
           />
           <Route element={<EpisRoute />} path="/epis" />
           <Route element={<MateriaisRoute />} path="/materiais" />
+          <Route element={<SupermercadosRoute />} path="/supermercados" />
           <Route element={<VocabularioRoute />} path="/vocabulario" />
           <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
           <Route element={<ExecucaoDashboardRoute />} path="/execucao" />

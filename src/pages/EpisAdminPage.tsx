@@ -18,6 +18,7 @@ import {
   excluirEpi,
   listarEpis,
   listarLookupsEpis,
+  obterProximoCodigoEpi,
 } from '../lib/api';
 import { fromLocalDateTime, toLocalDateTime } from '../lib/datetime';
 import { cn } from '../lib/utils';
@@ -48,7 +49,6 @@ const emptyForm: ItemFormData = {
   codigo: '',
   nome: '',
   numeroCa: '',
-  numeroPatrimonio: '',
   dataValidade: '',
   quantidade: 0,
   quantidadeMinima: 0,
@@ -207,13 +207,27 @@ export default function EpisAdminPage({
     carregarTodos();
   }, [carregarTodos]);
 
+  useEffect(() => {
+    if (editando) return;
+    let cancelado = false;
+    obterProximoCodigoEpi()
+      .then((r) => {
+        if (!cancelado) setForm((prev) => ({ ...prev, codigo: r.codigo }));
+      })
+      .catch(() => {
+        /* silencioso */
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [editando]);
+
   function comecarEdicao(e: EpiItem) {
     setEditando(e);
     setForm({
       codigo: e.codigo,
       nome: e.nome,
       numeroCa: e.numeroCa ?? '',
-      numeroPatrimonio: e.numeroPatrimonio ?? '',
       dataValidade: toLocalDateTime(e.dataValidade),
       custoUnitario:
         e.custoUnitario == null ? undefined : Number(e.custoUnitario),
@@ -246,7 +260,6 @@ export default function EpisAdminPage({
         codigo: form.codigo,
         nome: form.nome ?? '',
         numeroCa: form.numeroCa || undefined,
-        numeroPatrimonio: form.numeroPatrimonio || undefined,
         dataValidade: fromLocalDateTime(form.dataValidade ?? ''),
         custoUnitario: form.custoUnitario,
         quantidade: form.quantidade ?? 0,
@@ -448,7 +461,7 @@ export default function EpisAdminPage({
                 </span>
               </div>
               <CardDescription className="text-sm">
-                CA: {e.numeroCa ?? '—'} · Patrimônio: {e.numeroPatrimonio ?? '—'} · Estoque: {e.quantidade}{' '}
+                CA: {e.numeroCa ?? '—'} · Estoque: {e.quantidade}{' '}
                 {e.quantidadeMinima !== null && `(mín. ${e.quantidadeMinima})`}
               </CardDescription>
             </CardHeader>
@@ -486,7 +499,7 @@ export default function EpisAdminPage({
                         : 'Ativar'}
                   </Button>
                   {confirmandoExclusao === e.id ? (
-                    <>
+                    <div className="flex items-center gap-1">
                       <Button
                         type="button"
                         variant="destructive"
@@ -494,24 +507,24 @@ export default function EpisAdminPage({
                         disabled={excluindo === e.id}
                         onClick={() => handleExcluir(e.id)}
                       >
-                        {excluindo === e.id
-                          ? 'Excluindo...'
-                          : 'Confirmar exclusão'}
+                        {excluindo === e.id ? 'Excluindo...' : 'Confirmar'}
                       </Button>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
+                        disabled={excluindo === e.id}
                         onClick={() => setConfirmandoExclusao(null)}
                       >
                         Cancelar
                       </Button>
-                    </>
+                    </div>
                   ) : (
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
+                      className="text-destructive hover:bg-destructive/10"
                       onClick={() => setConfirmandoExclusao(e.id)}
                     >
                       Excluir

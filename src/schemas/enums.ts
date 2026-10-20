@@ -56,7 +56,7 @@ export type StatusManutencao =
   | 'CONCLUIDA'
   | 'CANCELADA';
 
-export type TipoMaterial = 'MATERIAL' | 'EQUIPAMENTO';
+export type TipoMaterial = 'MATERIAL' | 'EQUIPAMENTO' | 'SUPERMERCADO';
 
 export type StatusMaterial = 'ATIVO' | 'INATIVO';
 

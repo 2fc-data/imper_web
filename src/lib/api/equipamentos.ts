@@ -86,6 +86,12 @@ export async function listarEquipamentos(params?: {
   );
 }
 
+export async function obterProximoCodigoEquipamento(): Promise<{
+  codigo: string;
+}> {
+  return api.get<{ codigo: string }>('/equipamentos/proximo-codigo');
+}
+
 export async function criarEquipamento(
   input: EquipamentoInput,
 ): Promise<EquipamentoItem> {

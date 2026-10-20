@@ -71,6 +71,10 @@ export async function listarEpis(params?: {
   return api.get<EpiItem[]>(`/epis${queryStr ? `?${queryStr}` : ''}`);
 }
 
+export async function obterProximoCodigoEpi(): Promise<{ codigo: string }> {
+  return api.get<{ codigo: string }>('/epis/proximo-codigo');
+}
+
 export async function criarEpi(input: EpiInput): Promise<EpiItem> {
   return api.post<EpiItem>('/epis', input);
 }

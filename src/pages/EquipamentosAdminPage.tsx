@@ -18,6 +18,7 @@ import {
   excluirEquipamento,
   listarEquipamentos,
   listarLookupsEquipamentos,
+  obterProximoCodigoEquipamento,
 } from '../lib/api';
 import {
   formatarData,
@@ -219,6 +220,21 @@ export default function EquipamentosAdminPage({
   useEffect(() => {
     carregarTodos();
   }, [carregarTodos]);
+
+  useEffect(() => {
+    if (editando) return;
+    let cancelado = false;
+    obterProximoCodigoEquipamento()
+      .then((r) => {
+        if (!cancelado) setForm((prev) => ({ ...prev, codigo: r.codigo }));
+      })
+      .catch(() => {
+        /* silencioso */
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [editando]);
 
   async function recarregarEquipamentos() {
     try {
@@ -431,6 +447,9 @@ export default function EquipamentosAdminPage({
                         <CardHeader className="pb-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground">
+                                {e.codigo}
+                              </span>
                               <CardTitle className="text-base">
                                 {e.descricao}
                               </CardTitle>
@@ -441,82 +460,86 @@ export default function EquipamentosAdminPage({
                             </span>
                           </div>
                           <CardDescription className="text-sm">
-                            {e.numeroPatrimonio || ''}
+                            Patrimônio: {e.numeroPatrimonio || '—'}
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                          <div className="text-xs text-muted-foreground">
-                            {e.marca && <span>Marca: {e.marca.nome} · </span>}
-                            {e.categoria && <span>{e.categoria.nome}</span>}
-                            {e.subcategoria && (
-                              <span> / {e.subcategoria.nome}</span>
-                            )}
-                            {e.localizacao && (
-                              <span> · {e.localizacao.nome}</span>
-                            )}
-                            {e.estadoConservacao && (
-                              <span> · {e.estadoConservacao.nome}</span>
-                            )}
-                            {e.dataAquisicao && (
-                              <span>
-                                {' '}
-                                · Aquisição: {formatarData(e.dataAquisicao)}
-                              </span>
-                            )}
-                            {e.valorAquisicao != null && (
-                              <span> · {formatarValor(e.valorAquisicao)}</span>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => comecarEdicao(e)}
-                            >
-                              Editar
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={excluindo === e.id}
-                              onClick={() => handleToggleAtivo(e)}
-                            >
-                              {e.ativo ? 'Desativar' : 'Ativar'}
-                            </Button>
-                            {confirmandoExclusao === e.id ? (
-                              <>
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={excluindo === e.id}
-                                  onClick={() => handleExcluir(e.id)}
-                                >
-                                  {excluindo === e.id
-                                    ? 'Excluindo...'
-                                    : 'Confirmar exclusão'}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setConfirmandoExclusao(null)}
-                                >
-                                  Cancelar
-                                </Button>
-                              </>
-                            ) : (
+                        <CardContent>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-xs text-muted-foreground">
+                              {e.marca && <span>Marca: {e.marca.nome} · </span>}
+                              {e.categoria && <span>{e.categoria.nome}</span>}
+                              {e.subcategoria && (
+                                <span> / {e.subcategoria.nome}</span>
+                              )}
+                              {e.localizacao && (
+                                <span> · {e.localizacao.nome}</span>
+                              )}
+                              {e.estadoConservacao && (
+                                <span> · {e.estadoConservacao.nome}</span>
+                              )}
+                              {e.dataAquisicao && (
+                                <span>
+                                  {' '}
+                                  · Aquisição: {formatarData(e.dataAquisicao)}
+                                </span>
+                              )}
+                              {e.valorAquisicao != null && (
+                                <span> · {formatarValor(e.valorAquisicao)}</span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                onClick={() => setConfirmandoExclusao(e.id)}
+                                onClick={() => comecarEdicao(e)}
                               >
-                                Excluir
+                                Editar
                               </Button>
-                            )}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={excluindo === e.id}
+                                onClick={() => handleToggleAtivo(e)}
+                              >
+                                {e.ativo ? 'Desativar' : 'Ativar'}
+                              </Button>
+                              {confirmandoExclusao === e.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={excluindo === e.id}
+                                    onClick={() => handleExcluir(e.id)}
+                                  >
+                                    {excluindo === e.id
+                                      ? 'Excluindo...'
+                                      : 'Confirmar'}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={excluindo === e.id}
+                                    onClick={() => setConfirmandoExclusao(null)}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-destructive hover:bg-destructive/10"
+                                  onClick={() => setConfirmandoExclusao(e.id)}
+                                >
+                                  Excluir
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>

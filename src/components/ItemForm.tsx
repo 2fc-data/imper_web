@@ -96,10 +96,11 @@ export function ItemForm({
               <Input
                 id="codigo"
                 required
-                minLength={2}
-                placeholder={isEpi ? 'EPI-001' : 'EQ-001'}
+                readOnly
+                placeholder={isEpi ? 'EPI-001' : 'EQP-001'}
                 value={form.codigo}
                 onChange={(e) => setForm({ ...form, codigo: e.target.value })}
+                className="bg-muted/50 cursor-not-allowed"
               />
             </div>
 
@@ -131,20 +132,22 @@ export function ItemForm({
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label htmlFor="numeroPatrimonio">Nº de patrimônio</Label>
-              <Input
-                id="numeroPatrimonio"
-                placeholder="Opcional"
-                value={form.numeroPatrimonio ?? ''}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    numeroPatrimonio: e.target.value || undefined,
-                  })
-                }
-              />
-            </div>
+            {!isEpi && (
+              <div className="space-y-1.5">
+                <Label htmlFor="numeroPatrimonio">Nº de patrimônio</Label>
+                <Input
+                  id="numeroPatrimonio"
+                  placeholder="Opcional"
+                  value={form.numeroPatrimonio ?? ''}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      numeroPatrimonio: e.target.value || undefined,
+                    })
+                  }
+                />
+              </div>
+            )}
 
             {!isEpi && (
               <div className="space-y-1.5">

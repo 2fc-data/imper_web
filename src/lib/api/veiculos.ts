@@ -81,6 +81,8 @@ export interface AbastecimentoItem {
   fornecedor?: LookupItem | null;
   registradoPorId: number | null;
   registradoPor?: { id: number; nome: string } | null;
+  motoristaId: number | null;
+  motorista?: { id: number; nome: string } | null;
   veiculo?: { id: number; codigo: string; nome: string; placa: string };
 }
 
@@ -91,6 +93,7 @@ export interface AbastecimentoInput {
   litros: number;
   valorTotal: number;
   fornecedorId?: number;
+  motoristaId: number;
 }
 
 export interface ManutencaoVeiculoItem {
@@ -150,6 +153,7 @@ export interface VeiculoLookups {
   cores: LookupItem[];
   tiposManutencao: LookupItem[];
   responsaveis: { id: number; nome: string }[];
+  motoristas: { id: number; nome: string }[];
 }
 
 export interface ManutencoesVeiculosLookups {

@@ -408,7 +408,9 @@ export default function ManutencoesAdminPage({
                 </option>
                 {equipamentos.map((eq) => (
                   <option key={eq.id} value={eq.id}>
-                    {eq.codigo} — {eq.descricao}
+                    {eq.numeroPatrimonio
+                      ? `${eq.numeroPatrimonio} — ${eq.descricao}`
+                      : eq.descricao}
                   </option>
                 ))}
               </select>
@@ -555,7 +557,9 @@ export default function ManutencoesAdminPage({
                 </option>
                 {equipamentos.map((eq) => (
                   <option key={eq.id} value={eq.id}>
-                    {eq.codigo} — {eq.descricao}
+                    {eq.numeroPatrimonio
+                      ? `${eq.numeroPatrimonio} — ${eq.descricao}`
+                      : eq.descricao}
                   </option>
                 ))}
               </select>
@@ -777,8 +781,8 @@ export default function ManutencoesAdminPage({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <CardTitle className="text-base">
-                    {m.equipamento?.codigo ??
-                      m.equipamento?.numeroPatrimonio ??
+                    {m.equipamento?.numeroPatrimonio ??
+                      m.equipamento?.codigo ??
                       '—'}{' '}
                     — {m.equipamento?.descricao ?? `#${m.equipamentoId}`}
                   </CardTitle>

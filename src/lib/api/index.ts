@@ -255,6 +255,7 @@ export type {
 // Equipamentos
 export {
   listarEquipamentos,
+  obterProximoCodigoEquipamento,
   criarEquipamento,
   atualizarEquipamento,
   excluirEquipamento,
@@ -268,6 +269,7 @@ export type {
 // EPIs
 export {
   listarEpis,
+  obterProximoCodigoEpi,
   criarEpi,
   atualizarEpi,
   excluirEpi,

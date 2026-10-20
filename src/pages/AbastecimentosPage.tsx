@@ -12,6 +12,7 @@ import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
 import {
   atualizarAbastecimento,
+  buscarVeiculoLookups,
   criarAbastecimento,
   type AbastecimentoInput,
   type AbastecimentoItem,
@@ -31,10 +32,12 @@ const emptyForm: AbastecimentoInput = {
   litros: 0,
   valorTotal: 0,
   odometro: undefined,
+  motoristaId: 0,
 };
 
 export default function AbastecimentosPage() {
   const [veiculos, setVeiculos] = useState<VeiculoItem[]>([]);
+  const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([]);
   const [abastecimentos, setAbastecimentos] = useState<AbastecimentoItem[]>([]);
   const [veiculoFiltro, setVeiculoFiltro] = useState<number | ''>('');
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +50,13 @@ export default function AbastecimentosPage() {
   const carregar = useCallback(async () => {
     setError(null);
     try {
-      const [veics, abasts] = await Promise.all([
+      const [veics, abasts, lookups] = await Promise.all([
         listarVeiculos(),
         veiculoFiltro === '' ? listarAbastecimentos() : listarAbastecimentos({ veiculoId: veiculoFiltro }),
+        buscarVeiculoLookups(),
       ]);
       setVeiculos(veics.filter((v) => v.ativo));
+      setMotoristas(lookups.motoristas);
       setAbastecimentos(abasts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar abastecimentos');
@@ -69,6 +74,7 @@ export default function AbastecimentosPage() {
       litros: a.litros,
       valorTotal: a.valorTotal,
       odometro: a.odometro,
+      motoristaId: a.motoristaId || 0,
     });
     setError(null);
   }
@@ -89,6 +95,7 @@ export default function AbastecimentosPage() {
         litros: form.litros,
         valorTotal: form.valorTotal,
         odometro: form.odometro,
+        motoristaId: form.motoristaId || 0,
       };
       if (editando) {
         const atualizado = await atualizarAbastecimento(editando.id, payload);
@@ -155,6 +162,23 @@ export default function AbastecimentosPage() {
                 {veiculos.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.nome} — {v.placa}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="motoristaId">Motorista</Label>
+              <select
+                id="motoristaId"
+                required
+                value={form.motoristaId || ''}
+                onChange={(e) => setForm({ ...form, motoristaId: Number(e.target.value) })}
+                className={selectClasses}
+              >
+                <option value="" disabled>Selecione o motorista...</option>
+                {motoristas.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.nome}
                   </option>
                 ))}
               </select>
@@ -270,6 +294,7 @@ export default function AbastecimentosPage() {
                     )}
                     <span> · Odômetro: {formatarKm(a.odometro)} km</span>
                     {a.fornecedor && <span> · {a.fornecedor.nome}</span>}
+                    {a.motorista && <span> · Motorista: {a.motorista.nome}</span>}
                     {a.registradoPor && (
                       <span className="text-xs"> · por {a.registradoPor.nome}</span>
                     )}
