@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { RecordsFilter } from '../components/RecordsFilter';
+import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -294,8 +295,8 @@ export default function SupermercadosAdminPage({
   viewAtiva = 'lista',
   onNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista' | 'novo';
-  onNavegar?: (v: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar?: (v: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   const [itens, setItens] = useState<MaterialItem[]>([]);
   const [lookups, setLookups] = useState<MaterialLookups | null>(null);
@@ -430,6 +431,10 @@ export default function SupermercadosAdminPage({
       ? m.nome.toLowerCase().includes(busca.trim().toLowerCase())
       : true,
   );
+
+  if (viewAtiva === 'compras') {
+    return <ListaComprasView tipo="SUPERMERCADO" titulo="Supermercados" />;
+  }
 
   if (viewAtiva === 'analises') {
     return (

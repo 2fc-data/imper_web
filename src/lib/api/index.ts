@@ -308,6 +308,23 @@ export type {
   MaterialLookups,
 } from './materiais.js';
 
+// Listas de compras
+export {
+  obterListaCompras,
+  salvarItensListaCompras,
+  enviarListaCompras,
+  aprovarListaCompras,
+  recusarListaCompras,
+  recusarItemListaCompras,
+  reverterItemListaCompras,
+  comprarItemListaCompras,
+} from './listas-compras.js';
+export type {
+  ListaCompraDto,
+  ListaCompraItemDto,
+  OpcaoCatalogo,
+} from './listas-compras.js';
+
 // RBAC
 export {
   listarPapeisRbac,

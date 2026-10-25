@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { RecordsFilter } from '../components/RecordsFilter';
+import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -300,8 +301,8 @@ export default function MateriaisAdminPage({
   viewAtiva = 'lista',
   onNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista' | 'novo';
-  onNavegar?: (v: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar?: (v: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   const [materiais, setMateriais] = useState<MaterialItem[]>([]);
   const [lookups, setLookups] = useState<MaterialLookups | null>(null);
@@ -440,6 +441,10 @@ export default function MateriaisAdminPage({
           .includes(busca.trim().toLowerCase())
       : true;
   });
+
+  if (viewAtiva === 'compras') {
+    return <ListaComprasView tipo="MATERIAL" titulo="Materiais" />;
+  }
 
   if (viewAtiva === 'analises') {
     return (

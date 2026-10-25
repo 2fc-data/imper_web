@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { ItemForm, type ItemFormData } from '../components/ItemForm';
 import { RecordsFilter } from '../components/RecordsFilter';
+import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -171,8 +172,8 @@ export default function EpisAdminPage({
   viewAtiva = 'lista',
   onNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista' | 'novo';
-  onNavegar?: (v: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar?: (v: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   const [epis, setEpis] = useState<EpiItem[]>([]);
   const [lookups, setLookups] = useState<EpiLookups | null>(null);
@@ -334,6 +335,10 @@ export default function EpisAdminPage({
   });
 
   // --- Views ---
+
+  if (viewAtiva === 'compras') {
+    return <ListaComprasView tipo="EPI" titulo="EPIs" />;
+  }
 
   if (viewAtiva === 'analises') {
     return (

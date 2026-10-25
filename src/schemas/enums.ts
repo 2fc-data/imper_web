@@ -61,3 +61,17 @@ export type TipoMaterial = 'MATERIAL' | 'EQUIPAMENTO' | 'SUPERMERCADO';
 export type StatusMaterial = 'ATIVO' | 'INATIVO';
 
 export type TipoMovimento = 'ENTRADA' | 'SAIDA';
+
+export type SetorCompra = 'LOJA' | 'ALMOXARIFADO';
+export type TipoListaCompra =
+  | 'SUPERMERCADO'
+  | 'MATERIAL'
+  | 'EPI'
+  | 'EQUIPAMENTO';
+export type StatusListaCompra =
+  | 'ABERTA'
+  | 'ENVIADA'
+  | 'APROVADA'
+  | 'RECUSADA'
+  | 'COMPRADA';
+export type StatusItemLista = 'PENDENTE' | 'RECUSADO' | 'COMPRADO';
