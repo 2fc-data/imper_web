@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { ItemForm, type ItemFormData } from '../components/ItemForm';
 import { RecordsFilter } from '../components/RecordsFilter';
+import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -43,7 +44,7 @@ function BadgeAtivoEquipamento({ ativo }: { ativo: boolean }) {
   );
 }
 
-type ViewAtiva = 'analises' | 'lista' | 'novo';
+type ViewAtiva = 'analises' | 'lista' | 'novo' | 'compras';
 
 interface EquipamentosAdminPageProps {
   viewAtiva: ViewAtiva;
@@ -365,6 +366,10 @@ export default function EquipamentosAdminPage({
       }}
     />
   );
+
+  if (viewAtiva === 'compras') {
+    return <ListaComprasView tipo="EQUIPAMENTO" titulo="Equipamentos" />;
+  }
 
   return (
     <div className="space-y-6">

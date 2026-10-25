@@ -48,6 +48,9 @@ const MAPA_ROTULOS: Record<string, string> = {
   CONFIRMADO: 'Confirmado',
   CANCELADO: 'Cancelado',
   CANCELADA: 'Cancelada',
+  ABERTA: 'Aberta',
+  COMPRADA: 'Comprada',
+  COMPRADO: 'Comprado',
 };
 
 const MAPA_ESTILOS: Record<string, string> = {
@@ -76,6 +79,9 @@ const MAPA_ESTILOS: Record<string, string> = {
   CONFIRMADO: 'bg-success/10 text-success dark:bg-success/20 border-success/30 ring-1 ring-success/20',
   CANCELADO: 'bg-destructive/10 text-destructive dark:bg-destructive/20 border-destructive/30 ring-1 ring-destructive/20',
   CANCELADA: 'bg-destructive/10 text-destructive dark:bg-destructive/20 border-destructive/30 ring-1 ring-destructive/20',
+  ABERTA: 'bg-muted/80 text-muted-foreground border-border/60',
+  COMPRADA: 'bg-success/10 text-success dark:bg-success/20 border-success/30 ring-1 ring-success/20',
+  COMPRADO: 'bg-success/10 text-success dark:bg-success/20 border-success/30 ring-1 ring-success/20',
 };
 
 const STATUS_COM_PULSO = ['NOVO', 'EM_ANDAMENTO', 'AGENDADA', 'AGENDADO', 'AGUARDANDO_APROVACAO'];

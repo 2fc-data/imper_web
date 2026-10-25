@@ -233,8 +233,8 @@ export function EquipamentosSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   return (
     <>
@@ -258,6 +258,13 @@ export function EquipamentosSidebar({
         icon={icone('M12 4v16m8-8H4')}
       >
         Novo Equipamento
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'compras'}
+        onClick={() => onNavegar('compras')}
+        icon={icone('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z')}
+      >
+        Compras
       </SidebarButton>
       <SidebarNote>
         Cadastro e patrimônio dos equipamentos.
@@ -307,8 +314,8 @@ export function EpisSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   return (
     <>
@@ -332,6 +339,13 @@ export function EpisSidebar({
         icon={icone('M12 4v16m8-8H4')}
       >
         Novo EPI
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'compras'}
+        onClick={() => onNavegar('compras')}
+        icon={icone('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z')}
+      >
+        Compras
       </SidebarButton>
       <SidebarNote>
         Cadastro e gestão de equipamentos de proteção individual.
@@ -511,8 +525,8 @@ export function MateriaisSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   return (
     <>
@@ -537,6 +551,13 @@ export function MateriaisSidebar({
       >
         Novo Material
       </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'compras'}
+        onClick={() => onNavegar('compras')}
+        icon={icone('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z')}
+      >
+        Compras
+      </SidebarButton>
       <SidebarNote>
         Cadastro, saldo e movimentação (entrada/saída) do estoque.
       </SidebarNote>
@@ -548,8 +569,8 @@ export function SupermercadosSidebar({
   viewAtiva,
   onNavegar,
 }: {
-  viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
+  viewAtiva: 'analises' | 'lista' | 'novo' | 'compras';
+  onNavegar: (view: 'analises' | 'lista' | 'novo' | 'compras') => void;
 }) {
   return (
     <>
@@ -573,6 +594,13 @@ export function SupermercadosSidebar({
         icon={icone('M12 4v16m8-8H4')}
       >
         Novo Item
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'compras'}
+        onClick={() => onNavegar('compras')}
+        icon={icone('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z')}
+      >
+        Compras
       </SidebarButton>
       <SidebarNote>
         Itens de supermercado: cadastro, saldo e movimentação de estoque.

@@ -350,13 +350,17 @@ function OrcamentosRoute() {
 }
 
 function EquipamentosRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    'lista',
-  );
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'lista' | 'novo' | 'compras'
+  >('lista');
 
   return (
     <ProtectedLayout
-      requiredPermissions={['gerenciar_estoque', 'gerenciar_equipamentos']}
+      requiredPermissions={[
+        'gerenciar_estoque',
+        'gerenciar_equipamentos',
+        'criar_lista_compras',
+      ]}
       sidebar={
         <EquipamentosSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
       }
@@ -429,13 +433,17 @@ function ManutencoesVeiculosRoute() {
 }
 
 function EpisRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
-    'lista',
-  );
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'lista' | 'novo' | 'compras'
+  >('lista');
 
   return (
     <ProtectedLayout
-      requiredPermissions={['gerenciar_epis', 'gerenciar_estoque']}
+      requiredPermissions={[
+        'gerenciar_epis',
+        'gerenciar_estoque',
+        'criar_lista_compras',
+      ]}
       sidebar={<EpisSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />}
     >
       <EpisAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
@@ -445,7 +453,7 @@ function EpisRoute() {
 
 function MateriaisRoute() {
   const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'lista' | 'novo'
+    'analises' | 'lista' | 'novo' | 'compras'
   >('lista');
 
   return (
@@ -454,6 +462,7 @@ function MateriaisRoute() {
         'gerenciar_estoque',
         'criar_material',
         'entrada_estoque',
+        'criar_lista_compras',
       ]}
       sidebar={
         <MateriaisSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
@@ -466,12 +475,12 @@ function MateriaisRoute() {
 
 function SupermercadosRoute() {
   const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'lista' | 'novo'
+    'analises' | 'lista' | 'novo' | 'compras'
   >('lista');
 
   return (
     <ProtectedLayout
-      requiredPermissions={['gerenciar_estoque']}
+      requiredPermissions={['gerenciar_estoque', 'criar_lista_compras']}
       sidebar={
         <SupermercadosSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
       }
