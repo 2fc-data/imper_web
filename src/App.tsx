@@ -20,7 +20,7 @@ import {
   RbacSidebar,
   RetiradaDeItensSidebar,
   ServicosSidebar,
-  SupermercadosSidebar,
+  DespesasExtrasSidebar,
   UsuariosSidebar,
   VocabularioSidebar,
 } from './components/layout/sidebarContent';
@@ -63,8 +63,8 @@ const LandingContent = lazy(() => import('./pages/LandingContent'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const ManutencoesAdminPage = lazy(() => import('./pages/ManutencoesAdminPage'));
 const MateriaisAdminPage = lazy(() => import('./pages/MateriaisAdminPage'));
-const SupermercadosAdminPage = lazy(
-  () => import('./pages/SupermercadosAdminPage'),
+const DespesasExtrasAdminPage = lazy(
+  () => import('./pages/DespesasExtrasAdminPage'),
 );
 const OrcamentoPage = lazy(() => import('./pages/OrcamentoPage'));
 const OrcamentosAdminPage = lazy(() =>
@@ -473,7 +473,7 @@ function MateriaisRoute() {
   );
 }
 
-function SupermercadosRoute() {
+function DespesasExtrasRoute() {
   const [viewAtiva, setViewAtiva] = useState<
     'analises' | 'lista' | 'novo' | 'compras'
   >('lista');
@@ -482,10 +482,10 @@ function SupermercadosRoute() {
     <ProtectedLayout
       requiredPermissions={['gerenciar_estoque', 'criar_lista_compras']}
       sidebar={
-        <SupermercadosSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+        <DespesasExtrasSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
       }
     >
-      <SupermercadosAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+      <DespesasExtrasAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
@@ -723,7 +723,8 @@ export default function App() {
           />
           <Route element={<EpisRoute />} path="/epis" />
           <Route element={<MateriaisRoute />} path="/materiais" />
-          <Route element={<SupermercadosRoute />} path="/supermercados" />
+          <Route element={<DespesasExtrasRoute />} path="/despesas-extras" />
+          <Route element={<Navigate to="/despesas-extras" replace />} path="/supermercados" />
           <Route element={<VocabularioRoute />} path="/vocabulario" />
           <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
           <Route element={<ExecucaoDashboardRoute />} path="/execucao" />

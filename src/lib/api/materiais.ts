@@ -7,6 +7,26 @@ import type {
 } from '../../schemas/index.js';
 import type { LookupItem, SubcategoriaItem, FornecedorItem } from './lookups.js';
 
+export interface TipoDespesa {
+  id: number;
+  nome: string;
+  descricao: string | null;
+  requerObra: boolean;
+  ativo: boolean;
+  ordem: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ObraLookupItem {
+  id: number;
+  codigo: string;
+  atendimento?: {
+    id?: number;
+    user?: { id: number; nome: string } | null;
+  } | null;
+}
+
 export interface MaterialSaldo {
   materialId: number;
   saldo: number | string;
@@ -33,6 +53,10 @@ export interface MaterialItem {
   tipo: TipoMaterial;
   categoriaId: number | null;
   categoria?: LookupItem;
+  tipoDespesaId?: number | null;
+  tipoDespesa?: TipoDespesa | null;
+  obraId?: number | null;
+  obra?: ObraLookupItem | null;
   unidadeId: number | null;
   unidade?: UnidadeMedida;
   quantidadeMinima: number | null;
@@ -49,8 +73,10 @@ export interface MaterialInput {
   tipo?: TipoMaterial;
   categoriaId?: number | null;
   unidadeId?: number | null;
-  quantidadeMinima?: number;
-  custoUnitario?: number;
+  tipoDespesaId?: number | null;
+  obraId?: number | null;
+  quantidadeMinima?: number | null;
+  custoUnitario?: number | null;
 }
 
 export interface MaterialLookups {
@@ -59,6 +85,8 @@ export interface MaterialLookups {
   marcas: LookupItem[];
   cores: LookupItem[];
   unidadesMedida: UnidadeMedida[];
+  tiposDespesas?: TipoDespesa[];
+  obras?: ObraLookupItem[];
   localizacoes?: LookupItem[];
   fornecedores?: FornecedorItem[];
   statuses?: LookupItem[];
@@ -74,10 +102,14 @@ export async function listarLookupsMateriais(): Promise<MaterialLookups> {
 export async function listarMateriais(params?: {
   q?: string;
   tipo?: TipoMaterial;
+  tipoDespesaId?: number;
+  obraId?: number;
 }): Promise<MaterialItem[]> {
   const searchParams = new URLSearchParams();
   if (params?.q) searchParams.set('q', params.q);
   if (params?.tipo) searchParams.set('tipo', params.tipo);
+  if (params?.tipoDespesaId) searchParams.set('tipoDespesaId', String(params.tipoDespesaId));
+  if (params?.obraId) searchParams.set('obraId', String(params.obraId));
   const queryStr = searchParams.toString();
   return api.get<MaterialItem[]>(`/materiais${queryStr ? `?${queryStr}` : ''}`);
 }
@@ -101,4 +133,38 @@ export async function atualizarMaterial(
 
 export async function excluirMaterial(id: number): Promise<MaterialItem> {
   return api.del<MaterialItem>(`/materiais/${id}`);
+}
+
+// --- CRUD Tipos de Despesas Extras ---
+
+export async function listarTiposDespesas(
+  ativo?: boolean,
+): Promise<TipoDespesa[]> {
+  return api.get<TipoDespesa[]>('/materiais/lookups/tipos-despesas', { ativo });
+}
+
+export async function criarTipoDespesa(data: {
+  nome: string;
+  descricao?: string;
+  requerObra?: boolean;
+  ordem?: number;
+}): Promise<TipoDespesa> {
+  return api.post<TipoDespesa>('/materiais/lookups/tipos-despesas', data);
+}
+
+export async function atualizarTipoDespesa(
+  id: number,
+  data: Partial<{
+    nome: string;
+    descricao: string;
+    requerObra: boolean;
+    ativo: boolean;
+    ordem: number;
+  }>,
+): Promise<TipoDespesa> {
+  return api.put<TipoDespesa>(`/materiais/lookups/tipos-despesas/${id}`, data);
+}
+
+export async function desativarTipoDespesa(id: number): Promise<TipoDespesa> {
+  return api.del<TipoDespesa>(`/materiais/lookups/tipos-despesas/${id}`);
 }

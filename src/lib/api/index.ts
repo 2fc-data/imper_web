@@ -299,6 +299,10 @@ export {
   criarMaterial,
   atualizarMaterial,
   excluirMaterial,
+  listarTiposDespesas,
+  criarTipoDespesa,
+  atualizarTipoDespesa,
+  desativarTipoDespesa,
 } from './materiais.js';
 export type {
   MaterialSaldo,
@@ -306,6 +310,8 @@ export type {
   MaterialItem,
   MaterialInput,
   MaterialLookups,
+  TipoDespesa,
+  ObraLookupItem,
 } from './materiais.js';
 
 // Listas de compras

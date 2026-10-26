@@ -565,7 +565,7 @@ export function MateriaisSidebar({
   );
 }
 
-export function SupermercadosSidebar({
+export function DespesasExtrasSidebar({
   viewAtiva,
   onNavegar,
 }: {
@@ -586,7 +586,7 @@ export function SupermercadosSidebar({
         onClick={() => onNavegar('lista')}
         icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
       >
-        Lista de Supermercados
+        Lista de Despesas Extras
       </SidebarButton>
       <SidebarButton
         active={viewAtiva === 'novo'}
@@ -595,15 +595,18 @@ export function SupermercadosSidebar({
       >
         Novo Item
       </SidebarButton>
+
       <SidebarButton
         active={viewAtiva === 'compras'}
         onClick={() => onNavegar('compras')}
-        icon={icone('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z')}
+        icon={icone(
+          'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z',
+        )}
       >
         Compras
       </SidebarButton>
       <SidebarNote>
-        Itens de supermercado: cadastro, saldo e movimentação de estoque.
+        Itens de despesas extras: tipos, catálogo, regras de obra e compras.
       </SidebarNote>
     </>
   );

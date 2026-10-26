@@ -7,6 +7,7 @@ import {
   listarEquipamentos,
   listarEpis,
   listarMateriais,
+  listarTiposDespesas,
   obterListaCompras,
   recusarItemListaCompras,
   recusarListaCompras,
@@ -35,6 +36,7 @@ import {
   unidadeItem,
 } from '../../lib/lista-compras';
 import type { SetorCompra, StatusListaCompra, TipoListaCompra } from '../../schemas';
+import { type TipoDespesa } from '../../lib/api';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -83,7 +85,7 @@ function itensParaRascunho(lista: ListaCompraDto | null): RascunhoItem[] {
 }
 
 async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]> {
-  if (tipo === 'SUPERMERCADO' || tipo === 'MATERIAL') {
+  if (tipo === 'DESPESAS_EXTRAS' || tipo === 'MATERIAL') {
     const materiais = await listarMateriais({ tipo });
     return materiais
       .filter((m) => m.status === 'ATIVO')
@@ -144,21 +146,46 @@ export function ListaComprasView({
   const [selItemId, setSelItemId] = useState<number | ''>('');
   const [selQtd, setSelQtd] = useState('1');
   const [novoItemAberto, setNovoItemAberto] = useState(false);
+  const [tipoDespesaId, setTipoDespesaId] = useState<number | ''>('');
+  const [tiposDespesas, setTiposDespesas] = useState<TipoDespesa[]>([]);
+  
+  // Load expense types when component mounts
+  useEffect(() => {
+    let cancelled = false;
+    listarTiposDespesas()
+      .then(setTiposDespesas)
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [novoItemId, setNovoItemId] = useState<number | ''>('');
   const [novoItemQtd, setNovoItemQtd] = useState('1');
 
   const modo = modoDaLista(lista?.status ?? null);
-  const ehMaterial = tipo === 'MATERIAL' || tipo === 'SUPERMERCADO';
+  const ehMaterial = tipo === 'MATERIAL' || tipo === 'DESPESAS_EXTRAS';
 
   const carregamentoRef = useRef(0);
   const carregarLista = useCallback(async () => {
+    if (tipo === 'DESPESAS_EXTRAS' && tipoDespesaId === '') {
+      setLista(null);
+      setRascunho([]);
+      return;
+    }
     const id = ++carregamentoRef.current;
-    const resposta = await obterListaCompras({ tipo, setor, mes: mesAtual, ano });
+    const resposta = await obterListaCompras({
+      tipo,
+      setor,
+      mes: mesAtual,
+      ano,
+      tipoDespesaId: tipoDespesaId === '' ? undefined : tipoDespesaId,
+    });
     if (id !== carregamentoRef.current) return;
     const nova = resposta ?? null;
     setLista(nova);
     setRascunho(itensParaRascunho(nova));
-  }, [tipo, setor, mesAtual, ano]);
+  }, [tipo, setor, mesAtual, ano, tipoDespesaId]);
 
   useEffect(() => {
     let cancelado = false;
@@ -276,17 +303,47 @@ export function ListaComprasView({
 
   async function salvarRascunho() {
     await executar(() =>
-      salvarItensListaCompras(tipo, setor, mesAtual, ano, rascunho),
+      salvarItensListaCompras(
+        tipo,
+        setor,
+        mesAtual,
+        ano,
+        rascunho,
+        tipoDespesaId === '' ? (lista?.tipoDespesaId ?? undefined) : tipoDespesaId,
+      ),
     );
   }
 
   async function enviar() {
     if (!lista) return;
-    await executar(() => enviarListaCompras(lista.id));
+    await executar(async () => {
+      await salvarItensListaCompras(
+        tipo,
+        setor,
+        mesAtual,
+        ano,
+        rascunho,
+        tipoDespesaId === '' ? (lista?.tipoDespesaId ?? undefined) : tipoDespesaId,
+      );
+      await enviarListaCompras(lista.id);
+    });
   }
 
   async function criarListaMes() {
-    await executar(() => salvarItensListaCompras(tipo, setor, mesAtual, ano, []));
+    if (tipo === 'DESPESAS_EXTRAS' && tipoDespesaId === '') {
+      setErro('Selecione um tipo de despesa para criar a lista.');
+      return;
+    }
+    await executar(() =>
+      salvarItensListaCompras(
+        tipo,
+        setor,
+        mesAtual,
+        ano,
+        [],
+        tipoDespesaId === '' ? undefined : tipoDespesaId,
+      ),
+    );
   }
 
   async function aprovar() {
@@ -333,7 +390,14 @@ export function ListaComprasView({
       ];
     })();
     const salvo = await executar(() =>
-      salvarItensListaCompras(tipo, setor, mesAtual, ano, mesclados),
+      salvarItensListaCompras(
+        tipo,
+        setor,
+        mesAtual,
+        ano,
+        mesclados,
+        tipoDespesaId === '' ? (lista.tipoDespesaId ?? undefined) : tipoDespesaId,
+      ),
     );
     if (salvo) {
       setNovoItemAberto(false);
@@ -345,15 +409,29 @@ export function ListaComprasView({
   async function comprar(item: ListaCompraItemDto) {
     if (!lista) return;
     if (!window.confirm(`Confirmar compra de "${nomeItem(item)}"?`)) return;
-    const bruto = window.prompt('Custo real (deixe vazio se não souber):');
+    // Determine custo real automatically from unit cost if available
+    const quantidade = Number(item.quantidade);
     let custoReal: number | undefined;
-    if (bruto !== null && bruto.trim() !== '') {
-      const n = Number(bruto.trim().replace(',', '.'));
-      if (!Number.isFinite(n) || n <= 0) {
-        setErro(`Custo real inválido: "${bruto.trim()}".`);
-        return;
-      }
-      custoReal = n;
+    const rawUnitCost = item.material?.custoUnitario ?? item.epi?.custoUnitario;
+    let unitCost: number | undefined;
+    if (rawUnitCost != null) {
+        const parsed = Number(rawUnitCost);
+        if (Number.isFinite(parsed)) unitCost = parsed;
+    }
+    if (unitCost != null && quantidade > 0) {
+        custoReal = unitCost * quantidade;
+    }
+    // If no unit cost, fallback to prompt
+    if (custoReal === undefined) {
+        const bruto = window.prompt('Custo real (deixe vazio se não souber):');
+        if (bruto !== null && bruto.trim() !== '') {
+            const n = Number(bruto.trim().replace(',', '.'));
+            if (!Number.isFinite(n) || n <= 0) {
+                setErro(`Custo real inválido: "${bruto.trim()}".`);
+                return;
+            }
+            custoReal = n;
+        }
     }
     await executar(() => comprarItemListaCompras(lista.id, item.id, custoReal));
   }
@@ -580,18 +658,20 @@ export function ListaComprasView({
           <span className="text-sm text-muted-foreground">
             {lista?.itens.length ?? 0} item(ns)
           </span>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={aprovar} disabled={ocupado || !acao || !lista}>
-              Aprovar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={recusar}
-              disabled={ocupado || !acao || !lista}
-            >
-              Recusar
-            </Button>
-          </div>
+          {acao && (
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={aprovar} disabled={ocupado || !lista}>
+                Aprovar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={recusar}
+                disabled={ocupado || !lista}
+              >
+                Recusar
+              </Button>
+            </div>
+          )}
         </div>
 
         {tabelaItens()}
@@ -653,11 +733,19 @@ export function ListaComprasView({
     );
   }
 
+  const tipoDespesaObj = tiposDespesas.find((t) => t.id === tipoDespesaId);
+  const tituloExibido =
+    tipo === 'DESPESAS_EXTRAS' && tipoDespesaObj
+      ? `${titulo} - ${tipoDespesaObj.nome}`
+      : titulo;
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{titulo}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {tituloExibido}
+          </h1>
           <p className="text-sm text-muted-foreground">
             {rotuloSetor} · {MESES_CURTOS[mesAtual - 1]}/{ano}
           </p>
@@ -666,7 +754,7 @@ export function ListaComprasView({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => gerarPdfListaCompras(lista, titulo)}
+            onClick={() => gerarPdfListaCompras(lista, tituloExibido)}
           >
             Baixar PDF
           </Button>
@@ -677,6 +765,34 @@ export function ListaComprasView({
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {erro}
         </p>
+      )}
+
+      {tipo === 'DESPESAS_EXTRAS' && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3 shadow-sm">
+          <Label htmlFor="tipo-despesa-filtro" className="text-sm font-medium">
+            Tipo de despesa:
+          </Label>
+          <select
+            id="tipo-despesa-filtro"
+            value={tipoDespesaId === '' ? '' : String(tipoDespesaId)}
+            onChange={(e) =>
+              setTipoDespesaId(
+                e.target.value === '' ? '' : Number(e.target.value),
+              )
+            }
+            className="h-9 min-w-64 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            disabled={ocupado}
+          >
+            <option value="">Selecione um tipo de despesa...</option>
+            {tiposDespesas
+              .filter((t) => t.ativo)
+              .map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome}
+                </option>
+              ))}
+          </select>
+        </div>
       )}
 
       <div className="flex flex-wrap gap-1">
@@ -745,9 +861,19 @@ export function ListaComprasView({
         <p className="py-10 text-center text-sm text-muted-foreground">
           Carregando...
         </p>
+      ) : tipo === 'DESPESAS_EXTRAS' && tipoDespesaId === '' ? (
+        <div className="space-y-3 rounded-lg border bg-card p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Selecione um tipo de despesa acima para visualizar ou criar a lista de compras deste mês.
+          </p>
+        </div>
       ) : !lista ? (
         <div className="space-y-3 rounded-lg border bg-card p-6 text-center">
-          <p className="text-sm text-muted-foreground">Nenhuma lista para este mês</p>
+          <p className="text-sm text-muted-foreground">
+            {tipo === 'DESPESAS_EXTRAS' && tipoDespesaObj
+              ? `Nenhuma lista de "${tipoDespesaObj.nome}" para este mês`
+              : 'Nenhuma lista para este mês'}
+          </p>
           {podeCriar && podeEditarItens(modo) && (
             <Button onClick={criarListaMes} disabled={ocupado}>
               Criar lista do mês
