@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CatalogosOperacionais } from '../components/CatalogosOperacionais';
+import TiposDespesasView from './TiposDespesasView';
+import { Accordion } from '../components/Accordion';
 import {
   type EpiLookups,
   type EquipamentoLookups,
@@ -9,12 +11,13 @@ import {
   type MaterialLookups,
 } from '../lib/api';
 
-type Tab = 'EQUIPAMENTO' | 'EPI' | 'MATERIAIS';
+type Tab = 'EQUIPAMENTO' | 'EPI' | 'MATERIAIS' | 'DESPESAS_EXTRAS';
 
 const TAB_LABELS: Record<Tab, string> = {
   EQUIPAMENTO: 'Equipamentos',
   EPI: 'EPIs',
   MATERIAIS: 'Materiais',
+  DESPESAS_EXTRAS: 'Despesas Extras',
 };
 
 export function CatalogosPage() {
@@ -77,13 +80,13 @@ export function CatalogosPage() {
         </p>
       </div>
 
-      <div className="flex gap-1 rounded-lg border bg-muted p-1">
-        {(['EQUIPAMENTO', 'EPI', 'MATERIAIS'] as Tab[]).map((t) => (
+      <div className="flex flex-wrap gap-1 rounded-lg border bg-muted p-1 overflow-x-auto">
+        {(['EQUIPAMENTO', 'EPI', 'MATERIAIS', 'DESPESAS_EXTRAS'] as Tab[]).map((t) => (
           <button
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex-1 min-w-[120px] rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               tab === t
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -124,6 +127,17 @@ export function CatalogosPage() {
           lookups={lookupsMaterial}
           relerLookups={carregarMaterial}
           ocultarTitulo
+        />
+      )}
+
+      {tab === 'DESPESAS_EXTRAS' && (
+        <Accordion
+          items={[
+            {
+              titulo: 'Tipos de Despesas Extras',
+              conteudo: <TiposDespesasView />,
+            },
+          ]}
         />
       )}
     </div>

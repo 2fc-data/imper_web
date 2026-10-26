@@ -475,7 +475,7 @@ function MateriaisRoute() {
 
 function DespesasExtrasRoute() {
   const [viewAtiva, setViewAtiva] = useState<
-    'analises' | 'lista' | 'novo' | 'tipos' | 'compras'
+    'analises' | 'lista' | 'novo' | 'compras'
   >('lista');
 
   return (

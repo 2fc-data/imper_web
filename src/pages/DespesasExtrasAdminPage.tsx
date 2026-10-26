@@ -15,15 +15,17 @@ import {
   excluirMaterial,
   listarLookupsMateriais,
   listarMateriais,
+  listarTiposDespesas,
   type MaterialInput,
   type MaterialItem,
   type MaterialLookups,
   type StatusMaterial,
   type UnidadeMedida,
+  type TipoDespesa,
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
 import { cn } from '../lib/utils';
-import TiposDespesasView from './TiposDespesasView';
+
 
 function toNum(v: number | string | null | undefined): number {
   if (v === null || v === undefined) return 0;
@@ -222,6 +224,7 @@ function DespesasExtrasForm({
                 </option>
               ))}
           </select>
+
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">
@@ -296,9 +299,9 @@ export default function DespesasExtrasAdminPage({
   viewAtiva = 'lista',
   onNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras' | 'tipos';
+  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras';
   onNavegar?: (
-    v: 'analises' | 'lista' | 'novo' | 'compras' | 'tipos',
+    v: 'analises' | 'lista' | 'novo' | 'compras',
   ) => void;
 }) {
   const [itens, setItens] = useState<MaterialItem[]>([]);
@@ -331,7 +334,7 @@ export default function DespesasExtrasAdminPage({
     carregarTodos();
     listarLookupsMateriais()
       .then(setLookups)
-      .catch(() => {});
+      .catch(() => { });
   }, [carregarTodos]);
 
   function comecarEdicao(m: MaterialItem) {
@@ -435,9 +438,9 @@ export default function DespesasExtrasAdminPage({
       : true,
   );
 
-  if (viewAtiva === 'tipos') {
-    return <TiposDespesasView />;
-  }
+
+
+
 
   if (viewAtiva === 'compras') {
     return <ListaComprasView tipo="DESPESAS_EXTRAS" titulo="Despesas Extras" />;

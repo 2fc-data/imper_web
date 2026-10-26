@@ -219,15 +219,15 @@ export const NAV_ITEMS: NavItem[] = [
           'gerenciar_equipamentos',
           'criar_lista_compras',
         ],
+
       },
       {
         to: '/manutencoes',
         label: 'Manutenção',
-        icon: (
-          <Icon d="M20 8l1-4-1 4a4 4 0 006 0l-1 4M4 8l1-4-1 4a4 4 0 00-6 0l1 4" />
-        ),
+        icon: <Icon d="M20 8l1-4-1 4a4 4 0 006 0l-1 4M4 8l1-4-1 4a4 4 0 00-6 0l1 4" />,
         requiredPermissions: ['gerenciar_equipamentos'],
       },
+
       {
         to: '/materiais',
         label: 'Materiais',

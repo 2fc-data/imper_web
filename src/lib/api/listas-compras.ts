@@ -26,6 +26,7 @@ export interface ListaCompraItemDto {
     id: number; nome: string;
     unidadeMedida?: { nome: string } | null;
     quantidade?: number | string;
+    custoUnitario?: number | string | null;
   } | null;
   equipamento?: {
     id: number; descricao: string;
@@ -43,6 +44,8 @@ export interface ListaCompraDto {
   ano: number;
   status: StatusListaCompra;
   motivoRecusa: string | null;
+  tipoDespesaId?: number | null;
+  tipoDespesa?: { id: number; nome: string } | null;
   enviadoPor?: { id: number; nome: string } | null;
   enviadoEm: string | null;
   aprovadoPor?: { id: number; nome: string } | null;
@@ -51,17 +54,27 @@ export interface ListaCompraDto {
 }
 
 export async function obterListaCompras(params: {
-  tipo: TipoListaCompra; setor: SetorCompra; mes: number; ano: number;
+  tipo: TipoListaCompra;
+  setor: SetorCompra;
+  mes: number;
+  ano: number;
+  tipoDespesaId?: number;
 }): Promise<ListaCompraDto | null> {
   return api.get<ListaCompraDto | null>('/listas-compras', params);
 }
 
 export async function salvarItensListaCompras(
-  tipo: TipoListaCompra, setor: SetorCompra, mes: number, ano: number,
+  tipo: TipoListaCompra,
+  setor: SetorCompra,
+  mes: number,
+  ano: number,
   itens: { itemId: number; quantidade: number }[],
+  tipoDespesaId?: number,
 ): Promise<ListaCompraDto> {
+  const query = tipoDespesaId ? `?tipoDespesaId=${tipoDespesaId}` : '';
   return api.put<ListaCompraDto>(
-    `/listas-compras/${tipo}/${setor}/${mes}/${ano}/itens`, { itens },
+    `/listas-compras/${tipo}/${setor}/${mes}/${ano}/itens${query}`,
+    { itens, tipoDespesaId },
   );
 }
 
