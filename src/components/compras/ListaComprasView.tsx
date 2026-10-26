@@ -83,7 +83,7 @@ function itensParaRascunho(lista: ListaCompraDto | null): RascunhoItem[] {
 }
 
 async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]> {
-  if (tipo === 'SUPERMERCADO' || tipo === 'MATERIAL') {
+  if (tipo === 'DESPESAS_EXTRAS' || tipo === 'MATERIAL') {
     const materiais = await listarMateriais({ tipo });
     return materiais
       .filter((m) => m.status === 'ATIVO')
@@ -148,7 +148,7 @@ export function ListaComprasView({
   const [novoItemQtd, setNovoItemQtd] = useState('1');
 
   const modo = modoDaLista(lista?.status ?? null);
-  const ehMaterial = tipo === 'MATERIAL' || tipo === 'SUPERMERCADO';
+  const ehMaterial = tipo === 'MATERIAL' || tipo === 'DESPESAS_EXTRAS';
 
   const carregamentoRef = useRef(0);
   const carregarLista = useCallback(async () => {

@@ -240,8 +240,8 @@ export const NAV_ITEMS: NavItem[] = [
         ],
       },
       {
-        to: '/supermercados',
-        label: 'Supermercados',
+        to: '/despesas-extras',
+        label: 'Despesas Extras',
         icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z" />,
         requiredPermissions: ['gerenciar_estoque', 'criar_lista_compras'],
       },

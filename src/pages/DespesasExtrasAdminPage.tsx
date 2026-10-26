@@ -23,6 +23,7 @@ import {
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
 import { cn } from '../lib/utils';
+import TiposDespesasView from './TiposDespesasView';
 
 function toNum(v: number | string | null | undefined): number {
   if (v === null || v === undefined) return 0;
@@ -50,7 +51,7 @@ const emptyForm = {
   status: 'ATIVO' as StatusMaterial,
 };
 
-type SupermercadoFormData = typeof emptyForm;
+type DespesasExtrasFormData = typeof emptyForm;
 
 function numOuNull(v: string): number | null {
   const n = Number(v.trim().replace(',', '.'));
@@ -94,11 +95,11 @@ function BadgeSaldo({
   );
 }
 
-interface SupermercadosAnalisesProps {
+interface DespesasExtrasAnalisesProps {
   itens: MaterialItem[];
 }
 
-export function SupermercadosAnalises({ itens }: SupermercadosAnalisesProps) {
+export function DespesasExtrasAnalises({ itens }: DespesasExtrasAnalisesProps) {
   const total = itens.length;
   const saldoTotal = itens.reduce((acc, m) => acc + saldoDe(m), 0);
   const semEstoque = itens.filter((m) => saldoDe(m) === 0).length;
@@ -112,10 +113,10 @@ export function SupermercadosAnalises({ itens }: SupermercadosAnalisesProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold tracking-tight">
-          Análises de Supermercados
+          Análises de Despesas Extras
         </h2>
         <p className="text-sm text-muted-foreground">
-          Situação do estoque, saldo e valor dos itens de supermercado.
+          Situação do estoque, saldo e valor dos itens de despesas extras.
         </p>
       </div>
 
@@ -157,17 +158,17 @@ export function SupermercadosAnalises({ itens }: SupermercadosAnalisesProps) {
   );
 }
 
-interface SupermercadoFormProps {
+interface DespesasExtrasFormProps {
   editando: boolean;
   saving: boolean;
-  form: SupermercadoFormData;
-  setForm: (f: SupermercadoFormData) => void;
+  form: DespesasExtrasFormData;
+  setForm: (f: DespesasExtrasFormData) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
   unidadesMedida: UnidadeMedida[];
 }
 
-function SupermercadoForm({
+function DespesasExtrasForm({
   editando,
   saving,
   form,
@@ -175,7 +176,7 @@ function SupermercadoForm({
   onSubmit,
   onCancel,
   unidadesMedida,
-}: SupermercadoFormProps) {
+}: DespesasExtrasFormProps) {
   const inputCls =
     'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
   return (
@@ -184,7 +185,7 @@ function SupermercadoForm({
       className="rounded-xl border bg-card p-5 shadow-sm space-y-4"
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
+        <div>
           <label className="mb-1 block text-sm font-medium">Nome</label>
           <input
             type="text"
@@ -291,12 +292,14 @@ function SupermercadoForm({
   );
 }
 
-export default function SupermercadosAdminPage({
+export default function DespesasExtrasAdminPage({
   viewAtiva = 'lista',
   onNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras';
-  onNavegar?: (v: 'analises' | 'lista' | 'novo' | 'compras') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo' | 'compras' | 'tipos';
+  onNavegar?: (
+    v: 'analises' | 'lista' | 'novo' | 'compras' | 'tipos',
+  ) => void;
 }) {
   const [itens, setItens] = useState<MaterialItem[]>([]);
   const [lookups, setLookups] = useState<MaterialLookups | null>(null);
@@ -305,7 +308,7 @@ export default function SupermercadosAdminPage({
   const [itensPorPagina, setItensPorPagina] = useState(25);
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<MaterialItem | null>(null);
-  const [form, setForm] = useState<SupermercadoFormData>(emptyForm);
+  const [form, setForm] = useState<DespesasExtrasFormData>(emptyForm);
   const [toggling, setToggling] = useState<number | null>(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(
     null,
@@ -315,11 +318,11 @@ export default function SupermercadosAdminPage({
   const carregarTodos = useCallback(async () => {
     setError(null);
     try {
-      const lista = await listarMateriais({ tipo: 'SUPERMERCADO' });
+      const lista = await listarMateriais({ tipo: 'DESPESAS_EXTRAS' });
       setItens(lista);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Falha ao carregar supermercados',
+        err instanceof Error ? err.message : 'Falha ao carregar despesas extras',
       );
     }
   }, []);
@@ -373,7 +376,7 @@ export default function SupermercadosAdminPage({
       } else {
         const payload: MaterialInput = {
           nome: form.nome,
-          tipo: 'SUPERMERCADO',
+          tipo: 'DESPESAS_EXTRAS',
           unidadeId: form.unidadeId === '' ? undefined : form.unidadeId,
           quantidadeMinima: numOuNull(form.quantidadeMinima) ?? undefined,
           custoUnitario: numOuNull(form.custoUnitario) ?? undefined,
@@ -432,8 +435,12 @@ export default function SupermercadosAdminPage({
       : true,
   );
 
+  if (viewAtiva === 'tipos') {
+    return <TiposDespesasView />;
+  }
+
   if (viewAtiva === 'compras') {
-    return <ListaComprasView tipo="SUPERMERCADO" titulo="Supermercados" />;
+    return <ListaComprasView tipo="DESPESAS_EXTRAS" titulo="Despesas Extras" />;
   }
 
   if (viewAtiva === 'analises') {
@@ -441,14 +448,14 @@ export default function SupermercadosAdminPage({
       <div className="space-y-6">
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Supermercados
+            Despesas Extras
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cadastro e gestão de estoque de itens de supermercado.
+            Cadastro e gestão de estoque de itens de despesas extras.
           </p>
         </header>
 
-        <SupermercadosAnalises itens={itens} />
+        <DespesasExtrasAnalises itens={itens} />
 
         {onNavegar && (
           <Button
@@ -468,10 +475,10 @@ export default function SupermercadosAdminPage({
       <div className="space-y-6">
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {editando ? `Editar ${editando.nome}` : 'Novo Item de Supermercado'}
+            {editando ? `Editar ${editando.nome}` : 'Novo Item de Despesas Extras'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre ou edite um item de supermercado e seu estoque mínimo.
+            Cadastre ou edite um item de despesas extras e seu estoque mínimo.
           </p>
         </header>
 
@@ -481,7 +488,7 @@ export default function SupermercadosAdminPage({
           </p>
         )}
 
-        <SupermercadoForm
+        <DespesasExtrasForm
           editando={!!editando}
           saving={saving}
           form={form}
@@ -498,10 +505,10 @@ export default function SupermercadosAdminPage({
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Supermercados
+          Despesas Extras
         </h1>
         <p className="text-sm text-muted-foreground">
-          Cadastro e gestão de estoque de itens de supermercado.
+          Cadastro e gestão de estoque de itens de despesas extras.
         </p>
       </header>
 
@@ -622,7 +629,7 @@ export default function SupermercadosAdminPage({
         })}
         {!error && filtrados.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Nenhum item de supermercado encontrado.
+            Nenhum item de despesas extras encontrado.
           </p>
         )}
       </div>
