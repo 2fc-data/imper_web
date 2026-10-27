@@ -1,143 +1,203 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { selectClasses } from '../components/ui/form-classes';
+import { Input } from '../components/ui/input';
+import { PageHeader } from '../components/ui/page-header';
+import { EmptyState, ErrorState, LoadingState } from '../components/ui/states';
+import { StatusBadge } from '../components/ui/StatusBadge';
+import { Table, TableWrapper, Th } from '../components/ui/table';
+
+const STATUS_OBRA = [
+  { valor: 'EM_PREPARACAO', rotulo: 'Em Preparação' },
+  { valor: 'EM_EXECUCAO', rotulo: 'Em Execução' },
+  { valor: 'CONCLUIDA', rotulo: 'Concluída' },
+  { valor: 'CANCELADA', rotulo: 'Cancelada' },
+] as const;
+
+function moeda(valor: unknown) {
+  return Number(valor ?? 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
 
 export function ObrasAdminPage() {
   const [obras, setObras] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [buscaInput, setBuscaInput] = useState('');
   const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('');
-
-  const carregarObras = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (busca) params.append('busca', busca);
-      if (statusFiltro) params.append('status', statusFiltro);
-
-      const res = await api.get<any>(`/obras?${params.toString()}`);
-      setObras(res.data.obras || []);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao carregar obras');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
-    carregarObras();
-  }, [statusFiltro]);
+    let cancelado = false;
+    setLoading(true);
+    setError(null);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    carregarObras();
+    const params = new URLSearchParams();
+    if (busca) params.append('busca', busca);
+    if (statusFiltro) params.append('status', statusFiltro);
+
+    api
+      .get<any>(`/obras?${params.toString()}`)
+      .then((res) => {
+        if (!cancelado) setObras(res.data.obras || []);
+      })
+      .catch((err: any) => {
+        if (!cancelado) {
+          setError(err.response?.data?.message || 'Erro ao carregar obras');
+          setObras([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setLoading(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [busca, statusFiltro, tentativa]);
+
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault();
+    setBusca(buscaInput.trim());
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestão de Obras</h1>
-          <p className="text-gray-500 text-sm">Painel de controle e acompanhamento de obras</p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Gestão de Obras"
+        description="Acompanhe o andamento, os valores contratados e as etapas de cada obra."
+      />
 
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <form onSubmit={handleSearch} className="flex flex-wrap gap-4 items-center">
-          <input
-            type="text"
-            placeholder="Buscar por código, cliente ou observações..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="border px-3 py-2 rounded-md text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
-          <select
-            value={statusFiltro}
-            onChange={(e) => setStatusFiltro(e.target.value)}
-            className="border px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <Card>
+        <CardContent className="pt-5">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-wrap items-end gap-3"
           >
-            <option value="">Todos os status</option>
-            <option value="EM_PREPARACAO">Em Preparação</option>
-            <option value="EM_EXECUCAO">Em Execução</option>
-            <option value="CONCLUIDA">Concluída</option>
-            <option value="CANCELADA">Cancelada</option>
-          </select>
+            <div className="min-w-0 flex-1 basis-64 space-y-1.5">
+              <label
+                htmlFor="busca-obras"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Buscar
+              </label>
+              <Input
+                id="busca-obras"
+                type="search"
+                placeholder="Código, cliente ou observações…"
+                value={buscaInput}
+                onChange={(event) => setBuscaInput(event.target.value)}
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition"
-          >
-            Filtrar
-          </button>
-        </form>
-      </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="status-obras"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Status
+              </label>
+              <select
+                id="status-obras"
+                value={statusFiltro}
+                onChange={(event) => setStatusFiltro(event.target.value)}
+                className={`${selectClasses} sm:w-52`}
+              >
+                <option value="">Todos os status</option>
+                {STATUS_OBRA.map((status) => (
+                  <option key={status.valor} value={status.valor}>
+                    {status.rotulo}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Button type="submit">Filtrar</Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {loading ? (
-        <div className="text-center py-10 text-gray-500">Carregando obras...</div>
+        <LoadingState label="Carregando obras…" rows={4} />
       ) : error ? (
-        <div className="bg-red-50 text-red-700 p-4 rounded-md">{error}</div>
+        <ErrorState
+          description={error}
+          onRetry={() => setTentativa((valor) => valor + 1)}
+        />
+      ) : obras.length === 0 ? (
+        <EmptyState
+          title="Nenhuma obra encontrada"
+          description="Ajuste os filtros ou cadastre uma nova obra para começar o acompanhamento."
+        />
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full text-left border-collapse text-sm">
+        <TableWrapper>
+          <Table>
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 font-medium">
-                <th className="p-4">Código</th>
-                <th className="p-4">Cliente</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Valor Contratado</th>
-                <th className="p-4">Etapas</th>
-                <th className="p-4">Aditivos</th>
-                <th className="p-4">Ações</th>
+              <tr>
+                <Th>Código</Th>
+                <Th>Cliente</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Valor contratado</Th>
+                <Th className="text-center">Etapas</Th>
+                <Th className="text-center">Aditivos</Th>
+                <Th className="text-right">Ações</Th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {obras.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-500">
-                    Nenhuma obra encontrada.
+            <tbody>
+              {obras.map((obra) => (
+                <tr
+                  key={obra.id}
+                  className="border-b border-border/60 transition-colors last:border-0 hover:bg-muted/40"
+                >
+                  <td className="px-4 py-3 font-mono text-sm font-semibold text-foreground">
+                    {obra.codigo}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {obra.user?.nome || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={obra.status} size="sm" />
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm tabular-nums">
+                    {moeda(obra.valorContratado)}
+                  </td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">
+                    {obra._count?.etapas ?? 0}
+                  </td>
+                  <td className="px-4 py-3 text-center text-sm tabular-nums text-muted-foreground">
+                    {obra._count?.aditivos ?? 0}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      to={`/obras/${obra.id}`}
+                      className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-primary underline-offset-4 transition-elegant hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                      Ver detalhes
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
+                    </Link>
                   </td>
                 </tr>
-              ) : (
-                obras.map((obra) => (
-                  <tr key={obra.id} className="hover:bg-gray-50">
-                    <td className="p-4 font-semibold text-blue-600">{obra.codigo}</td>
-                    <td className="p-4">{obra.user?.nome || 'N/A'}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          obra.status === 'EM_PREPARACAO'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : obra.status === 'EM_EXECUCAO'
-                            ? 'bg-blue-100 text-blue-800'
-                            : obra.status === 'CONCLUIDA'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {obra.status}
-                      </span>
-                    </td>
-                    <td className="p-4 font-mono">
-                      R$ {Number(obra.valorContratado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-4">{obra._count?.etapas || 0}</td>
-                    <td className="p-4">{obra._count?.aditivos || 0}</td>
-                    <td className="p-4">
-                      <Link
-                        to={`/obras/${obra.id}`}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        Ver Detalhes →
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableWrapper>
       )}
     </div>
   );

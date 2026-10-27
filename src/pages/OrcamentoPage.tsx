@@ -18,9 +18,7 @@ import { EmailInput } from '../components/ui/email-input';
 import { enviarContato } from '../lib/api';
 import { fadeUp, stagger, VIEWPORT } from '../lib/motion';
 import { cn } from '../lib/utils';
-
-const textareaClasses =
-  'flex min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+import { textareaClasses } from '../components/ui/form-classes';
 
 export default function OrcamentoPage() {
   const navigate = useNavigate();

@@ -3,6 +3,7 @@ import { CalendarioDisponibilidade } from '../components/disponibilidade/Calenda
 import { GerenciarDatas } from '../components/disponibilidade/GerenciarDatas';
 import { GerenciarPadroes } from '../components/disponibilidade/GerenciarPadroes';
 import { ListaDisponibilidade } from '../components/disponibilidade/ListaDisponibilidade';
+import { PageHeader } from '../components/ui/page-header';
 
 export type CalendarioView = 'calendario' | 'disponibilidade' | 'datas' | 'padroes';
 
@@ -19,13 +20,11 @@ export function CalendarioPage({
   const userId = user?.id ?? 0;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="border-b pb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Calendário de Visitas Técnicas</h1>
-        <p className="text-sm text-muted-foreground">
-          Gerencie datas, horários disponíveis e bloqueios para agendamento de visitas técnicas.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Calendário de Visitas Técnicas"
+        description="Gerencie datas, horários disponíveis e bloqueios para agendamento de visitas técnicas."
+      />
 
       {viewAtiva === 'calendario' && (
         <div className="space-y-6">

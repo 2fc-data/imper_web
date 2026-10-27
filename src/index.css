@@ -239,6 +239,32 @@
   #root {
     height: 100%;
   }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 28%, transparent);
+    color: var(--foreground);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent)
+      transparent;
+  }
+
+  input,
+  textarea,
+  select {
+    caret-color: var(--primary);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @layer utilities {
@@ -298,15 +324,25 @@
     cursor: pointer;
   }
 
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1);
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     padding: 2px;
     border-radius: 4px;
-    transition: filter 0.2s, transform 0.2s, background-color 0.2s;
+    opacity: 0.65;
+    transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
   }
-  input[type="date"]::-webkit-calendar-picker-indicator:hover {
-    @apply bg-primary/20 scale-110;
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]::-webkit-calendar-picker-indicator,
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    @apply bg-primary/20 opacity-100;
+    transform: scale(1.08);
   }
 
   [data-slot="checkbox"] {

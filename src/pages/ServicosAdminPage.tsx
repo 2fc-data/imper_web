@@ -18,12 +18,10 @@ import {
   type ServicoMarketingInput,
 } from '../lib/api';
 import { cn } from '../lib/utils';
-
-const textareaClasses =
-  'flex min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
-
-const selectClasses =
-  'flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+import {
+  selectClasses,
+  textareaClasses,
+} from '../components/ui/form-classes';
 
 const ICONES = [
   { rotulo: 'Piscina / Infiltração', d: 'M19 9l-7 12-7-12a7 7 0 1114 0z' },

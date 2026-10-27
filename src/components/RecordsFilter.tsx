@@ -1,11 +1,10 @@
+import { filterSelectClasses as selectClasses } from './ui/form-classes';
+
 interface RecordsFilterProps {
   value: number;
   onChange: (value: number) => void;
   total: number;
 }
-
-const selectClasses =
-  'rounded-lg border border-input bg-background px-2 py-1.5 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
 
 export function RecordsFilter({ value, onChange, total }: RecordsFilterProps) {
   return (
