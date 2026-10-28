@@ -197,6 +197,7 @@ export default function EquipamentosAdminPage({
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<EquipamentoItem | null>(null);
   const [form, setForm] = useState<ItemFormData>(emptyForm);
+  const [codigoVersao, setCodigoVersao] = useState(0);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(
     null,
   );
@@ -223,7 +224,7 @@ export default function EquipamentosAdminPage({
   }, [carregarTodos]);
 
   useEffect(() => {
-    if (editando) return;
+    if (editando || viewAtiva !== 'novo') return;
     let cancelado = false;
     obterProximoCodigoEquipamento()
       .then((r) => {
@@ -235,7 +236,7 @@ export default function EquipamentosAdminPage({
     return () => {
       cancelado = true;
     };
-  }, [editando]);
+  }, [editando, viewAtiva, codigoVersao]);
 
   async function recarregarEquipamentos() {
     try {
@@ -273,6 +274,7 @@ export default function EquipamentosAdminPage({
   function cancelarEdicao() {
     setEditando(null);
     setForm(emptyForm);
+    setCodigoVersao((v) => v + 1);
     setError(null);
   }
 

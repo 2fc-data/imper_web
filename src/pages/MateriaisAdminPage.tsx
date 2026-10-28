@@ -245,7 +245,7 @@ function MaterialForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">
-            Quantidade mínima
+            Estoque mínimo
           </label>
           <input
             type="number"

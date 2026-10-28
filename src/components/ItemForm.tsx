@@ -93,11 +93,9 @@ export function ItemForm({
               <Label htmlFor="codigo">Código *</Label>
               <Input
                 id="codigo"
-                required
                 readOnly
                 placeholder={isEpi ? 'EPI-001' : 'EQP-001'}
                 value={form.codigo}
-                onChange={(e) => setForm({ ...form, codigo: e.target.value })}
                 className="bg-muted/50 cursor-not-allowed"
               />
             </div>

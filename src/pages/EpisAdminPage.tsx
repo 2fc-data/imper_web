@@ -184,6 +184,7 @@ export default function EpisAdminPage({
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<EpiItem | null>(null);
   const [form, setForm] = useState<ItemFormData>(emptyForm);
+  const [codigoVersao, setCodigoVersao] = useState(0);
   const [toggling, setToggling] = useState<number | null>(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(
     null,
@@ -209,7 +210,7 @@ export default function EpisAdminPage({
   }, [carregarTodos]);
 
   useEffect(() => {
-    if (editando) return;
+    if (editando || viewAtiva !== 'novo') return;
     let cancelado = false;
     obterProximoCodigoEpi()
       .then((r) => {
@@ -221,7 +222,7 @@ export default function EpisAdminPage({
     return () => {
       cancelado = true;
     };
-  }, [editando]);
+  }, [editando, viewAtiva, codigoVersao]);
 
   function comecarEdicao(e: EpiItem) {
     setEditando(e);
@@ -248,6 +249,7 @@ export default function EpisAdminPage({
   function cancelarEdicao() {
     setEditando(null);
     setForm(emptyForm);
+    setCodigoVersao((v) => v + 1);
     setError(null);
     onNavegar?.('lista');
   }
