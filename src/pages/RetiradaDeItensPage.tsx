@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '../components/ui/card';
 import {
+  api,
   excluirSeparacao,
   detalharSeparacao,
   listarSeparacoes,
@@ -23,6 +24,13 @@ import { cn } from '../lib/utils';
 import { selectClasses } from '../components/ui/form-classes';
 
 type TabItem = 'equipamentos' | 'epis' | 'materiais';
+
+type ObraFiltroItem = {
+  id: number;
+  codigo: string;
+  user?: { nome: string } | null;
+  endereco?: { logradouro: string; numero: string | null } | null;
+};
 
 const STATUS_COLORS: Record<string, string> = {
   SEPARACAO_PENDENTE: 'bg-amber-500/10 text-amber-600',
@@ -89,10 +97,16 @@ export function RetiradaDeItensPage() {
   >([]);
   const [retiradaPendente, setRetiradaPendente] = useState<number | null>(null);
   const [colaboradorId, setColaboradorId] = useState('');
+  const [obras, setObras] = useState<ObraFiltroItem[]>([]);
 
   useEffect(() => {
     listarLookupsEpis()
       .then((l) => setColaboradores(l.colaboradores ?? []))
+      .catch(console.error);
+
+    api
+      .get<{ obras: ObraFiltroItem[] }>('/obras')
+      .then((res) => setObras(res.obras ?? []))
       .catch(console.error);
   }, []);
 
@@ -196,13 +210,22 @@ export function RetiradaDeItensPage() {
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Obra</label>
-          <input
-            type="number"
-            placeholder="Filtrar por obra..."
+          <select
             value={filtroObra}
             onChange={(e) => setFiltroObra(e.target.value)}
             className={selectClasses}
-          />
+          >
+            <option value="">Todas as obras</option>
+            {obras.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.codigo}
+                {o.user?.nome ? ` — ${o.user.nome}` : ''}
+                {o.endereco?.logradouro
+                  ? ` — ${o.endereco.logradouro}${o.endereco.numero ? `, ${o.endereco.numero}` : ''}`
+                  : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-2">
