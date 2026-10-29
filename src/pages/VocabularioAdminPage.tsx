@@ -372,7 +372,7 @@ export default function VocabularioAdminPage({
     return (
       <div className="space-y-6">
         <header>
-          <h1 className="text-2xl font-semibold tracking-tight">Vocabulário</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Etapas de obra</h1>
           <p className="text-sm text-muted-foreground">
             Gerencie etapas, termos e sub-serviços do orçamento
           </p>
@@ -562,7 +562,7 @@ export default function VocabularioAdminPage({
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">Termos</h1>
           <p className="text-sm text-muted-foreground">
-            Vocabulário por dimensão: verbos, objetos, locais e características
+            Termos por dimensão: verbos, objetos, locais e características
           </p>
         </header>
         {error && (

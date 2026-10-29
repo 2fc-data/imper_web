@@ -725,7 +725,7 @@ export default function App() {
           <Route element={<MateriaisRoute />} path="/materiais" />
           <Route element={<DespesasExtrasRoute />} path="/despesas-extras" />
           <Route element={<Navigate to="/despesas-extras" replace />} path="/supermercados" />
-          <Route element={<VocabularioRoute />} path="/vocabulario" />
+          <Route element={<VocabularioRoute />} path="/etapas-de-obra" />
           <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
           <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
           <Route element={<Navigate to="/portal/dados" replace />} path="/minha-conta" />

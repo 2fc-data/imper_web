@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { iniciais, itensPara, type NavItem } from '../../lib/nav';
@@ -14,27 +14,42 @@ interface AdminSidebarProps {
   onLogout: () => void;
 }
 
-function ItemMenu({ item, end }: { item: NavItem; end?: boolean }) {
+function chaveItem(item: NavItem, idx: number): string {
+  return item.to || item.label || String(idx);
+}
+
+function indiceGrupoAtivo(itens: NavItem[], pathname: string): number {
+  return itens.findIndex((item) =>
+    item.children?.some(
+      (child) => child.to && pathname.startsWith(child.to),
+    ),
+  );
+}
+
+function ItemMenu({
+  item,
+  end,
+  open,
+  onToggle,
+}: {
+  item: NavItem;
+  end?: boolean;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const location = useLocation();
   const isChildActive = Boolean(
     item.children?.some(
       (child) => child.to && location.pathname.startsWith(child.to),
     ),
   );
-  const [open, setOpen] = useState(isChildActive);
-
-  useEffect(() => {
-    if (isChildActive) {
-      setOpen(true);
-    }
-  }, [isChildActive]);
 
   if (item.children && item.children.length > 0) {
     return (
       <div className="flex flex-col">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={onToggle}
           className={cn(
             'flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer',
             isChildActive && 'text-primary font-semibold',
@@ -180,13 +195,30 @@ export function AdminSidebar({
     [navigate],
   );
 
-  const itens = itensPara(user?.permissoes ?? []);
-  const itensFiltrados =
-    menuAtivo === 'analitico'
+  const itensFiltrados = useMemo(() => {
+    const itens = itensPara(user?.permissoes ?? []);
+    return menuAtivo === 'analitico'
       ? itens.filter((item) => item.to === '/painel' || item.to === '/execucao')
       : itens.filter(
           (item) => item.to !== '/painel' && item.to !== '/execucao',
         );
+  }, [user?.permissoes, menuAtivo]);
+
+  const [menuAberto, setMenuAberto] = useState<string | null>(() => {
+    const idx = indiceGrupoAtivo(itensFiltrados, location.pathname);
+    return idx >= 0 ? chaveItem(itensFiltrados[idx], idx) : null;
+  });
+
+  useEffect(() => {
+    const idx = indiceGrupoAtivo(itensFiltrados, location.pathname);
+    if (idx >= 0) {
+      setMenuAberto(chaveItem(itensFiltrados[idx], idx));
+    }
+  }, [location.pathname, itensFiltrados]);
+
+  const alternarMenu = useCallback((chave: string) => {
+    setMenuAberto((atual) => (atual === chave ? null : chave));
+  }, []);
 
   useEffect(() => {
     onClose();
@@ -204,9 +236,11 @@ export function AdminSidebar({
       >
         {itensFiltrados.map((item, idx) => (
           <ItemMenu
-            key={item.to || item.label || idx}
+            key={chaveItem(item, idx)}
             item={item}
             end={menuAtivo === 'analitico'}
+            open={menuAberto === chaveItem(item, idx)}
+            onToggle={() => alternarMenu(chaveItem(item, idx))}
           />
         ))}
       </nav>
