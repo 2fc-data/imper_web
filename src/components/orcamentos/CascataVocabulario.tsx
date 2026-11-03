@@ -26,8 +26,10 @@ interface Props {
 
 /**
  * Seletor etapa → sub-serviço → verbo/objeto/local/característica.
- * Selects totalmente independentes: cada um lista todas as opções ativas,
- * sem filtragem cruzada, sem `disabled` e sem limpar os demais ao mudar.
+ * Termos (verbo/objeto/local/característica) listam todas as opções ativas,
+ * sem filtragem cruzada. Etapa → sub-serviço encadeia: com etapa selecionada
+ * o sub-serviço é filtrado por etapa; sem etapa, lista todos com prefixo
+ * "Etapa › Nome" para evitar rótulos duplicados entre etapas.
  */
 export function CascataVocabulario({
   valor,
@@ -42,6 +44,9 @@ export function CascataVocabulario({
   const [caracteristicas, setCaracteristicas] = useState<OpcaoCascata[]>([]);
   const [verbos, setVerbos] = useState<OpcaoCascata[]>([]);
   const [objetos, setObjetos] = useState<OpcaoCascata[]>([]);
+
+  const nomeEtapa = (id: number): string =>
+    etapas.find((e) => e.id === id)?.nome ?? `#${id}`;
 
   // termos (locais, características, verbos, objetos)
   useEffect(() => {
@@ -81,28 +86,49 @@ export function CascataVocabulario({
     };
   }, [soTermos]);
 
-  // sub-serviços: todos os ativos de uma vez (independente da etapa)
+  // sub-serviços: filtrados pela etapa quando selecionada; sem etapa, todos
+  // os ativos (com prefixo de etapa no label para desambiguar)
   useEffect(() => {
     if (soTermos) return;
     let vivo = true;
-    listarSubServicos(undefined, true)
+    listarSubServicos(valor.etapaId ?? undefined, true)
       .then((r) => {
-        if (vivo) setSubs(r);
+        if (!vivo) return;
+        setSubs(r);
+        // limpa sub que não pertence à nova etapa (ou não existe mais)
+        if (
+          valor.subServicoId != null &&
+          !r.some((s) => s.id === valor.subServicoId)
+        ) {
+          onChange({
+            ...valor,
+            subServicoId: null,
+            subServicoNome: null,
+          });
+        }
       })
       .catch(() => {});
     return () => {
       vivo = false;
     };
-  }, [soTermos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soTermos, valor.etapaId]);
 
   const mudarEtapa = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? Number(e.target.value) : null;
     const etapa = etapas.find((x) => x.id === id) ?? null;
+    const subValido =
+      id != null && valor.subServicoId != null
+        ? subs.some((s) => s.id === valor.subServicoId && s.etapaId === id)
+        : false;
     onChange({
       ...valor,
       etapaId: id,
       etapaNome: etapa?.nome ?? null,
       etapaOrdem: etapa?.ordem ?? null,
+      ...(subValido
+        ? {}
+        : { subServicoId: null, subServicoNome: null }),
     });
   };
 
@@ -177,7 +203,9 @@ export function CascataVocabulario({
               <option value="">Selecione o sub-serviço…</option>
               {subs.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nome}
+                  {valor.etapaId == null
+                    ? `${nomeEtapa(s.etapaId)} › ${s.nome}`
+                    : s.nome}
                 </option>
               ))}
             </select>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { AtendimentoItem, FichaInput } from '../../lib/api';
 import { obterAtendimento } from '../../lib/api';
 import logoImper from '../../assets/logo_imper.webp';
+import { EMPRESA, empresaContatoLinha } from '../../lib/empresa';
 import { brl, formatarEnderecoCompleto, telefoneWhatsApp } from '../../lib/format';
 import {
   atualizarFicha,
@@ -66,9 +67,15 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
   const clienteEmail = atendimento?.user?.email ?? null;
 
   const linhas = ([1, 2, 3] as const).map((n) => {
-    const risco = ((ficha[`risco${n}`] as string | null) ?? '').trim();
-    const acao = ((ficha[`acao${n}`] as string | null) ?? '').trim();
-    return { n, risco, acao, preenchido: Boolean(risco || acao), completo: Boolean(risco && acao) };
+    const risco = (ficha[`risco${n}`] as string | null) ?? '';
+    const acao = (ficha[`acao${n}`] as string | null) ?? '';
+    return {
+      n,
+      risco,
+      acao,
+      preenchido: Boolean(risco.trim() || acao.trim()),
+      completo: Boolean(risco.trim() && acao.trim()),
+    };
   });
   const totalPares = linhas.filter((l) => l.completo).length;
   const algumPreenchido = linhas.some((l) => l.preenchido);
@@ -292,56 +299,72 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
         </div>
       </section>
 
-      {/* Relatório somente-leitura */}
+      {/* Relatório somente-leitura — folha A4 (idêntica ao PDF) */}
       <section
-        className={`${cardClasses} relatorio-print text-sm`}
+        className="relatorio-print mx-auto w-[210mm] max-w-full bg-white p-[15mm] text-sm text-black shadow"
         aria-label="Relatório do orçamento"
       >
-        <header className="mb-4 flex items-start justify-between gap-4 border-b pb-3">
-          <div className="flex items-center gap-3">
+        <header className="mb-3 flex items-start justify-between gap-4 border-b border-neutral-300 pb-3">
+          <div className="flex min-w-0 items-start gap-3">
             <img
               src={logoImper}
-              alt="Imper"
-              className="h-10 w-auto no-print-hide"
+              alt={EMPRESA.nome}
+              className="h-10 w-auto shrink-0 no-print-hide"
             />
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Proposta de orçamento
+            <div className="min-w-0 text-[11px] leading-snug text-neutral-700">
+              <p className="text-sm font-semibold text-black">{EMPRESA.nome}</p>
+              <p>{EMPRESA.tagline}</p>
+              <p>CNPJ {EMPRESA.cnpj}</p>
+              <p>
+                {EMPRESA.endereco} — {EMPRESA.cidade}
               </p>
-              <p className="text-lg font-semibold">
-                {codigo ? `Nº ${codigo}` : 'Nº — (novo)'}
-              </p>
+              <p className="text-[10px]">{empresaContatoLinha()}</p>
             </div>
           </div>
-          <div className="text-right text-xs text-muted-foreground">
-            <p>Emitido em {dataBr(new Date().toISOString().slice(0, 10))}</p>
-            <p>
-              Válida até <strong className="text-foreground">{dataBr(state.validade)}</strong>
+          <div className="shrink-0 text-right">
+            <p className="text-[10px] uppercase tracking-wide text-neutral-500">
+              Proposta de orçamento
+            </p>
+            <p className="text-base font-semibold text-black">
+              {codigo ? `Nº ${codigo}` : 'Nº — (novo)'}
+            </p>
+            <p className="mt-1 text-[10px] text-neutral-500">
+              Emitido em {dataBr(new Date().toISOString().slice(0, 10))}
+            </p>
+            <p className="text-[10px] text-neutral-500">
+              Válida até{' '}
+              <strong className="text-black">{dataBr(state.validade)}</strong>
             </p>
           </div>
         </header>
 
         <div className="mb-4 grid gap-3 sm:grid-cols-2">
           <div>
-            <p className="text-xs font-semibold text-muted-foreground">Cliente</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+              Cliente
+            </p>
             <p>{clienteNome}</p>
-            {clienteTel ? <p className="text-muted-foreground">{clienteTel}</p> : null}
+            {clienteTel ? <p className="text-neutral-600">{clienteTel}</p> : null}
             {clienteEmail ? (
-              <p className="text-muted-foreground">{clienteEmail}</p>
+              <p className="text-neutral-600">{clienteEmail}</p>
             ) : null}
           </div>
           <div>
-            <p className="text-xs font-semibold text-muted-foreground">Endereço</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+              Endereço
+            </p>
             <p>{enderecoTexto || '—'}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Urgência: <strong className="text-foreground">{state.urgencia}</strong>
+            <p className="mt-1 text-[11px] text-neutral-600">
+              Urgência: <strong className="text-black">{state.urgencia}</strong>
             </p>
           </div>
         </div>
 
         {state.observacoes.trim() ? (
           <div className="mb-4">
-            <p className="text-xs font-semibold text-muted-foreground">Observações</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+              Observações
+            </p>
             <p className="whitespace-pre-wrap">{state.observacoes}</p>
           </div>
         ) : null}
@@ -350,7 +373,7 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
         <div className="mb-4 overflow-x-auto">
           <table className="w-full min-w-[560px] border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b text-muted-foreground">
+              <tr className="border-b border-neutral-400 text-neutral-600">
                 <th className="py-1 pr-2 font-semibold">Etapa › Sub-serviço</th>
                 <th className="py-1 pr-2 font-semibold">Descrição</th>
                 <th className="py-1 pr-2 text-right font-semibold">Qtd.</th>
@@ -400,7 +423,7 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
               )}
               {state.atividades.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-3 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-3 text-center text-neutral-500">
                     Nenhuma atividade.
                   </td>
                 </tr>
@@ -411,25 +434,25 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
 
         <div className="mb-4 ml-auto max-w-xs text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Mão de obra</span>
+            <span className="text-neutral-600">Mão de obra</span>
             <span>{brl(totais.valorMO)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Materiais</span>
+            <span className="text-neutral-600">Materiais</span>
             <span>{brl(totais.valorMateriais)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">EPIs</span>
+            <span className="text-neutral-600">EPIs</span>
             <span>{brl(totais.valorEpis)}</span>
           </div>
-          <div className="mt-1 flex justify-between border-t pt-1 text-base font-semibold">
+          <div className="mt-1 flex justify-between border-t border-neutral-400 pt-1 text-base font-semibold">
             <span>Total</span>
             <span>{brl(totais.total)}</span>
           </div>
         </div>
 
         {totalPares > 0 ? (
-          <div className="border-t pt-3">
+          <div className="border-t border-neutral-300 pt-3">
             <h4 className="mb-1 text-sm font-semibold">Análise crítica de riscos</h4>
             <ul className="flex list-disc flex-col gap-1 pl-4 text-xs">
               {linhas
@@ -444,7 +467,7 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
         ) : null}
 
         {(ficha.cuidados ?? []).filter(Boolean).length > 0 ? (
-          <div className="mt-3 border-t pt-3">
+          <div className="mt-3 border-t border-neutral-300 pt-3">
             <h4 className="mb-1 text-sm font-semibold">Cuidados</h4>
             <ul className="flex list-disc flex-col gap-1 pl-4 text-xs">
               {(ficha.cuidados ?? []).filter(Boolean).map((c, i) => (

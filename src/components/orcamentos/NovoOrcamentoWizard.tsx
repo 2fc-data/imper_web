@@ -23,6 +23,11 @@ import {
   reducerAutosave,
 } from './autosave';
 import {
+  limparRascunho,
+  salvarRascunho,
+  type RascunhoLocal,
+} from './rascunho';
+import {
   PASSOS,
   btnPrimarioClasses,
   btnSecundarioClasses,
@@ -44,6 +49,11 @@ interface Props {
   orcamentoEdicao?: OrcamentoAdminItem;
   /** Atendimento fixado quando o wizard abre via agendamento ("Planejar orçamento"). */
   atendimentoTravado?: number | null;
+  /**
+   * Rascunho local (localStorage) mais recente que o servidor, quando a página
+   * ofereceu a retomada. Em modo edição substitui a hidratação do servidor.
+   */
+  estadoInicialRascunho?: RascunhoLocal | null;
 }
 
 type ErroApi = Error & {
@@ -87,14 +97,20 @@ export function NovoOrcamentoWizard({
   onCancel,
   orcamentoEdicao,
   atendimentoTravado,
+  estadoInicialRascunho,
 }: Props) {
-  const [state, setState] = useState<WizardState>(() =>
-    estadoInicialWizard(
+  const [state, setState] = useState<WizardState>(() => {
+    if (estadoInicialRascunho?.estado) {
+      // Merge sobre os defaults: preenche campos ausentes em snapshots de
+      // versões anteriores do payload.
+      return estadoInicialWizard(estadoInicialRascunho.estado);
+    }
+    return estadoInicialWizard(
       atendimentoTravado != null && !orcamentoEdicao
         ? { atendimentoId: atendimentoTravado }
         : undefined,
-    ),
-  );
+    );
+  });
   const [listaAtendimentosVazia, setListaAtendimentosVazia] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -105,7 +121,9 @@ export function NovoOrcamentoWizard({
 
   // Espelhos para o autosave não depender de closures obsoletas: o id criado
   // na primeira gravação e o estado corrente (usado pelo "Tentar novamente").
-  const salvoIdRef = useRef<number | null>(orcamentoEdicao?.id ?? null);
+  const salvoIdRef = useRef<number | null>(
+    orcamentoEdicao?.id ?? estadoInicialRascunho?.orcamentoId ?? null,
+  );
   const estadoRef = useRef<WizardState>(state);
   const filaAutosaveRef = useRef<Promise<void>>(Promise.resolve());
   const seqAutosaveRef = useRef(0);
@@ -113,6 +131,24 @@ export function NovoOrcamentoWizard({
   useEffect(() => {
     estadoRef.current = state;
   }, [state]);
+
+  // Rascunho local: rede de segurança quando o autosave server falha (ex.:
+  // 409 de FK stale). Grava um snapshot debounced a cada mutação; quando o
+  // autosave cria o id, o snapshot sob a chave "novo" é removido para não
+  // deixar cópia órfã.
+  const idRascunhoRef = useRef<number | null>(salvoIdRef.current);
+  useEffect(() => {
+    if (carregando) return;
+    const timer = setTimeout(() => {
+      const id = salvoIdRef.current;
+      if (idRascunhoRef.current !== id) {
+        limparRascunho(window.localStorage, idRascunhoRef.current);
+        idRascunhoRef.current = id;
+      }
+      salvarRascunho(window.localStorage, id, estadoRef.current, Date.now());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [state, carregando]);
 
   const set: AtualizarEstado = useCallback(
     (fn) => setState((s) => fn(s)),
@@ -139,6 +175,20 @@ export function NovoOrcamentoWizard({
   // ---- hidratação em modo edição ------------------------------------------
   useEffect(() => {
     if (!orcamentoEdicao) return;
+    // Rascunho local aceito na retomada: o estado já veio do snapshot e é
+    // mais novo que o servidor — não sobrescrever com a hidratação.
+    if (estadoInicialRascunho?.estado) {
+      salvoIdRef.current = orcamentoEdicao.id;
+      // Se o snapshot veio da chave "novo" (orcamentoId nulo), ele já foi
+      // adotado — remove a entrada órfã. Próximas gravações usam a chave
+      // por id.
+      if (estadoInicialRascunho.orcamentoId === null) {
+        limparRascunho(window.localStorage, null);
+        idRascunhoRef.current = orcamentoEdicao.id;
+      }
+      setCarregando(false);
+      return;
+    }
     let vivo = true;
     setCarregando(true);
     (async () => {
@@ -323,6 +373,11 @@ export function NovoOrcamentoWizard({
       // pelo autosave vira PATCH, e não um segundo rascunho.
       const id = await salvar();
       await fn(id);
+      // Servidor confirmou (envio/aprovação/recusa): o rascunho local cumpriu
+      // seu papel. Limpa as duas chaves possíveis ("novo" e por id).
+      limparRascunho(window.localStorage, id);
+      limparRascunho(window.localStorage, null);
+      idRascunhoRef.current = null;
       onSalvo();
     } catch {
       // erro já tratado em salvar()/abaixo

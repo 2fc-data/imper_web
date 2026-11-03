@@ -222,7 +222,6 @@ export function AdminSidebar({
 
   useEffect(() => {
     onClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, onClose]);
 
   const navItems = (

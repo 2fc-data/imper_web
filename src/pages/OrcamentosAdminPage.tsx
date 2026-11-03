@@ -17,6 +17,12 @@ import {
 import { PendenciasAprovacaoModal } from '../components/orcamentos/PendenciasAprovacaoModal';
 import { RecusaOrcamentoModal } from '../components/orcamentos/RecusaOrcamentoModal';
 import {
+  carregarRascunho,
+  limparRascunho,
+  rascunhoLocalMaisRecente,
+  type RascunhoLocal,
+} from '../components/orcamentos/rascunho';
+import {
   calcularEvolucaoOrcamento,
   EvolucaoOrcamento,
 } from '../components/orcamentos/EvolucaoOrcamento';
@@ -384,6 +390,11 @@ export function OrcamentosAdminPage({
     initialView === 'novo' && atendimentoInicial != null,
   );
   const retomacaoFeita = useRef(false);
+  // Rascunho local aceito na retomada (localStorage): snapshot mais novo que o
+  // servidor, oferecido via confirm ao abrir o wizard.
+  const [rascunhoLocal, setRascunhoLocal] = useState<RascunhoLocal | null>(
+    null,
+  );
 
   useEffect(() => {
     if (retomacaoFeita.current) return;
@@ -398,6 +409,34 @@ export function OrcamentosAdminPage({
           atendimentoId: atendimentoInicial,
         });
         const existente = rascunhoParaRetomar(lista);
+
+        // Rascunho local do "novo": só vale se bater o atendimento e for mais
+        // recente que o rascunho do servidor (se houver). Confirmar antes de
+        // sobrescrever o que já foi gravado.
+        const local = carregarRascunho(window.localStorage, null);
+        const localDoAtendimento =
+          local && local.estado.atendimentoId === atendimentoInicial
+            ? local
+            : null;
+        if (
+          localDoAtendimento &&
+          rascunhoLocalMaisRecente(localDoAtendimento, existente?.updatedAt)
+        ) {
+          const hora = new Date(localDoAtendimento.salvoEm).toLocaleString(
+            'pt-BR',
+            { dateStyle: 'short', timeStyle: 'short' },
+          );
+          const retomar = window.confirm(
+            `Encontramos um rascunho local não sincronizado (${hora}). Deseja retomá-lo?` +
+              '\n\nOK = retomar o rascunho local · Cancelar = descartá-lo',
+          );
+          if (retomar) {
+            setRascunhoLocal(localDoAtendimento);
+          } else {
+            limparRascunho(window.localStorage, null);
+          }
+        }
+
         if (existente) setOrcamentoEdicao(existente);
       } catch (err) {
         console.error('Erro ao buscar rascunho do atendimento:', err);
@@ -492,12 +531,31 @@ export function OrcamentosAdminPage({
 
   const handleEditar = (orcamento: OrcamentoAdminItem) => {
     setErroAcao(null);
+    setRascunhoLocal(null);
+    // Rascunho local desta edição: se mais novo que o servidor, confirmar
+    // a retomada; se mais antigo (ou recusado), descartar para não reoferecer.
+    const local = carregarRascunho(window.localStorage, orcamento.id);
+    if (local && rascunhoLocalMaisRecente(local, orcamento.updatedAt)) {
+      const hora = new Date(local.salvoEm).toLocaleString('pt-BR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      });
+      const retomar = window.confirm(
+        `Encontramos um rascunho local não sincronizado (${hora}). Deseja retomá-lo?` +
+          '\n\nOK = retomar o rascunho local · Cancelar = descartá-lo',
+      );
+      if (retomar) setRascunhoLocal(local);
+      else limparRascunho(window.localStorage, orcamento.id);
+    } else if (local) {
+      limparRascunho(window.localStorage, orcamento.id);
+    }
     setOrcamentoEdicao(orcamento);
     mudarView('novo');
   };
 
   const fecharWizard = () => {
     setOrcamentoEdicao(null);
+    setRascunhoLocal(null);
     setErroAcao(null);
     mudarView('lista');
   };
@@ -553,6 +611,7 @@ export function OrcamentosAdminPage({
               atendimentoTravado={
                 orcamentoEdicao ? null : atendimentoInicial
               }
+              estadoInicialRascunho={rascunhoLocal}
               onSalvo={() => {
                 fecharWizard();
                 carregarOrcamentos();

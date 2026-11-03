@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { listarEpis, type EpiItem } from '../../lib/api';
+import { InputDecimal } from './InputDecimal';
 import { inputClasses, labelClasses, type EpiLinhaForm } from './tipos';
 
 interface Props {
@@ -151,15 +152,9 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
               </span>
               <label className="flex flex-col gap-0.5">
                 <span className="text-[10px] text-muted-foreground">Qtd</span>
-                <input
-                  className={inputClasses}
-                  type="number"
-                  min={0}
-                  step="any"
+                <InputDecimal
                   value={e.quantidade}
-                  onChange={(ev) =>
-                    atualizar(idx, { quantidade: Number(ev.target.value) })
-                  }
+                  onChange={(ev) => atualizar(idx, { quantidade: ev })}
                 />
               </label>
               <label className="flex flex-col gap-0.5">

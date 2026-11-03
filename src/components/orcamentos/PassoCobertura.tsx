@@ -174,8 +174,8 @@ export function PassoCobertura({ state, set }: Props) {
         </div>
       </div>
 
-      <div>
-        <h3 className="mb-2 text-sm font-semibold">
+      <div className={cardClasses}>
+        <h3 className="mb-3 text-sm font-semibold">
           3. Atividades adicionadas ({state.atividades.length})
         </h3>
         {state.atividades.length === 0 ? (

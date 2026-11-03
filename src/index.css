@@ -362,6 +362,11 @@
   border-radius: 6px !important;
 }
 
+@page {
+  size: A4;
+  margin: 0;
+}
+
 @media print {
   body * {
     visibility: hidden;
@@ -372,13 +377,17 @@
   }
   .relatorio-print {
     position: absolute;
-    inset: 0;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    min-height: 297mm;
     margin: 0;
-    padding: 24px;
+    padding: 15mm;
     box-shadow: none !important;
     border: none !important;
+    background: #fff !important;
   }
   .relatorio-print img {
-    max-height: 48px;
+    max-height: 12mm;
   }
 }

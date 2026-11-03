@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { listarMateriais, type MaterialItem } from '../../lib/api';
+import { InputDecimal } from './InputDecimal';
 import { inputClasses, labelClasses, type MaterialLinhaForm } from './tipos';
 
 interface Props {
@@ -134,19 +135,34 @@ export function MateriaisLinhaEditor({ materiais, onChange }: Props) {
           {materiais.map((m, idx) => (
             <li
               key={m.materialId}
-              className="grid grid-cols-[1fr_auto_4.5rem_auto] items-end gap-2 rounded-lg border p-2"
+              className="grid grid-cols-[1fr_auto_5.5rem_auto_auto] items-end gap-2 rounded-lg border p-2"
             >
               <span className="self-center text-sm">{m.nome}</span>
               <label className="flex flex-col gap-0.5">
                 <span className="text-[10px] text-muted-foreground">Qtd</span>
+                <InputDecimal
+                  value={m.quantidade}
+                  onChange={(v) => atualizar(idx, { quantidade: v })}
+                />
+              </label>
+              <label className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-muted-foreground">
+                  Unit. (R$)
+                </span>
                 <input
                   className={inputClasses}
                   type="number"
                   min={0}
                   step="any"
-                  value={m.quantidade}
-                  onChange={(e) =>
-                    atualizar(idx, { quantidade: Number(e.target.value) })
+                  placeholder="n/d"
+                  value={m.custoUnitario ?? ''}
+                  onChange={(ev) =>
+                    atualizar(idx, {
+                      custoUnitario:
+                        ev.target.value === ''
+                          ? null
+                          : Number(ev.target.value),
+                    })
                   }
                 />
               </label>

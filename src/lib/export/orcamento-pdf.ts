@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImper from '../../assets/logo_imper.webp';
 import { brl } from '../format';
+import { EMPRESA, empresaContatoLinha } from '../empresa';
 import { dataBr } from '../../components/orcamentos/tipos';
 
 interface LinhaPdf {
@@ -61,25 +62,42 @@ export async function gerarPdfOrcamento(input: OrcamentoPdfInput): Promise<void>
       // webp pode falhar no jsPDF; segue sem logo
     }
   }
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text('PROPOSTA DE ORÇAMENTO', 48, y + 4);
-  doc.setFontSize(16);
-  doc.setTextColor(0);
-  doc.text(codigoLabel, 48, y + 10);
-  y += 16;
-  doc.setDrawColor(200);
-  doc.line(15, y, 195, y);
-  y += 6;
 
+  // Identidade da empresa (esquerda) — idêntico à tela
+  const identX = 48;
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0);
+  doc.text(EMPRESA.nome, identX, y + 3);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(80);
+  doc.text(EMPRESA.tagline, identX, y + 7);
+  doc.text(`CNPJ ${EMPRESA.cnpj}`, identX, y + 11);
+  doc.text(`${EMPRESA.endereco} — ${EMPRESA.cidade}`, identX, y + 15);
+  doc.setFontSize(7);
+  doc.setTextColor(100);
+  doc.text(empresaContatoLinha(), identX, y + 19);
+
+  // Documento (direita)
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text(`Emitido em ${emitidoBr}`, 195, y, { align: 'right' });
-  y += 5;
+  doc.text('PROPOSTA DE ORÇAMENTO', 195, y + 3, { align: 'right' });
+  doc.setFontSize(15);
   doc.setTextColor(0);
-  doc.setFontSize(10);
-  doc.text(`Válida até ${validadeBr}`, 195, y, { align: 'right' });
-  y += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.text(codigoLabel, 195, y + 10, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80);
+  doc.text(`Emitido em ${emitidoBr}`, 195, y + 15, { align: 'right' });
+  doc.setTextColor(0);
+  doc.text(`Válida até ${validadeBr}`, 195, y + 19, { align: 'right' });
+
+  y += 24;
+  doc.setDrawColor(200);
+  doc.line(15, y, 195, y);
+  y += 8;
 
   // Cliente / Endereço / Urgência
   doc.setFontSize(8);
