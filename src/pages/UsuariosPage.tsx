@@ -1191,7 +1191,7 @@ export default function UsuariosPage({
                 <th className="px-4 py-3">E-mail</th>
                 <th className="px-4 py-3">Telefone</th>
                 <th className="px-4 py-3">RG</th>
-                <th className="px-4 py-3">Perfil</th>
+                <th className="px-4 py-3 min-w-[210px]">Perfil</th>
                 <th className="px-4 py-3">Cargo</th>
                 <th className="px-4 py-3">Criado em</th>
                 <th className="px-4 py-3 text-right">Ações</th>
@@ -1224,9 +1224,9 @@ export default function UsuariosPage({
                       <td className="px-4 py-3 text-muted-foreground">
                         {u.rg ?? '—'}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 align-middle">
                         {podeDefinirPerfil ? (
-                          <div className="space-y-1">
+                          <div className="flex flex-col gap-1.5 min-w-[200px]">
                             <MultiSelectPapeis
                               papeis={papeis}
                               value={valorDe(u)}
@@ -1238,29 +1238,48 @@ export default function UsuariosPage({
                               }
                               disabled={saving === u.id}
                             />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              disabled={
-                                saving === u.id || selecoes[u.id] === undefined
-                              }
-                              onClick={() => handleSalvarPerfil(u.id)}
-                            >
-                              {saving === u.id ? 'Salvando…' : 'Salvar'}
-                            </Button>
+                            {selecoes[u.id] !== undefined && (
+                              <div className="flex items-center gap-1.5 pt-0.5">
+                                <Button
+                                  type="button"
+                                  variant="default"
+                                  size="sm"
+                                  className="h-6 text-xs px-2.5 font-medium"
+                                  disabled={saving === u.id}
+                                  onClick={() => handleSalvarPerfil(u.id)}
+                                >
+                                  {saving === u.id ? 'Salvando…' : 'Salvar'}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground"
+                                  disabled={saving === u.id}
+                                  onClick={() =>
+                                    setSelecoes((prev) => {
+                                      const copy = { ...prev };
+                                      delete copy[u.id];
+                                      return copy;
+                                    })
+                                  }
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ) : (
-                          <span className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1.5 min-w-[190px]">
                             {u.papeis.map((p) => (
                               <span
                                 key={p.id}
-                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${badgetColor(p.nome)}`}
+                                className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium shadow-2xs ${badgetColor(p.nome)}`}
                               >
                                 {ROTULO_PAPEL[p.nome] ?? p.nome}
                               </span>
                             ))}
-                          </span>
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">

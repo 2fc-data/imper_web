@@ -25,38 +25,67 @@ export function MultiSelectPapeis({
   disabled,
 }: MultiSelectPapeisProps) {
   const [aberto, setAberto] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    maxHeight: number;
+    abrirParaCima: boolean;
+  } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const selecionados = papeis.filter((p) => value.includes(p.id));
 
   function alternar() {
     if (!aberto && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 4, left: r.left });
+      const ALTURA_ESTIMADA = 250;
+      const MARGEM = 12;
+      const espacoAbaixo = window.innerHeight - r.bottom - MARGEM;
+      const espacoAcima = r.top - MARGEM;
+      const abrirParaCima = espacoAbaixo < ALTURA_ESTIMADA && espacoAcima > espacoAbaixo;
+
+      const maxHeight = Math.max(120, Math.min(260, abrirParaCima ? espacoAcima : espacoAbaixo));
+
+      let left = r.left;
+      const LARGURA = 240;
+      if (left + LARGURA > window.innerWidth - MARGEM) {
+        left = Math.max(MARGEM, r.right - LARGURA);
+      }
+
+      setPos({
+        top: abrirParaCima ? undefined : r.bottom + 4,
+        bottom: abrirParaCima ? window.innerHeight - r.top + 4 : undefined,
+        left,
+        maxHeight,
+        abrirParaCima,
+      });
     }
     setAberto((v) => !v);
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
         ref={btnRef}
         type="button"
         disabled={disabled}
         onClick={alternar}
-        className="flex h-11 w-full flex-wrap items-center gap-1 rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm disabled:opacity-50"
+        className="flex min-h-[36px] h-auto w-full min-w-[190px] flex-wrap items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs shadow-xs hover:border-accent transition-colors disabled:opacity-50 text-left cursor-pointer"
+        title="Clique para gerenciar perfis"
       >
         {selecionados.length === 0 ? (
           <span className="text-muted-foreground">Nenhum perfil</span>
         ) : (
-          selecionados.map((p) => (
-            <span
-              key={p.id}
-              className={`inline-flex rounded-full px-2 py-0.5 text-sm font-medium ${badgetColor(p.nome)}`}
-            >
-              {ROTULO_PAPEL[p.nome] ?? p.nome}
-            </span>
-          ))
+          <div className="flex flex-wrap items-center gap-1.5">
+            {selecionados.map((p) => (
+              <span
+                key={p.id}
+                className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium shadow-2xs leading-normal ${badgetColor(p.nome)}`}
+              >
+                {ROTULO_PAPEL[p.nome] ?? p.nome}
+              </span>
+            ))}
+          </div>
         )}
       </button>
       {aberto &&
@@ -69,23 +98,44 @@ export function MultiSelectPapeis({
               onClick={() => setAberto(false)}
             />
             <div
-              className="fixed z-50 max-h-60 w-56 overflow-y-auto rounded-lg border bg-popover p-1 shadow-md"
-              style={{ top: pos.top, left: pos.left }}
+              className="fixed z-50 w-60 overflow-y-auto rounded-lg border bg-popover p-2 shadow-lg"
+              style={{
+                top: pos.top !== undefined ? `${pos.top}px` : undefined,
+                bottom: pos.bottom !== undefined ? `${pos.bottom}px` : undefined,
+                left: `${pos.left}px`,
+                maxHeight: `${pos.maxHeight}px`,
+              }}
             >
-              {papeis.map((p) => (
-                <label
-                  key={p.id}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent"
-                >
-                  <input
-                    type="checkbox"
-                    className="h-3.5 w-3.5"
-                    checked={value.includes(p.id)}
-                    onChange={() => onChange(selecionarPapel(value, p.id))}
-                  />
-                  <span>{ROTULO_PAPEL[p.nome] ?? p.nome}</span>
-                </label>
-              ))}
+              <div className="px-1.5 pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b mb-1">
+                Perfis de Acesso
+              </div>
+              <div className="space-y-1">
+                {papeis.map((p) => {
+                  const isChecked = value.includes(p.id);
+                  return (
+                    <label
+                      key={p.id}
+                      className={`flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-accent ${
+                        isChecked ? 'bg-accent/40 font-medium' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 rounded border-input text-primary focus:ring-1"
+                          checked={isChecked}
+                          onChange={() => onChange(selecionarPapel(value, p.id))}
+                        />
+                        <span
+                          className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium border ${badgetColor(p.nome)}`}
+                        >
+                          {ROTULO_PAPEL[p.nome] ?? p.nome}
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           </>,
           document.body,
