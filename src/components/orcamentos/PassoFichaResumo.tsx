@@ -103,8 +103,8 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
   const mailtoHref =
     clienteEmail != null && clienteEmail !== ''
       ? `mailto:${encodeURIComponent(clienteEmail)}?subject=${encodeURIComponent(
-          `Orçamento ${codigo ?? ''} — Imper`.trim(),
-        )}&body=${encodeURIComponent(textoResumo)}`
+        `Orçamento ${codigo ?? ''} — Imper`.trim(),
+      )}&body=${encodeURIComponent(textoResumo)}`
       : null;
 
   const baixarPdf = async () => {
@@ -309,7 +309,7 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
             <img
               src={logoImper}
               alt={EMPRESA.nome}
-              className="h-10 w-auto shrink-0 no-print-hide"
+              className="h-27 w-auto shrink-0 no-print-hide"
             />
             <div className="min-w-0 text-[11px] leading-snug text-neutral-700">
               <p className="text-sm font-semibold text-black">{EMPRESA.nome}</p>

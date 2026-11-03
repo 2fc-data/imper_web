@@ -57,7 +57,7 @@ export async function gerarPdfOrcamento(input: OrcamentoPdfInput): Promise<void>
 
   if (logo) {
     try {
-      doc.addImage(logo, 'PNG', 15, y, 28, 10, undefined, 'FAST');
+      doc.addImage(logo, 'PNG', 15, y, 50, 20, undefined, 'FAST');
     } catch {
       // webp pode falhar no jsPDF; segue sem logo
     }
