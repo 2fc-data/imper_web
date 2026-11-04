@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import {
   aprovarOrcamentoAdmin,
@@ -138,15 +139,31 @@ export function OrcamentoList({
   onVisualizar,
 }: OrcamentoListProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const podeAprovar = user?.permissoes.includes('aprovar_orcamento') ?? false;
-  const acaoClasses = (tom: 'neutro' | 'info' | 'sucesso' | 'perigo') =>
-    tom === 'info'
-      ? 'rounded-md border border-info/30 bg-info/10 px-2.5 py-1 text-xs font-medium text-info hover:bg-info/20 transition-colors'
-      : tom === 'sucesso'
-        ? 'rounded-md border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-medium text-success hover:bg-success/20 transition-colors'
-        : tom === 'perigo'
-          ? 'rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/20 transition-colors'
-          : 'rounded-md border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors';
+  const podePlanejar = Boolean(
+    user?.papeis?.some((p) => {
+      const nome = typeof p === 'string' ? p.toLowerCase() : (p as any)?.nome?.toLowerCase();
+      return (
+        nome?.includes('admin') ||
+        nome?.includes('supervisor') ||
+        nome?.includes('obras')
+      );
+    }) ||
+    user?.permissoes?.includes('editar_obra') ||
+    user?.permissoes?.includes('ver_obras')
+  );
+
+  const acaoClasses = (tom: 'neutro' | 'info' | 'sucesso' | 'perigo' | 'destaque') =>
+    tom === 'destaque'
+      ? 'rounded-md border border-primary/50 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/20 hover:border-primary transition-colors shadow-sm'
+      : tom === 'info'
+        ? 'rounded-md border border-info/30 bg-info/10 px-2.5 py-1 text-xs font-medium text-info hover:bg-info/20 transition-colors'
+        : tom === 'sucesso'
+          ? 'rounded-md border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-medium text-success hover:bg-success/20 transition-colors'
+          : tom === 'perigo'
+            ? 'rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/20 transition-colors'
+            : 'rounded-md border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors';
 
   return (
     <div className="space-y-4">
@@ -300,6 +317,20 @@ export function OrcamentoList({
                         >
                           Visualizar
                         </button>
+                        {item.status === 'APROVADO' && podePlanejar && item.obra?.id ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(`/obras/${item.obra!.id}?aba=planejamento`)
+                            }
+                            className={acaoClasses('destaque')}
+                            title="Planejar execução das atividades da obra"
+                          >
+                            {item.obra.dataInicioPrevista
+                              ? 'Ver Planejamento'
+                              : 'Planejar Execução'}
+                          </button>
+                        ) : null}
                         {editavel ? (
                           <button
                             type="button"

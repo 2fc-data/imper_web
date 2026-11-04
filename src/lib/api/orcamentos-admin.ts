@@ -92,6 +92,7 @@ export interface OrcamentoAdminItem {
   updatedAt: string;
   atendimento?: { id: number; user: { id: number; nome: string } | null };
   user?: { id: number; nome: string } | null;
+  obra?: { id: number; codigo: string; status: string; dataInicioPrevista?: string | null } | null;
   ordemServico?: { id: number; codigo: string; status: string } | null;
   servicoMarketing?: { id: number; titulo: string } | null;
   ficha?: { id?: number } | null;

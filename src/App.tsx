@@ -32,6 +32,7 @@ const ObrasAdminPage = lazy(() =>
 const ObraDetalhePage = lazy(() =>
   import('./pages/ObraDetalhePage').then((m) => ({ default: m.ObraDetalhePage })),
 );
+const ColaboradorTarefasPage = lazy(() => import('./pages/ColaboradorTarefasPage'));
 const PortalObraDetalhePage = lazy(() => import('./pages/portal/PortalObraDetalhePage'));
 
 const AgendamentosAdminPage = lazy(() =>
@@ -650,6 +651,7 @@ export default function App() {
               </GuestsOnly>
             }
           />
+          <Route path="/colaborador/tarefas" element={<ColaboradorTarefasPage />} />
           <Route element={<UsuariosRoute />} path="/usuarios" />
           <Route element={<ServicosRoute />} path="/servicos-admin" />
           <Route element={<RbacRoute />} path="/rbac" />

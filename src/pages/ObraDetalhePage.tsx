@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { PlanejamentoObra } from '../components/obras/PlanejamentoObra';
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ interface ObraAtividade {
   areaM2: number | null; moValorTotal: number; materiaisValor: number;
   linhaValorTotal: number; cancelada: boolean;
   materiais: ObraMaterial[];
+  execucoes?: Array<{ id: string; status: string }>;
 }
 interface ObraEtapa { id: number; nome: string; ordem: number; inativo: boolean; atividades: ObraAtividade[] }
 interface Aditivo { id: number; descricao: string; valor: number; status: 'PENDENTE' | 'APROVADO' | 'RECUSADO'; createdAt: string }
@@ -494,12 +496,15 @@ function ModalCriarAditivo({
 // ── Main Page ──────────────────────────────────────────────────────────────
 export function ObraDetalhePage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [obra, setObra] = useState<Obra | null>(null);
   const [comparacao, setComparacao] = useState<Comparacao | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [aba, setAba] = useState<'escopo' | 'execucao' | 'aditivos'>('escopo');
+  const [aba, setAba] = useState<'escopo' | 'execucao' | 'aditivos' | 'planejamento'>(
+    searchParams.get('aba') === 'planejamento' ? 'planejamento' : 'escopo',
+  );
   const [modalAditivo, setModalAditivo] = useState(false);
   const [concluindo, setConcluindo] = useState(false);
 
@@ -576,16 +581,30 @@ export function ObraDetalhePage() {
     );
   }
 
-  const todasExecucoesConcluidas =
-    obra.etapas?.flatMap(e => e.atividades).length > 0 &&
-    obra.etapas.every(e =>
-      e.inativo || e.atividades.every(a => a.cancelada),
-    );
+  const todasAtividades =
+    obra.etapas
+      ?.filter((e) => !e.inativo)
+      .flatMap((e) => e.atividades)
+      .filter((a) => !a.cancelada) ?? [];
 
-  const podeConcluir = obra.status !== 'CONCLUIDA' && obra.status !== 'CANCELADA' && canEdit;
+  const totalAtividadesValidas = todasAtividades.length;
+  const atividadesConcluidasCount = todasAtividades.filter((ativ) => {
+    const execs = ativ.execucoes ?? [];
+    return execs.length > 0 && execs.every((ex) => ex.status === 'CONCLUIDA');
+  }).length;
+
+  const todasAtividadesConcluidas =
+    totalAtividadesValidas > 0 &&
+    atividadesConcluidasCount === totalAtividadesValidas;
+
+  const podeConcluir =
+    obra.status !== 'CONCLUIDA' &&
+    obra.status !== 'CANCELADA' &&
+    canEdit &&
+    todasAtividadesConcluidas;
 
   const totalEtapas = obra.etapas?.length ?? 0;
-  const totalAtividades = obra.etapas?.flatMap(e => e.atividades).length ?? 0;
+  const totalAtividades = obra.etapas?.flatMap((e) => e.atividades).length ?? 0;
   const totalAditivos = obra.aditivos?.length ?? 0;
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -647,7 +666,7 @@ export function ObraDetalhePage() {
             <div className="mt-5 pt-5 border-t border-border/60 grid grid-cols-2 sm:grid-cols-4 gap-5">
               <StatCard label="Valor Contratado" value={brl(obra.valorContratado)} sub={`Orç: ${brl(obra.orcamento?.valorTotal ?? 0)}`} />
               <StatCard label="Etapas" value={String(totalEtapas)} sub={`${totalAtividades} atividades`} />
-              <StatCard label="Execuções" value={String(totalAtividades)} sub={todasExecucoesConcluidas ? '✓ Escopo concluído' : undefined} />
+              <StatCard label="Execuções" value={String(totalAtividades)} sub={`${atividadesConcluidasCount}/${totalAtividadesValidas} concluídas`} />
               <StatCard label="Aditivos" value={String(totalAditivos)} sub={`${obra.aditivos.filter(a => a.status === 'APROVADO').length} aprovados`} />
             </div>
           </CardContent>
@@ -666,6 +685,9 @@ export function ObraDetalhePage() {
 
       {/* Abas */}
       <div className="flex gap-6 border-b border-border/60">
+        <AbaBtn ativa={aba === 'planejamento'} onClick={() => setAba('planejamento')}>
+          📅 Planejamento da Execução
+        </AbaBtn>
         <AbaBtn ativa={aba === 'escopo'} onClick={() => setAba('escopo')}>
           Escopo & Etapas {totalEtapas > 0 && <span className="ml-1 text-xs text-muted-foreground">({totalEtapas})</span>}
         </AbaBtn>
@@ -678,6 +700,9 @@ export function ObraDetalhePage() {
       </div>
 
       {/* Conteúdo das abas */}
+      {aba === 'planejamento' && (
+        <PlanejamentoObra obraId={obra.id} onObraAtualizada={carregar} />
+      )}
       {aba === 'escopo' && <AbaEscopo etapas={obra.etapas} canEdit={canEdit} />}
       {aba === 'execucao' && (
         <AbaExecucao obraId={obra.id} />
