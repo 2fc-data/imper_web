@@ -47,6 +47,12 @@ export interface PlanejamentoAtividadeItem {
   ordem: number;
   quantidade: number | null;
   areaM2: number | null;
+  dataDisparoWhatsapp: string | null;
+  statusWhatsapp: string | null;
+  verbo?: { id: number; nome: string } | null;
+  objeto?: { id: number; nome: string } | null;
+  local?: { id: number; nome: string } | null;
+  caracteristica?: { id: number; nome: string } | null;
   materiais: Array<{
     materialId: number;
     quantidade: number;
@@ -106,13 +112,13 @@ export interface DadosPlanejamentoObra {
 
 export interface SalvarPlanejamentoPayload {
   dataInicioPrevista?: string | null;
-  dataDisparoWhatsapp?: string | null;
   dispararAgora?: boolean;
   atividades: Array<{
     atividadeId: string;
     colaboradorId?: number | null;
     colaboradoresIds?: number[];
     dataPrevisao?: string | null;
+    dataDisparoWhatsapp?: string | null;
     veiculoId?: number | null;
     materiais: Array<{ materialId: number; quantidade: number }>;
     epis: Array<{ epiId: number; quantidade: number }>;

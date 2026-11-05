@@ -4,6 +4,7 @@ import {
   obterPlanejamentoObra,
   salvarPlanejamentoObra,
   type DadosPlanejamentoObra,
+  type PlanejamentoAtividadeItem,
   type SalvarPlanejamentoPayload,
 } from '../../lib/api/planejamento';
 import { api } from '../../lib/api';
@@ -33,10 +34,38 @@ interface AtividadeFormState {
   colaboradorId: number | null;
   colaboradoresIds: number[];
   dataPrevisao: string;
+  dataDisparoWhatsapp: string;
   veiculoId: number | null;
   materiais: Array<{ materialId: number; quantidade: number }>;
   epis: Array<{ epiId: number; quantidade: number }>;
   equipamentos: Array<{ equipamentoId: number }>;
+}
+
+function montarDescricaoAtividade(ativ: PlanejamentoAtividadeItem): string {
+  const termos = [ativ.verbo?.nome, ativ.objeto?.nome]
+    .filter((p): p is string => Boolean(p && p.trim()))
+    .join(' ');
+  if (!termos) return ativ.descricao?.trim() || '—';
+
+  let texto = termos;
+  if (ativ.local?.nome?.trim()) texto += ` ${ativ.local.nome.trim()}`;
+  if (ativ.caracteristica?.nome?.trim()) {
+    texto += ` — ${ativ.caracteristica.nome.trim()}`;
+  }
+  if (ativ.descricao?.trim()) texto += ` · ${ativ.descricao.trim()}`;
+  return texto;
+}
+
+function paraDateTimeLocal(valor?: string | null): string {
+  if (!valor) return '';
+  const dt = new Date(valor);
+  if (Number.isNaN(dt.getTime())) return '';
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  const hh = String(dt.getHours()).padStart(2, '0');
+  const min = String(dt.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 
 export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraProps) {
@@ -50,7 +79,6 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
 
   // Estados do formulário
   const [dataInicioPrevista, setDataInicioPrevista] = useState<string>('');
-  const [dataDisparoWhatsapp, setDataDisparoWhatsapp] = useState<string>('');
   const [atividadesState, setAtividadesState] = useState<
     Record<string, AtividadeFormState>
   >({});
@@ -81,16 +109,6 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
           new Date(res.obra.dataInicioPrevista).toISOString().split('T')[0],
         );
       }
-      if (res.obra.dataDisparoWhatsapp) {
-        const dt = new Date(res.obra.dataDisparoWhatsapp);
-        const yyyy = dt.getFullYear();
-        const mm = String(dt.getMonth() + 1).padStart(2, '0');
-        const dd = String(dt.getDate()).padStart(2, '0');
-        const hh = String(dt.getHours()).padStart(2, '0');
-        const min = String(dt.getMinutes()).padStart(2, '0');
-        setDataDisparoWhatsapp(`${yyyy}-${mm}-${dd}T${hh}:${min}`);
-      }
-
       // Prepara estado inicial das atividades
       const estadoAtivs: Record<string, AtividadeFormState> = {};
       for (const etapa of res.obra.etapas) {
@@ -143,6 +161,7 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
             dataPrevisao: exec?.dataPrevisao
               ? new Date(exec.dataPrevisao).toISOString().split('T')[0]
               : '',
+            dataDisparoWhatsapp: paraDateTimeLocal(ativ.dataDisparoWhatsapp),
             veiculoId: exec?.veiculoId ?? null,
             materiais: mats,
             epis,
@@ -191,7 +210,7 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
 
   const atualizarAtividadeCampo = (
     ativId: string,
-    campo: 'colaboradorId' | 'dataPrevisao' | 'veiculoId',
+    campo: 'colaboradorId' | 'veiculoId' | 'dataDisparoWhatsapp',
     valor: any,
   ) => {
     setAtividadesState((prev) => ({
@@ -348,9 +367,6 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
         dataInicioPrevista: dataInicioPrevista
           ? new Date(dataInicioPrevista).toISOString()
           : null,
-        dataDisparoWhatsapp: dataDisparoWhatsapp
-          ? new Date(dataDisparoWhatsapp).toISOString()
-          : null,
         dispararAgora,
         atividades: Object.values(atividadesState).map((a) => {
           const cIds =
@@ -365,6 +381,9 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
             colaboradoresIds: cIds,
             dataPrevisao: a.dataPrevisao
               ? new Date(a.dataPrevisao).toISOString()
+              : null,
+            dataDisparoWhatsapp: a.dataDisparoWhatsapp
+              ? new Date(a.dataDisparoWhatsapp).toISOString()
               : null,
             veiculoId: a.veiculoId ? Number(a.veiculoId) : null,
             materiais: a.materiais.filter((m) => m.quantidade > 0),
@@ -546,29 +565,6 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
               </p>
             </div>
 
-            <div>
-              <Label htmlFor="dataDisparo">Agendamento Disparo WhatsApp</Label>
-              <Input
-                id="dataDisparo"
-                type="datetime-local"
-                value={dataDisparoWhatsapp}
-                onChange={(e) => setDataDisparoWhatsapp(e.target.value)}
-                className="mt-1"
-              />
-              <div className="mt-1 flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Status:</span>
-                <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    obra.statusWhatsapp === 'ENVIADO'
-                      ? 'bg-success/15 text-success'
-                      : 'bg-warning/15 text-warning'
-                  }`}
-                >
-                  {obra.statusWhatsapp === 'ENVIADO' ? 'ENVIADO' : 'PENDENTE'}
-                </span>
-              </div>
-            </div>
-
             {/* Regra 1: O botão 'Disparar WhatsApp Agora' só deve aparecer após as atividades serem distribuídas */}
             {todasAtividadesDistribuidas && (
               <div className="flex flex-col justify-end gap-2">
@@ -618,6 +614,7 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                   colaboradorId: null,
                   colaboradoresIds: [],
                   dataPrevisao: '',
+                  dataDisparoWhatsapp: '',
                   veiculoId: null,
                   materiais: [],
                   epis: [],
@@ -642,14 +639,28 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                   <div key={ativ.id} className="p-4 space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-foreground">
-                          {ativ.descricao}
-                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              Descrição
+                            </span>
+                            <p className="font-medium text-sm text-foreground">
+                              {montarDescricaoAtividade(ativ)}
+                            </p>
+                          </div>
+                          <div className="shrink-0 sm:text-right">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              Qtde
+                            </span>
+                            <p className="font-mono text-sm font-semibold text-foreground">
+                              {ativ.quantidade ?? '—'}
+                            </p>
+                          </div>
+                        </div>
                         <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          {ativ.quantidade != null && <span>Qtd: {ativ.quantidade}</span>}
                           {ativ.areaM2 != null && <span>Área: {ativ.areaM2} m²</span>}
                           <span className="text-primary/80 font-medium">
-                            • {formState.materiais.length} materiais • {formState.epis.length} EPIs • {formState.equipamentos.length} ferramentas
+                            {formState.materiais.length} materiais • {formState.epis.length} EPIs • {formState.equipamentos.length} ferramentas
                           </span>
                           {formState.colaboradoresIds?.length > 0 && (
                             <span className="text-primary/90 font-medium">
@@ -676,8 +687,8 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                       </Button>
                     </div>
 
-                    {/* Linha de Configuração do Colaborador, Data e Veículo */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-muted/10 p-3 rounded-lg border border-border/40">
+                    {/* Linha de Configuração do Colaborador, Veículo e Disparo */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-muted/10 p-3 rounded-lg border border-border/40">
                       <div>
                         <Label className="text-xs text-muted-foreground mb-1 block">
                           Colaborador Especialista
@@ -693,24 +704,6 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                           }
                           onChange={(ids) => atualizarColaboradoresAtividade(ativ.id, ids)}
                           placeholder="Selecione o(s) colaborador(es)..."
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-xs text-muted-foreground">
-                          Data Prevista
-                        </Label>
-                        <Input
-                          type="date"
-                          value={formState.dataPrevisao}
-                          onChange={(e) =>
-                            atualizarAtividadeCampo(
-                              ativ.id,
-                              'dataPrevisao',
-                              e.target.value,
-                            )
-                          }
-                          className="mt-1 h-8 text-xs"
                         />
                       </div>
 
@@ -736,6 +729,40 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                             </option>
                           ))}
                         </select>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Label className="text-xs text-muted-foreground">
+                            Agendamento Disparo WhatsApp
+                          </Label>
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              ativ.statusWhatsapp === 'ENVIADO'
+                                ? 'bg-success/15 text-success'
+                                : 'bg-warning/15 text-warning'
+                            }`}
+                          >
+                            {ativ.statusWhatsapp === 'ENVIADO'
+                              ? 'ENVIADO'
+                              : 'PENDENTE'}
+                          </span>
+                        </div>
+                        <Input
+                          type="datetime-local"
+                          value={formState.dataDisparoWhatsapp}
+                          onChange={(e) =>
+                            atualizarAtividadeCampo(
+                              ativ.id,
+                              'dataDisparoWhatsapp',
+                              e.target.value,
+                            )
+                          }
+                          className="mt-1 text-xs"
+                        />
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Cada atividade é disparada independentemente.
+                        </p>
                       </div>
                     </div>
 
