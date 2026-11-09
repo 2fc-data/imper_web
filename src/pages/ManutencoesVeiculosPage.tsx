@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { ManutencoesVeiculosAnalyticsDashboard } from '../components/analytics/ManutencoesVeiculosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -61,7 +62,18 @@ const emptyForm: ManutencaoVeiculoInput = {
   responsavelManutencaoId: undefined,
 };
 
-export default function ManutencoesVeiculosPage() {
+export default function ManutencoesVeiculosPage({
+  viewAtiva: propViewAtiva,
+  onNavegar: propOnNavegar,
+}: {
+  viewAtiva?: 'analises' | 'lista';
+  onNavegar?: (view: 'analises' | 'lista') => void;
+} = {}) {
+  const [internalView, setInternalView] = useState<'analises' | 'lista'>('lista');
+  const viewAtiva = propViewAtiva ?? internalView;
+  const setViewAtiva = propOnNavegar ?? setInternalView;
+
+  const [mostrarForm, setMostrarForm] = useState(false);
   const [manutencoes, setManutencoes] = useState<ManutencaoVeiculoItem[]>([]);
   const [lookups, setLookups] = useState<ManutencoesVeiculosLookups | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -106,12 +118,14 @@ export default function ManutencoesVeiculosPage() {
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
     });
     setError(null);
+    setMostrarForm(true);
   }
 
   function cancelarEdicao() {
     setEditando(null);
     setForm(emptyForm);
     setError(null);
+    setMostrarForm(false);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -325,96 +339,114 @@ export default function ManutencoesVeiculosPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Manutenções de Veículos</h1>
-        <p className="text-sm text-muted-foreground">Acompanhe manutenções preventivas e corretivas da frota.</p>
+        <p className="text-sm text-muted-foreground">Registro e análise de manutenções preventivas e corretivas da frota.</p>
       </header>
 
       {error && (
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
 
-      {formulario}
+      {viewAtiva === 'analises' && (
+        <ManutencoesVeiculosAnalyticsDashboard
+          manutencoes={manutencoes}
+          lookups={lookups}
+        />
+      )}
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar por veículo, tipo ou descrição..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
+      {viewAtiva === 'lista' && (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
+            <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Buscar por veículo, tipo ou descrição..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-ring-ring"
+                />
+              </div>
+              <select
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value)}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-ring-ring"
+              >
+                <option value="">TODOS OS STATUS</option>
+                {Object.entries(STATUS_LABEL).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
+            {!mostrarForm && !editando && (
+              <Button type="button" onClick={() => setMostrarForm(true)}>
+                + Nova Manutenção
+              </Button>
+            )}
+          </div>
+
+          {(mostrarForm || editando) && formulario}
+
+          <div className="space-y-3">
+            {filtradas.map((m) => (
+              <Card key={m.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CardTitle className="text-base">
+                        {m.veiculo ? `${m.veiculo.nome} — ${m.veiculo.placa}` : `Veículo #${m.veiculoId}`}
+                      </CardTitle>
+                      <BadgeStatus status={m.status} />
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatarData(m.data)}</span>
+                  </div>
+                  <CardDescription className="text-sm">{m.descricao}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="text-xs text-muted-foreground">
+                    {m.tipo && <span>Tipo: {m.tipo.nome} · </span>}
+                    {m.local && <span>Local: {m.local} · </span>}
+                    <span>
+                      Peças: {formatarValor(m.custoPecas)} · Mão de obra: {formatarValor(m.custoMaoDeObra)} · Total: {formatarValor(m.custoTotal)}
+                    </span>
+                    {m.proximaManutencao && (
+                      <span> · Próx.: {formatarData(m.proximaManutencao)}</span>
+                    )}
+                    {m.responsavelManutencao && (
+                      <span> · Motorista: {m.responsavelManutencao.nome}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {m.status === 'PENDENTE' && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => handleMudarStatus(m, 'EM_ANDAMENTO')}>
+                        Iniciar
+                      </Button>
+                    )}
+                    {m.status === 'EM_ANDAMENTO' && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => handleMudarStatus(m, 'CONCLUIDA')}>
+                        Concluir
+                      </Button>
+                    )}
+                    <Button type="button" variant="outline" size="sm" onClick={() => comecarEdicao(m)}>Editar</Button>
+                    {confirmandoExclusao === m.id ? (
+                      <>
+                        <Button type="button" variant="destructive" size="sm" disabled={excluindo === m.id} onClick={() => handleExcluir(m.id)}>
+                          {excluindo === m.id ? 'Excluindo...' : 'Confirmar exclusão'}
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(null)}>Cancelar</Button>
+                      </>
+                    ) : (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(m.id)}>Excluir</Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {!error && filtradas.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma manutenção encontrada.</p>
+            )}
+          </div>
         </div>
-        <select
-          value={filtroStatus}
-          onChange={(e) => setFiltroStatus(e.target.value)}
-          className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
-          <option value="">TODOS OS STATUS</option>
-          {Object.entries(STATUS_LABEL).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="space-y-3">
-        {filtradas.map((m) => (
-          <Card key={m.id}>
-            <CardHeader className="pb-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <CardTitle className="text-base">
-                    {m.veiculo ? `${m.veiculo.nome} — ${m.veiculo.placa}` : `Veículo #${m.veiculoId}`}
-                  </CardTitle>
-                  <BadgeStatus status={m.status} />
-                </div>
-                <span className="text-xs text-muted-foreground">{formatarData(m.data)}</span>
-              </div>
-              <CardDescription className="text-sm">{m.descricao}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-xs text-muted-foreground">
-                {m.tipo && <span>Tipo: {m.tipo.nome} · </span>}
-                {m.local && <span>Local: {m.local} · </span>}
-                <span>
-                  Peças: {formatarValor(m.custoPecas)} · Mão de obra: {formatarValor(m.custoMaoDeObra)} · Total: {formatarValor(m.custoTotal)}
-                </span>
-                {m.proximaManutencao && (
-                  <span> · Próx.: {formatarData(m.proximaManutencao)}</span>
-                )}
-                {m.responsavelManutencao && (
-                  <span> · Motorista: {m.responsavelManutencao.nome}</span>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {m.status === 'PENDENTE' && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => handleMudarStatus(m, 'EM_ANDAMENTO')}>
-                    Iniciar
-                  </Button>
-                )}
-                {m.status === 'EM_ANDAMENTO' && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => handleMudarStatus(m, 'CONCLUIDA')}>
-                    Concluir
-                  </Button>
-                )}
-                <Button type="button" variant="outline" size="sm" onClick={() => comecarEdicao(m)}>Editar</Button>
-                {confirmandoExclusao === m.id ? (
-                  <>
-                    <Button type="button" variant="destructive" size="sm" disabled={excluindo === m.id} onClick={() => handleExcluir(m.id)}>
-                      {excluindo === m.id ? 'Excluindo...' : 'Confirmar exclusão'}
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(null)}>Cancelar</Button>
-                  </>
-                ) : (
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(m.id)}>Excluir</Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {!error && filtradas.length === 0 && (
-          <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma manutenção encontrada.</p>
-        )}
-      </div>
+      )}
     </div>
   );
 }

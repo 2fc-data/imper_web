@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { AbastecimentosAnalyticsDashboard } from '../components/analytics/AbastecimentosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -33,7 +34,18 @@ const emptyForm: AbastecimentoInput = {
   motoristaId: 0,
 };
 
-export default function AbastecimentosPage() {
+export default function AbastecimentosPage({
+  viewAtiva: propViewAtiva,
+  onNavegar: propOnNavegar,
+}: {
+  viewAtiva?: 'analises' | 'lista';
+  onNavegar?: (view: 'analises' | 'lista') => void;
+} = {}) {
+  const [internalView, setInternalView] = useState<'analises' | 'lista'>('lista');
+  const viewAtiva = propViewAtiva ?? internalView;
+  const setViewAtiva = propOnNavegar ?? setInternalView;
+
+  const [mostrarForm, setMostrarForm] = useState(false);
   const [veiculos, setVeiculos] = useState<VeiculoItem[]>([]);
   const [motoristas, setMotoristas] = useState<{ id: number; nome: string }[]>([]);
   const [abastecimentos, setAbastecimentos] = useState<AbastecimentoItem[]>([]);
@@ -75,12 +87,14 @@ export default function AbastecimentosPage() {
       motoristaId: a.motoristaId || 0,
     });
     setError(null);
+    setMostrarForm(true);
   }
 
   function cancelarEdicao() {
     setEditando(null);
     setForm(emptyForm);
     setError(null);
+    setMostrarForm(false);
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -236,86 +250,102 @@ export default function AbastecimentosPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Abastecimentos</h1>
-        <p className="text-sm text-muted-foreground">Registro de abastecimentos da frota.</p>
+        <p className="text-sm text-muted-foreground">Registro e análise de abastecimentos da frota.</p>
       </header>
 
       {error && (
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
 
-      {formulario}
+      {viewAtiva === 'analises' && (
+        <AbastecimentosAnalyticsDashboard
+          abastecimentos={abastecimentos}
+          veiculos={veiculos}
+        />
+      )}
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="space-y-1.5 flex-1">
-          <Label htmlFor="veiculoFiltro">Filtrar por veículo</Label>
-          <select
-            id="veiculoFiltro"
-            value={veiculoFiltro}
-            onChange={(e) => setVeiculoFiltro(e.target.value ? Number(e.target.value) : '')}
-            className={selectClasses}
-          >
-            <option value="">Todos os veículos</option>
-            {veiculos.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.nome} — {v.placa}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Histórico</h2>
-        {abastecimentos.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Nenhum abastecimento registrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {abastecimentos.map((a) => (
-              <Card key={a.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <CardTitle className="text-base">
-                      {a.veiculo ? `${a.veiculo.nome} — ${a.veiculo.placa}` : `Veículo #${a.veiculoId}`}
-                    </CardTitle>
-                    <span className="text-xs text-muted-foreground">{formatarData(a.data)}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="text-sm text-muted-foreground">
-                    <span>{Number(a.litros).toFixed(2)} L · {formatarValor(a.valorTotal)}</span>
-                    <span> · R$/L: {formatarValor(a.precoLitro)}</span>
-                    {a.kmDesdeUltimo != null && (
-                      <span> · {a.kmDesdeUltimo.toLocaleString('pt-BR')} km desde último</span>
-                    )}
-                    {a.kmPorLitro != null && (
-                      <span> · {Number(a.kmPorLitro).toFixed(2)} km/L</span>
-                    )}
-                    <span> · Odômetro: {formatarKm(a.odometro)} km</span>
-                    {a.fornecedor && <span> · {a.fornecedor.nome}</span>}
-                    {a.motorista && <span> · Motorista: {a.motorista.nome}</span>}
-                    {a.registradoPor && (
-                      <span className="text-xs"> · por {a.registradoPor.nome}</span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => comecarEdicao(a)}>Editar</Button>
-                    {confirmandoExclusao === a.id ? (
-                      <>
-                        <Button type="button" variant="destructive" size="sm" disabled={excluindo === a.id} onClick={() => handleExcluir(a.id)}>
-                          {excluindo === a.id ? 'Excluindo...' : 'Confirmar exclusão'}
-                        </Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(null)}>Cancelar</Button>
-                      </>
-                    ) : (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(a.id)}>Excluir</Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+      {viewAtiva === 'lista' && (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end justify-between">
+            <div className="space-y-1.5 flex-1 max-w-sm">
+              <Label htmlFor="veiculoFiltro">Filtrar por veículo</Label>
+              <select
+                id="veiculoFiltro"
+                value={veiculoFiltro}
+                onChange={(e) => setVeiculoFiltro(e.target.value ? Number(e.target.value) : '')}
+                className={selectClasses}
+              >
+                <option value="">Todos os veículos</option>
+                {veiculos.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nome} — {v.placa}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {!mostrarForm && !editando && (
+              <Button type="button" onClick={() => setMostrarForm(true)}>
+                + Novo Abastecimento
+              </Button>
+            )}
           </div>
-        )}
-      </div>
+
+          {(mostrarForm || editando) && formulario}
+
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Histórico de Abastecimentos</h2>
+            {abastecimentos.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Nenhum abastecimento registrado.</p>
+            ) : (
+              <div className="space-y-2">
+                {abastecimentos.map((a) => (
+                  <Card key={a.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <CardTitle className="text-base">
+                          {a.veiculo ? `${a.veiculo.nome} — ${a.veiculo.placa}` : `Veículo #${a.veiculoId}`}
+                        </CardTitle>
+                        <span className="text-xs text-muted-foreground">{formatarData(a.data)}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        <span>{Number(a.litros).toFixed(2)} L · {formatarValor(a.valorTotal)}</span>
+                        <span> · R$/L: {formatarValor(a.precoLitro)}</span>
+                        {a.kmDesdeUltimo != null && (
+                          <span> · {a.kmDesdeUltimo.toLocaleString('pt-BR')} km desde último</span>
+                        )}
+                        {a.kmPorLitro != null && (
+                          <span> · {Number(a.kmPorLitro).toFixed(2)} km/L</span>
+                        )}
+                        <span> · Odômetro: {formatarKm(a.odometro)} km</span>
+                        {a.fornecedor && <span> · {a.fornecedor.nome}</span>}
+                        {a.motorista && <span> · Motorista: {a.motorista.nome}</span>}
+                        {a.registradoPor && (
+                          <span className="text-xs"> · por {a.registradoPor.nome}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => comecarEdicao(a)}>Editar</Button>
+                        {confirmandoExclusao === a.id ? (
+                          <>
+                            <Button type="button" variant="destructive" size="sm" disabled={excluindo === a.id} onClick={() => handleExcluir(a.id)}>
+                              {excluindo === a.id ? 'Excluindo...' : 'Confirmar exclusão'}
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(null)}>Cancelar</Button>
+                          </>
+                        ) : (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(a.id)}>Excluir</Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

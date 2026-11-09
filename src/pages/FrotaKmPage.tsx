@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FrotaKmAnalyticsDashboard } from '../components/analytics/FrotaKmAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -29,7 +30,17 @@ const MESES_CURTOS = [
   'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
 ];
 
-export default function FrotaKmPage() {
+export default function FrotaKmPage({
+  viewAtiva: propViewAtiva,
+  onNavegar: propOnNavegar,
+}: {
+  viewAtiva?: 'analises' | 'lista';
+  onNavegar?: (view: 'analises' | 'lista') => void;
+} = {}) {
+  const [internalView, setInternalView] = useState<'analises' | 'lista'>('lista');
+  const viewAtiva = propViewAtiva ?? internalView;
+  const setViewAtiva = propOnNavegar ?? setInternalView;
+
   const [veiculos, setVeiculos] = useState<VeiculoItem[]>([]);
   const [colaboradores, setColaboradores] = useState<{ id: number; nome: string }[]>([]);
   const [veiculoId, setVeiculoId] = useState<number | ''>('');
@@ -117,6 +128,7 @@ export default function FrotaKmPage() {
       setForm({ odometro: 0, observacao: '', colaboradorId: undefined });
       const veiculo = await listarVeiculos();
       setVeiculos(veiculo.filter((v) => v.ativo));
+      setViewAtiva('lista');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao registrar km');
     } finally {
@@ -187,7 +199,7 @@ export default function FrotaKmPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Km Diário</h1>
         <p className="text-sm text-muted-foreground">
-          Informe a leitura do odômetro ao final do dia. O sistema calcula a quilometragem percorrida.
+          Acompanhamento e registro de quilometragem percorrida pela frota.
         </p>
       </header>
 
@@ -195,98 +207,113 @@ export default function FrotaKmPage() {
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="space-y-1.5 flex-1">
-          <Label htmlFor="veiculoId">Veículo</Label>
-          <select
-            id="veiculoId"
-            value={veiculoId}
-            onChange={(e) => setVeiculoId(e.target.value ? Number(e.target.value) : '')}
-            className={selectClasses}
-          >
-            <option value="">Selecione o veículo...</option>
-            {veiculos.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.nome} — {v.placa} ({formatarKm(v.odometroAtual)} km)
-              </option>
-            ))}
-          </select>
-        </div>
-        {veiculoSelecionado && (
-          <div className="rounded-lg border bg-card px-4 py-2 text-sm">
-            <span className="text-muted-foreground">Odômetro atual: </span>
-            <span className="font-semibold">{formatarKm(veiculoSelecionado.odometroAtual)} km</span>
-          </div>
-        )}
-      </div>
-
-      {veiculoId !== '' && veiculoSelecionado && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Registrar KM</CardTitle>
-            <CardDescription>Informe a leitura do odômetro ao final do dia.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="odometro">Odômetro</Label>
-                  <Input
-                    id="odometro"
-                    inputMode="numeric"
-                    required
-                    placeholder={formatarKm(veiculoSelecionado.odometroAtual)}
-                    value={form.odometro ? formatarKm(form.odometro) : ''}
-                    onChange={(e) => setForm({ ...form, odometro: parseKm(e.target.value) ?? 0 })}
-                  />
-                  {form.odometro > 0 && form.odometro > Number(veiculoSelecionado.odometroAtual) && (
-                    <p className="text-xs text-muted-foreground">
-                      KM rodados: {formatarKm(form.odometro - Number(veiculoSelecionado.odometroAtual))}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="colaboradorId">Colaborador</Label>
-                  <select
-                    id="colaboradorId"
-                    value={form.colaboradorId ?? ''}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        colaboradorId: e.target.value ? Number(e.target.value) : undefined,
-                      })
-                    }
-                    className={selectClasses}
-                  >
-                    <option value="">Nenhum</option>
-                    {colaboradores.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="observacao">Observação (opcional)</Label>
-                  <Input
-                    id="observacao"
-                    value={form.observacao ?? ''}
-                    onChange={(e) => setForm({ ...form, observacao: e.target.value })}
-                  />
-                </div>
-              </div>
-              <Button
-                type="submit"
-                disabled={saving || !form.odometro || form.odometro <= Number(veiculoSelecionado.odometroAtual)}
-              >
-                {saving ? 'Salvando...' : 'Registrar KM'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      {viewAtiva === 'analises' && (
+        <FrotaKmAnalyticsDashboard
+          registros={registros}
+          veiculos={veiculos}
+        />
       )}
 
-      {veiculoId !== '' && (
+      {viewAtiva === 'lista' && (
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="space-y-1.5 flex-1 max-w-sm">
+              <Label htmlFor="veiculoIdLista">Veículo</Label>
+              <select
+                id="veiculoIdLista"
+                value={veiculoId}
+                onChange={(e) => setVeiculoId(e.target.value ? Number(e.target.value) : '')}
+                className={selectClasses}
+              >
+                <option value="">Selecione o veículo...</option>
+                {veiculos.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nome} — {v.placa} ({formatarKm(v.odometroAtual)} km)
+                  </option>
+                ))}
+              </select>
+            </div>
+            {veiculoSelecionado && (
+              <div className="rounded-lg border bg-card px-4 py-2 text-sm">
+                <span className="text-muted-foreground">Odômetro atual: </span>
+                <span className="font-semibold">{formatarKm(veiculoSelecionado.odometroAtual)} km</span>
+              </div>
+            )}
+          </div>
+
+          {veiculoId !== '' && veiculoSelecionado && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Registrar KM — {veiculoSelecionado.nome} ({veiculoSelecionado.placa})</CardTitle>
+                <CardDescription>Informe a leitura do odômetro ao final do dia.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="odometro">Odômetro</Label>
+                      <Input
+                        id="odometro"
+                        inputMode="numeric"
+                        required
+                        placeholder={formatarKm(veiculoSelecionado.odometroAtual)}
+                        value={form.odometro ? formatarKm(form.odometro) : ''}
+                        onChange={(e) => setForm({ ...form, odometro: parseKm(e.target.value) ?? 0 })}
+                      />
+                      {form.odometro > 0 && form.odometro > Number(veiculoSelecionado.odometroAtual) && (
+                        <p className="text-xs text-muted-foreground">
+                          KM rodados: {formatarKm(form.odometro - Number(veiculoSelecionado.odometroAtual))}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="colaboradorId">Colaborador</Label>
+                      <select
+                        id="colaboradorId"
+                        value={form.colaboradorId ?? ''}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            colaboradorId: e.target.value ? Number(e.target.value) : undefined,
+                          })
+                        }
+                        className={selectClasses}
+                      >
+                        <option value="">Nenhum</option>
+                        {colaboradores.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="observacao">Observação (opcional)</Label>
+                      <Input
+                        id="observacao"
+                        value={form.observacao ?? ''}
+                        onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Button
+                      type="submit"
+                      disabled={saving || !form.odometro || form.odometro <= Number(veiculoSelecionado.odometroAtual)}
+                    >
+                      {saving ? 'Salvando...' : 'Registrar KM'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {veiculoId === '' ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Selecione um veículo para visualizar os registros de KM.
+            </p>
+          ) : (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">Registros de KM</h2>
@@ -443,6 +470,8 @@ export default function FrotaKmPage() {
               </table>
             </div>
           )}
+        </div>
+      )}
         </div>
       )}
     </div>
