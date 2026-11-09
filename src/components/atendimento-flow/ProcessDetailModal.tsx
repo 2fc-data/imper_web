@@ -101,8 +101,8 @@ export function ProcessDetailModal({
       setDescricaoDraft('');
       onClose();
       await onCriarOrcamento?.(item.id);
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao salvar registro de atendimento.');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao salvar registro de atendimento.');
     } finally {
       setSalvando(false);
     }
@@ -121,8 +121,8 @@ export function ProcessDetailModal({
       await onRegistrarLog(item.id, descricao);
       setDescricaoDraft('');
       setAvisoRegistro('Registro salvo no histórico');
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao salvar o registro.');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao salvar o registro.');
     } finally {
       setSalvando(false);
     }
@@ -136,8 +136,8 @@ export function ProcessDetailModal({
       } else if (acao.criarOrcamento) {
         await onCriarOrcamento?.(item.id);
       }
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao executar ação.');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao executar ação.');
     }
   };
 
@@ -183,8 +183,8 @@ export function ProcessDetailModal({
         await onAgendarVisita(item.id, agendarDados);
         setAvisoReagendamento(`Visita agendada com sucesso: ${dataNova}`);
       }
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao salvar o novo horário.');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao salvar o novo horário.');
     } finally {
       setSalvando(false);
     }
@@ -301,7 +301,7 @@ export function ProcessDetailModal({
               </div>
               <div className="space-y-1">
                 <span className="font-semibold text-muted-foreground">E-mail:</span>
-                <p className="text-foreground font-semibold text-sm">{(item.user as any)?.email || 'Não informado'}</p>
+                <p className="text-foreground font-semibold text-sm">{item.user?.email || 'Não informado'}</p>
               </div>
               <div className="space-y-1">
                 <span className="font-semibold text-muted-foreground">Nível de Urgência:</span>

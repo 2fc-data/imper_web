@@ -291,7 +291,7 @@ function CalendarioRoute() {
         <CalendarioSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
       }
     >
-      <CalendarioPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+      <CalendarioPage viewAtiva={viewAtiva} />
     </ProtectedLayout>
   );
 }

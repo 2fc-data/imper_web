@@ -238,15 +238,6 @@ export default function EquipamentosAdminPage({
     };
   }, [editando, viewAtiva, codigoVersao]);
 
-  async function recarregarEquipamentos() {
-    try {
-      const lista = await listarEquipamentos();
-      setEquipamentos(lista);
-    } catch {
-      /* mantém a lista atual */
-    }
-  }
-
   function comecarEdicao(e: EquipamentoItem) {
     setEditando(e);
     setForm({

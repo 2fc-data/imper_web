@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Button } from '../components/ui/button';
 import { CepInput, type CepDados } from '../components/ui/cep-input';
@@ -854,7 +854,7 @@ function CargosView({
   const [descricao, setDescricao] = useState('');
   const [saving, setSaving] = useState(false);
 
-  async function recarregar() {
+  const recarregar = useCallback(async () => {
     setCarregando(true);
     try {
       const lista = await listarCargos();
@@ -864,11 +864,11 @@ function CargosView({
     } finally {
       setCarregando(false);
     }
-  }
+  }, [onError]);
 
   useEffect(() => {
     recarregar();
-  }, []);
+  }, [recarregar]);
 
   function iniciarCriacao() {
     setNovo(true);
@@ -1102,12 +1102,12 @@ export default function UsuariosPage({
     }
   }
 
-  const filtrados = usuarios.filter(
-    (u) =>
-      (!filtroLocal || u.papeis?.some((p) => p.nome === filtroLocal)) &&
-      (u.nome.toLowerCase().includes(busca.toLowerCase()) ||
-        u.email.toLowerCase().includes(busca.toLowerCase())),
-  );
+  const filtrados = usuarios.filter((u) => {
+    const matchesFiltro = !filtroLocal || u.papeis?.some((p) => p.nome === filtroLocal);
+    const nomeMatch = typeof u.nome === 'string' && u.nome.toLowerCase().includes(busca.toLowerCase());
+    const emailMatch = typeof u.email === 'string' && u.email.toLowerCase().includes(busca.toLowerCase());
+    return matchesFiltro && (nomeMatch || emailMatch);
+  });
 
   if (viewAtiva === 'analises') {
     return (

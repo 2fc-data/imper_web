@@ -13,7 +13,7 @@ export function Accordion({
   return (
     <div className="space-y-2" role="list">
       {items.map((item, i) => (
-        <AccordionItem key={i} index={i} {...item} />
+        <AccordionItem key={i} {...item} />
       ))}
     </div>
   );
@@ -23,12 +23,10 @@ function AccordionItem({
   titulo,
   descricao,
   conteudo,
-  index,
 }: {
   titulo: string;
   descricao?: string;
   conteudo: ReactNode;
-  index: number;
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();

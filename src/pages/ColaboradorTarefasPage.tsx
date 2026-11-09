@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '../components/ui/card';
-import { Input } from '../components/ui/input';
 
 export default function ColaboradorTarefasPage() {
   const [searchParams] = useSearchParams();

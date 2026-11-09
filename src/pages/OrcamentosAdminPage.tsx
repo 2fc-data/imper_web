@@ -143,7 +143,10 @@ export function OrcamentoList({
   const podeAprovar = user?.permissoes.includes('aprovar_orcamento') ?? false;
   const podePlanejar = Boolean(
     user?.papeis?.some((p) => {
-      const nome = typeof p === 'string' ? p.toLowerCase() : (p as any)?.nome?.toLowerCase();
+      const nome =
+        typeof p === 'string'
+          ? p.toLowerCase()
+          : (p as { nome?: string })?.nome?.toLowerCase();
       return (
         nome?.includes('admin') ||
         nome?.includes('supervisor') ||
@@ -477,9 +480,9 @@ export function OrcamentosAdminPage({
     })();
   }, [initialView, atendimentoInicial]);
 
-  const mudarView = (novaView: 'analises' | 'lista' | 'novo') => {
+  const mudarView = useCallback((novaView: 'analises' | 'lista' | 'novo') => {
     if (onNavegar) onNavegar(novaView);
-  };
+  }, [onNavegar]);
 
   // View "novo" sem atendimento (URL órfã — o botão de sidebar foi removido)
   // ou em edição não aplicável: volta para a lista em vez de abrir o wizard vazio.
@@ -487,7 +490,7 @@ export function OrcamentosAdminPage({
     if (initialView === 'novo' && atendimentoInicial == null && orcamentoEdicao == null) {
       mudarView('lista');
     }
-  }, [initialView, atendimentoInicial, orcamentoEdicao]);
+  }, [initialView, atendimentoInicial, orcamentoEdicao, mudarView]);
 
   const carregarOrcamentos = useCallback(async () => {
     setLoading(true);

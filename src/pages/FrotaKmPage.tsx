@@ -29,10 +29,6 @@ const MESES_CURTOS = [
   'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
 ];
 
-function dataMes(r: RegistroKmItem): number {
-  return new Date(r.data).getMonth() + 1;
-}
-
 export default function FrotaKmPage() {
   const [veiculos, setVeiculos] = useState<VeiculoItem[]>([]);
   const [colaboradores, setColaboradores] = useState<{ id: number; nome: string }[]>([]);

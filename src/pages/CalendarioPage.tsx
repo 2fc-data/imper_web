@@ -9,12 +9,10 @@ export type CalendarioView = 'calendario' | 'disponibilidade' | 'datas' | 'padro
 
 interface CalendarioPageProps {
   viewAtiva?: CalendarioView;
-  onNavegar?: (view: CalendarioView) => void;
 }
 
 export function CalendarioPage({
   viewAtiva = 'calendario',
-  onNavegar,
 }: CalendarioPageProps) {
   const { user } = useAuth();
   const userId = user?.id ?? 0;

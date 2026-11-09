@@ -30,13 +30,19 @@ interface Obra {
   valorContratado: number; createdAt: string;
   user?: { id: number; nome: string; email: string };
   aprovadoPor?: { nome: string };
-  orcamento?: { id: number; codigo: string; valorTotal: number; atividades: any[] };
+  orcamento?: { id: number; codigo: string; valorTotal: number; atividades: AtividadeComparavel[] };
   etapas: ObraEtapa[];
   aditivos: Aditivo[];
 }
+interface AtividadeComparavel {
+  linhaValorTotal: number | string;
+  etapaId?: number;
+  obraEtapaId?: number;
+  cancelada?: boolean;
+}
 interface Comparacao {
   obraId: number; codigo: string; valorContratado: number;
-  baseline: any[]; mestre: any[]; aditivos: Aditivo[];
+  baseline: AtividadeComparavel[]; mestre: AtividadeComparavel[]; aditivos: Aditivo[];
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────
@@ -69,7 +75,7 @@ function AbaBtn({ ativa, onClick, children }: { ativa: boolean; onClick: () => v
 }
 
 // ── Aba Escopo ─────────────────────────────────────────────────────────────
-function AbaEscopo({ etapas, canEdit }: { etapas: ObraEtapa[]; canEdit: boolean }) {
+function AbaEscopo({ etapas }: { etapas: ObraEtapa[] }) {
   if (!etapas?.length)
     return <p className="py-12 text-center text-muted-foreground">Nenhuma etapa cadastrada na obra.</p>;
 
@@ -212,27 +218,27 @@ function AbaAditivos({
   const usandoFallback = !comparacao;
 
   // ── Derive metrics from comparacao endpoint or fallback to local obra ──
-  const baselineAtivs: any[] = comparacao?.baseline ?? (obra.orcamento?.atividades ?? []);
-  const mestreAtivs: any[] = comparacao?.mestre ?? obra.etapas.flatMap(e => e.atividades);
+  const baselineAtivs: AtividadeComparavel[] = comparacao?.baseline ?? (obra.orcamento?.atividades ?? []);
+  const mestreAtivs: AtividadeComparavel[] = comparacao?.mestre ?? obra.etapas.flatMap(e => e.atividades);
   const aditivosAprovados = obra.aditivos.filter(a => a.status === 'APROVADO');
   const totalAditivos = aditivosAprovados.reduce((s, a) => s + Number(a.valor), 0);
 
   // Valor Total
   const baselineTotal = comparacao
-    ? baselineAtivs.reduce((s: number, a: any) => s + Number(a.linhaValorTotal ?? 0), 0)
+    ? baselineAtivs.reduce((s, a) => s + Number(a.linhaValorTotal ?? 0), 0)
     : Number(obra.orcamento?.valorTotal ?? 0);
-  const mestreTotal = mestreAtivs.reduce((s: number, a: any) => s + Number(a.linhaValorTotal ?? 0), 0);
+  const mestreTotal = mestreAtivs.reduce((s, a) => s + Number(a.linhaValorTotal ?? 0), 0);
   const valorContratado = Number(comparacao?.valorContratado ?? obra.valorContratado);
 
   // Nº Etapas
-  const baselineEtapas = new Set(baselineAtivs.map((a: any) => a.etapaId)).size;
+  const baselineEtapas = new Set(baselineAtivs.map((a) => a.etapaId)).size;
   const mestreEtapas = comparacao
-    ? new Set(mestreAtivs.map((a: any) => a.obraEtapaId)).size
+    ? new Set(mestreAtivs.map((a) => a.obraEtapaId)).size
     : obra.etapas.filter(e => !e.inativo).length;
 
   // Nº Atividades
   const baselineAtivCount = baselineAtivs.length;
-  const mestreAtivAtivas = mestreAtivs.filter((a: any) => !a.cancelada).length;
+  const mestreAtivAtivas = mestreAtivs.filter((a) => !a.cancelada).length;
   const mestreAtivCanceladas = mestreAtivs.length - mestreAtivAtivas;
 
   // Variation helpers
@@ -438,8 +444,8 @@ function ModalCriarAditivo({
       });
       onSuccess();
       onClose();
-    } catch (e: any) {
-      setErro(e?.message ?? 'Erro ao criar aditivo');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao criar aditivo');
     } finally {
       setSubmitting(false);
     }
@@ -519,10 +525,10 @@ export function ObraDetalhePage() {
         api.get<{ obra: Obra }>(`/obras/${id}`),
         api.get<Comparacao>(`/obras/${id}/comparacao`).catch(() => null),
       ]);
-      setObra((obraRes as any).obra ?? obraRes);
-      setComparacao(compRes as Comparacao | null);
-    } catch (e: any) {
-      setErro(e?.message ?? 'Erro ao carregar obra');
+      setObra(obraRes.obra);
+      setComparacao(compRes);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao carregar obra');
     } finally {
       setLoading(false);
     }
@@ -537,8 +543,8 @@ export function ObraDetalhePage() {
       setConcluindo(true);
       await api.post(`/obras/${id}/concluir`);
       await carregar();
-    } catch (e: any) {
-      window.alert(e?.message ?? 'Erro ao concluir obra');
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Erro ao concluir obra');
     } finally {
       setConcluindo(false);
     }
@@ -549,7 +555,7 @@ export function ObraDetalhePage() {
     try {
       await api.post(`/obras/aditivos/${aditivoId}/aprovar`);
       await carregar();
-    } catch (e: any) { window.alert(e?.message ?? 'Erro'); }
+    } catch (e) { window.alert(e instanceof Error ? e.message : 'Erro'); }
   }
 
   async function handleRecusarAditivo(aditivoId: number) {
@@ -557,7 +563,7 @@ export function ObraDetalhePage() {
     try {
       await api.post(`/obras/aditivos/${aditivoId}/recusar`);
       await carregar();
-    } catch (e: any) { window.alert(e?.message ?? 'Erro'); }
+    } catch (e) { window.alert(e instanceof Error ? e.message : 'Erro'); }
   }
 
   // ── Loading ──────────────────────────────────────────────────────────────
@@ -703,7 +709,7 @@ export function ObraDetalhePage() {
       {aba === 'planejamento' && (
         <PlanejamentoObra obraId={obra.id} onObraAtualizada={carregar} />
       )}
-      {aba === 'escopo' && <AbaEscopo etapas={obra.etapas} canEdit={canEdit} />}
+      {aba === 'escopo' && <AbaEscopo etapas={obra.etapas} />}
       {aba === 'execucao' && (
         <AbaExecucao obraId={obra.id} />
       )}

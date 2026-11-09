@@ -149,13 +149,9 @@ export function ListaComprasView({
   
   // Load expense types when component mounts
   useEffect(() => {
-    let cancelled = false;
     listarTiposDespesas()
       .then(setTiposDespesas)
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const [novoItemId, setNovoItemId] = useState<number | ''>('');

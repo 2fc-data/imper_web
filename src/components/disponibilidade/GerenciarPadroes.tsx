@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   apiListarPadroes,
   apiCriarPadrao,
@@ -34,19 +34,19 @@ export function GerenciarPadroes({ userId }: GerenciarPadroesProps) {
   const [editAtivo, setEditAtivo] = useState(true);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     setCarregando(true);
     try {
       const data = await apiListarPadroes(userId);
       setPadroes(data);
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao carregar padrões');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao carregar padrões');
     } finally {
       setCarregando(false);
     }
-  }
+  }, [userId]);
 
-  useEffect(() => { carregar(); }, [userId]);
+  useEffect(() => { carregar(); }, [carregar]);
 
   async function handleCriar() {
     if (novoInicio >= novoFim) {
@@ -67,8 +67,8 @@ export function GerenciarPadroes({ userId }: GerenciarPadroesProps) {
       setNovoFim('12:00');
       setNovaCapacidade(1);
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao criar padrão');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao criar padrão');
     } finally {
       setSalvando(false);
     }
@@ -105,8 +105,8 @@ export function GerenciarPadroes({ userId }: GerenciarPadroesProps) {
       });
       setEditandoId(null);
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao atualizar padrão');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar padrão');
     } finally {
       setSalvandoEdit(false);
     }
@@ -116,8 +116,8 @@ export function GerenciarPadroes({ userId }: GerenciarPadroesProps) {
     try {
       await apiAtualizarPadrao(id, { ativo: !ativo });
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao atualizar padrão');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar padrão');
     }
   }
 
@@ -126,8 +126,8 @@ export function GerenciarPadroes({ userId }: GerenciarPadroesProps) {
     try {
       await apiExcluirPadrao(id);
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao excluir padrão');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao excluir padrão');
     }
   }
 

@@ -89,7 +89,6 @@ export function CpfCnpjInput({
     detectarEValidar();
   }, [detectarEValidar]);
 
-  const tipo = digitos.length > 11 ? 'CNPJ' : 'CPF';
   const mascarado = digitos.length <= 11 ? formatarCpf(value) : formatarCnpj(value);
 
   return (

@@ -173,6 +173,23 @@ export async function obterTarefasColaborador(token: string): Promise<DadosPorta
   return api.get<DadosPortalColaborador>(`/colaborador/tarefas?token=${encodeURIComponent(token)}`);
 }
 
+export interface ExecucaoAtividadeAtualizada {
+  id: string;
+  atividadeId: string;
+  dataPrevisao: string | null;
+  dataInicio: string | null;
+  dataConclusao: string | null;
+  status: string;
+  atribuidoAId: number | null;
+  veiculoId: number | null;
+  tokenAcesso: string | null;
+  fotoConclusaoUrl: string | null;
+  observacaoConclusao: string | null;
+  criadoPorId: number | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
 export async function concluirTarefaColaborador(
   execucaoId: string,
   payload: {
@@ -181,7 +198,10 @@ export async function concluirTarefaColaborador(
     fotoWebpBase64?: string;
     observacao?: string;
   },
-): Promise<any> {
-  return api.post<any>(`/colaborador/tarefas/${execucaoId}/concluir`, payload);
+): Promise<ExecucaoAtividadeAtualizada> {
+  return api.post<ExecucaoAtividadeAtualizada>(
+    `/colaborador/tarefas/${execucaoId}/concluir`,
+    payload,
+  );
 }
 

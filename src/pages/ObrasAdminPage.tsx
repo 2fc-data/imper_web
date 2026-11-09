@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api, type StatusObraPortal } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { selectClasses } from '../components/ui/form-classes';
@@ -17,6 +17,15 @@ const STATUS_OBRA = [
   { valor: 'CANCELADA', rotulo: 'Cancelada' },
 ] as const;
 
+interface ObraListItem {
+  id: number;
+  codigo: string;
+  status: StatusObraPortal;
+  valorContratado: string | number | null;
+  user?: { id: number; nome: string } | null;
+  _count?: { etapas: number; aditivos: number };
+}
+
 function moeda(valor: unknown) {
   return Number(valor ?? 0).toLocaleString('pt-BR', {
     style: 'currency',
@@ -25,7 +34,7 @@ function moeda(valor: unknown) {
 }
 
 export function ObrasAdminPage() {
-  const [obras, setObras] = useState<any[]>([]);
+  const [obras, setObras] = useState<ObraListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [buscaInput, setBuscaInput] = useState('');
@@ -43,13 +52,13 @@ export function ObrasAdminPage() {
     if (statusFiltro) params.append('status', statusFiltro);
 
     api
-      .get<any>(`/obras?${params.toString()}`)
+      .get<{ obras: ObraListItem[] }>(`/obras?${params.toString()}`)
       .then((res) => {
-        if (!cancelado) setObras(res.data.obras || []);
+        if (!cancelado) setObras(res.obras || []);
       })
-      .catch((err: any) => {
+      .catch((err) => {
         if (!cancelado) {
-          setError(err.response?.data?.message || 'Erro ao carregar obras');
+          setError(err instanceof Error ? err.message : 'Erro ao carregar obras');
           setObras([]);
         }
       })

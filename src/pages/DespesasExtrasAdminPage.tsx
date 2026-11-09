@@ -15,13 +15,11 @@ import {
   excluirMaterial,
   listarLookupsMateriais,
   listarMateriais,
-  listarTiposDespesas,
   type MaterialInput,
   type MaterialItem,
   type MaterialLookups,
   type StatusMaterial,
   type UnidadeMedida,
-  type TipoDespesa,
 } from '../lib/api';
 import { formatarData, formatarValor } from '../lib/datetime';
 import { cn } from '../lib/utils';

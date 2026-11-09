@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import {
   apiObterSlots,
@@ -30,7 +30,7 @@ export function ListaDisponibilidade() {
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  function carregarSlots() {
+  const carregarSlots = useCallback(() => {
     let cancelado = false;
     setCarregando(true);
     setErro(null);
@@ -39,11 +39,11 @@ export function ListaDisponibilidade() {
       .catch((err) => { if (!cancelado) setErro(err?.message || 'Erro ao carregar horários'); })
       .finally(() => { if (!cancelado) setCarregando(false); });
     return () => { cancelado = true; };
-  }
+  }, [mesAtual, anoAtual]);
 
   useEffect(() => {
     return carregarSlots();
-  }, [mesAtual, anoAtual]);
+  }, [carregarSlots]);
 
   function voltarMes() {
     setEditSlotKey(null);
@@ -87,8 +87,8 @@ export function ListaDisponibilidade() {
 
       setEditSlotKey(null);
       carregarSlots();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao atualizar vagas do horário');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar vagas do horário');
     } finally {
       setSalvando(false);
     }

@@ -57,7 +57,7 @@ export default function Turnstile({
     return () => {
       if (script.parentNode) script.parentNode.removeChild(script);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [onChange]);
 
   return (

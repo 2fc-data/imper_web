@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
 import {
   type AgendamentoItem,
   type AtendimentoItem,
@@ -1135,8 +1134,8 @@ export function NovoAgendamentoForm({
         observacoes: observacoes || undefined,
       });
       onSuccess();
-    } catch (err: any) {
-      setErro(err?.message || 'Falha ao criar agendamento');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Falha ao criar agendamento');
     } finally {
       setLoading(false);
     }
@@ -1314,7 +1313,6 @@ export function AgendamentosAdminPage({
   initialView = 'lista',
   onNavegar,
 }: AgendamentosAdminPageProps) {
-  const { user } = useAuth();
   const [agendamentos, setAgendamentos] = useState<AgendamentoItem[]>([]);
   const [agendamentosTodos, setAgendamentosTodos] = useState<AgendamentoItem[]>(
     [],

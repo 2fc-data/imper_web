@@ -606,7 +606,6 @@ export function NovoAtendimentoForm({
       setDropdownAberto(true);
       try {
         const data = await buscarUsuarios(q);
-        console.log('buscarUsuarios:', q, '→', data.length, 'resultados', data);
         setSugestoes(data);
       } catch (err) {
         console.error('Erro ao buscar usuarios:', err);
@@ -685,8 +684,8 @@ export function NovoAtendimentoForm({
       }
 
       onSuccess();
-    } catch (err: any) {
-      setErro(err?.message || 'Falha ao cadastrar atendimento');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Falha ao cadastrar atendimento');
     } finally {
       setLoading(false);
     }

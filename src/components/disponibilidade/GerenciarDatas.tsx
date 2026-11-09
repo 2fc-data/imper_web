@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   apiListarDatas,
   apiCriarData,
@@ -57,19 +57,19 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
   const [editExcluida, setEditExcluida] = useState(false);
   const [salvandoEdit, setSalvandoEdit] = useState(false);
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     setCarregando(true);
     try {
       const data = await apiListarDatas(userId, mesAtual, anoAtual);
       setDatas(data);
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao carregar datas');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao carregar datas');
     } finally {
       setCarregando(false);
     }
-  }
+  }, [userId, mesAtual, anoAtual]);
 
-  useEffect(() => { carregar(); }, [userId, mesAtual, anoAtual]);
+  useEffect(() => { carregar(); }, [carregar]);
 
   function voltarMes() {
     if (mesAtual === 1) { setMesAtual(12); setAnoAtual(anoAtual - 1); }
@@ -102,8 +102,8 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
       setNovaCapacidade(1);
       setNovaExcluida(false);
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao criar data');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao criar data');
     } finally {
       setSalvando(false);
     }
@@ -139,8 +139,8 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
       });
       setEditandoId(null);
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao atualizar data');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar data');
     } finally {
       setSalvandoEdit(false);
     }
@@ -150,8 +150,8 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
     try {
       await apiAtualizarData(id, { excluida: !excluida });
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao atualizar data');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar data');
     }
   }
 
@@ -160,8 +160,8 @@ export function GerenciarDatas({ userId }: GerenciarDatasProps) {
     try {
       await apiExcluirData(id);
       await carregar();
-    } catch (err: any) {
-      setErro(err?.message || 'Erro ao excluir data');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao excluir data');
     }
   }
 

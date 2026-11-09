@@ -208,10 +208,12 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
     }));
   };
 
-  const atualizarAtividadeCampo = (
+  const atualizarAtividadeCampo = <
+    K extends 'colaboradorId' | 'veiculoId' | 'dataDisparoWhatsapp',
+  >(
     ativId: string,
-    campo: 'colaboradorId' | 'veiculoId' | 'dataDisparoWhatsapp',
-    valor: any,
+    campo: K,
+    valor: AtividadeFormState[K],
   ) => {
     setAtividadesState((prev) => ({
       ...prev,

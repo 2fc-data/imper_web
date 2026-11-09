@@ -75,8 +75,8 @@ export default function RbacAdminPage({
     try {
       await excluirPapelRbac(papel.id);
       setPapeis((prev) => prev.filter((p) => p.id !== papel.id));
-    } catch (e: any) {
-      setErro(e.message ?? 'Erro ao excluir papel');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao excluir papel');
     }
   }
 
@@ -100,8 +100,8 @@ export default function RbacAdminPage({
         ),
       );
       onNavegar('papeis');
-    } catch (e: any) {
-      setErro(e.message ?? 'Erro ao salvar permissões');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao salvar permissões');
     } finally {
       setSalvando(false);
     }
@@ -333,8 +333,8 @@ function NovoPapelCard({
       setNome('');
       setDescricao('');
       setAberto(false);
-    } catch (err: any) {
-      setErro(err.message ?? 'Erro ao criar papel');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao criar papel');
     } finally {
       setSalvando(false);
     }
@@ -421,8 +421,8 @@ function EditarPapelCard({
         descricao: descricao || undefined,
       });
       onSalvar({ ...papel, ...atualizado });
-    } catch (err: any) {
-      setErro(err.message ?? 'Erro ao atualizar papel');
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar papel');
     } finally {
       setSalvando(false);
     }
