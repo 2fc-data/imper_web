@@ -21,6 +21,9 @@ export function exportarCsv(nomeArquivo: string, colunas: string[], linhas: (str
 }
 
 export interface StorytellingRelatorio {
+  resumoExecutivo?: string;
+  statusGeral?: string;
+  cenario?: string[];
   resumo?: string;
   destaques?: string[];
   diagnostico?: string[];

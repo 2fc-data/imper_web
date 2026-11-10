@@ -150,8 +150,8 @@ export function DespesasExtrasAnalyticsDashboard({
   // Storytelling Dinâmico
   const storytelling = useMemo(() => {
     const totalItens = itensFiltrados.length;
-    const topItem = topPorCusto[0];
-    const topClass = dadosPorClassificacao[0];
+    const topItem = topPorValor[0];
+    const topClass = dadosPorTipo[0];
     const percentTopClass = valorTotalEstoque > 0 && topClass ? ((topClass.value / valorTotalEstoque) * 100).toFixed(1) : '0';
 
     let statusGeral: 'otimo' | 'atencao' | 'critico' | 'estavel' = 'estavel';
@@ -188,7 +188,7 @@ export function DespesasExtrasAnalyticsDashboard({
       : `Controle satisfatório de despesas extras e suprimentos, mantendo saldo equilibrado com o mínimo de segurança.`;
 
     return { statusGeral, resumoExecutivo, cenario, diagnostico, recomendacoes };
-  }, [itensFiltrados, valorTotalEstoque, saldoTotalFisico, totalAbaixoMinimo, totalSemEstoque, topPorCusto, dadosPorClassificacao]);
+  }, [itensFiltrados, valorTotalEstoque, saldoTotalFisico, totalAbaixoMinimo, totalSemEstoque, topPorValor, dadosPorTipo]);
 
   // Exportações
   const handleExportarCsv = () => {
@@ -374,13 +374,13 @@ export function DespesasExtrasAnalyticsDashboard({
           </div>
           <ChartStorytellingNote
             oQueAconteceu={
-              topPorCusto[0]
-                ? `O item '${topPorCusto[0].nomeCompleto}' lidera o custo acumulado em despesas extras com R$ ${topPorCusto[0].valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`
+              topPorValor[0]
+                ? `O item '${topPorValor[0].nomeCompleto}' lidera o custo acumulado em despesas extras com R$ ${topPorValor[0].valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`
                 : 'Custos de despesas extras distribuídos uniformemente.'
             }
             impacto="Despesas avulsas recorrentes de alto valor costumam drenar margens de contratos sem previsão em planilha orçamentária."
             acaoRecomendada="Avaliar a integração formal dos 3 maiores itens ao escopo padrão de suprimentos ou contratação com fornecedores homologados."
-            destaque={topPorCusto.length > 0 ? 'info' : 'neutro'}
+            destaque={topPorValor.length > 0 ? 'info' : 'neutro'}
           />
         </div>
 
@@ -395,7 +395,7 @@ export function DespesasExtrasAnalyticsDashboard({
             </p>
           </div>
           <div className="h-72 w-full">
-            {dadosPorClassificacao.length === 0 ? (
+            {dadosPorTipo.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 Sem dados classificados
               </div>
@@ -403,7 +403,7 @@ export function DespesasExtrasAnalyticsDashboard({
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={dadosPorClassificacao}
+                    data={dadosPorTipo}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -412,7 +412,7 @@ export function DespesasExtrasAnalyticsDashboard({
                     outerRadius={85}
                     paddingAngle={3}
                   >
-                    {dadosPorClassificacao.map((_, index) => (
+                    {dadosPorTipo.map((_, index) => (
                       <Cell key={`cell-tipo-${index}`} fill={CORES_PALETA[index % CORES_PALETA.length]} />
                     ))}
                   </Pie>
@@ -429,13 +429,13 @@ export function DespesasExtrasAnalyticsDashboard({
           </div>
           <ChartStorytellingNote
             oQueAconteceu={
-              dadosPorClassificacao[0]
-                ? `A classificação '${dadosPorClassificacao[0].name}' representa a maior concentração de despesas avulsas.`
+              dadosPorTipo[0]
+                ? `A classificação '${dadosPorTipo[0].name}' representa a maior concentração de despesas avulsas.`
                 : 'Categorização pulverizada.'
             }
             impacto="Concentração em categorias como supermercado, fretes ou miudezas indica carência de planejamento logístico nas obras."
             acaoRecomendada="Fixar diretrizes claras de alçadas e requisições para os grupos com maior volume registrado."
-            destaque={dadosPorClassificacao.length > 0 ? 'info' : 'neutro'}
+            destaque={dadosPorTipo.length > 0 ? 'info' : 'neutro'}
           />
         </div>
 
