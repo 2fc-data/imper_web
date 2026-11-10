@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { MateriaisAnalyticsDashboard } from '../components/analytics/MateriaisAnalyticsDashboard';
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
@@ -449,24 +450,7 @@ export default function MateriaisAdminPage({
   if (viewAtiva === 'analises') {
     return (
       <div className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">Materiais</h1>
-          <p className="text-sm text-muted-foreground">
-            Cadastro e gestão de estoque de materiais operacionais.
-          </p>
-        </header>
-
-        <MateriaisAnalises materiais={materiais} />
-
-        {onNavegar && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onNavegar('lista')}
-          >
-            ← Voltar para a lista
-          </Button>
-        )}
+        <MateriaisAnalyticsDashboard materiais={materiais} lookups={lookups} />
       </div>
     );
   }

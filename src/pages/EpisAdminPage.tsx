@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { EpisAnalyticsDashboard } from '../components/analytics/EpisAnalyticsDashboard';
 import { ItemForm, type ItemFormData } from '../components/ItemForm';
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
@@ -345,24 +346,7 @@ export default function EpisAdminPage({
   if (viewAtiva === 'analises') {
     return (
       <div className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">EPIs</h1>
-          <p className="text-sm text-muted-foreground">
-            Cadastro e gestão de equipamentos de proteção individual.
-          </p>
-        </header>
-
-        <EpisAnalises epis={epis} />
-
-        {onNavegar && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onNavegar('lista')}
-          >
-            ← Voltar para a lista
-          </Button>
-        )}
+        <EpisAnalyticsDashboard epis={epis} lookups={lookups} />
       </div>
     );
   }

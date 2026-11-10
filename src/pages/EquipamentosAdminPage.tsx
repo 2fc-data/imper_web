@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { EquipamentosAnalyticsDashboard } from '../components/analytics/EquipamentosAnalyticsDashboard';
 import { ItemForm, type ItemFormData } from '../components/ItemForm';
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
@@ -364,6 +365,14 @@ export default function EquipamentosAdminPage({
     return <ListaComprasView tipo="EQUIPAMENTO" titulo="Equipamentos" />;
   }
 
+  if (viewAtiva === 'analises') {
+    return (
+      <div className="space-y-6">
+        <EquipamentosAnalyticsDashboard equipamentos={equipamentos} lookups={lookups} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <header>
@@ -379,10 +388,6 @@ export default function EquipamentosAdminPage({
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
-      )}
-
-      {viewAtiva === 'analises' && (
-        <EquipamentosAnalises equipamentos={equipamentos} />
       )}
 
       {(viewAtiva === 'novo' || editando) && formulario}

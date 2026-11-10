@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { DespesasExtrasAnalyticsDashboard } from '../components/analytics/DespesasExtrasAnalyticsDashboard';
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
@@ -447,26 +448,7 @@ export default function DespesasExtrasAdminPage({
   if (viewAtiva === 'analises') {
     return (
       <div className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Despesas Extras
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Cadastro e gestão de estoque de itens de despesas extras.
-          </p>
-        </header>
-
-        <DespesasExtrasAnalises itens={itens} />
-
-        {onNavegar && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onNavegar('lista')}
-          >
-            ← Voltar para a lista
-          </Button>
-        )}
+        <DespesasExtrasAnalyticsDashboard itens={itens} />
       </div>
     );
   }

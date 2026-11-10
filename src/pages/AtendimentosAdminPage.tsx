@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PhoneInput } from '../components/ui/phone-input';
 import { EmailInput } from '../components/ui/email-input';
+import { CpfCnpjInput } from '../components/ui/cpf-cnpj-input';
 import { AgendarVisita, type AgendarDados, type AgendarVisitaHandle } from '../components/agendamento/AgendarVisita';
 import { CORES_STATUS, ROTULOS_STATUS } from '../lib/atendimento-status';
 import { acaoPresente, montarAcoesAtendimento, type AcaoUI } from '../lib/proximas-acoes';
@@ -33,6 +34,8 @@ import {
   type Urgencia,
 } from '../lib/api';
 
+import { AtendimentosAnalyticsDashboard } from '../components/analytics/AtendimentosAnalyticsDashboard';
+
 interface AtendimentosAnalisesProps {
   atendimentos: AtendimentoItem[];
 }
@@ -40,134 +43,7 @@ interface AtendimentosAnalisesProps {
 export function AtendimentosAnalises({
   atendimentos,
 }: AtendimentosAnalisesProps) {
-  const total = atendimentos.length;
-  const novos = atendimentos.filter((c) => c.status === 'NOVO').length;
-  const emAndamento = atendimentos.filter(
-    (c) => c.status === 'EM_ANDAMENTO',
-  ).length;
-  const concluidos = atendimentos.filter(
-    (c) => c.status === 'CONCLUIDO',
-  ).length;
-  const inativos = atendimentos.filter((c) => c.status === 'INATIVO').length;
-
-  const porCanal = atendimentos.reduce(
-    (acc, c) => {
-      acc[c.canal] = (acc[c.canal] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-          Análises & Métricas Operacionais
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Visão geral da taxa de conversão, volume por estágio e canais de entrada.
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-2xl border border-border/80 bg-card/70 backdrop-blur-md p-4 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Total Geral
-            </span>
-            <span className="p-1.5 rounded-lg bg-muted text-foreground">
-              📊
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold tracking-tight text-foreground">{total}</p>
-          <p className="text-[11px] text-muted-foreground">Oportunidades em carteira</p>
-        </div>
-
-        <div className="rounded-2xl border border-info/30 bg-info/5 backdrop-blur-md p-4 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-info">
-              Novos Leads
-            </span>
-            <span className="p-1.5 rounded-lg bg-info/10 text-info">
-              🆕
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold tracking-tight text-info">{novos}</p>
-          <p className="text-[11px] text-info/80">Aguardando 1º contato</p>
-        </div>
-
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 backdrop-blur-md p-4 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">
-              Em Atendimento
-            </span>
-            <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
-              ⚡
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold tracking-tight text-primary">{emAndamento}</p>
-          <p className="text-[11px] text-primary/80">Visitas ou orçamentos</p>
-        </div>
-
-        <div className="rounded-2xl border border-success/30 bg-success/5 backdrop-blur-md p-4 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-success">
-              Concluídos
-            </span>
-            <span className="p-1.5 rounded-lg bg-success/10 text-success">
-              ✅
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold tracking-tight text-success">{concluidos}</p>
-          <p className="text-[11px] text-success/80">Obras e serviços entregues</p>
-        </div>
-
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 backdrop-blur-md p-4 shadow-sm space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-destructive">
-              Inativos
-            </span>
-            <span className="p-1.5 rounded-lg bg-destructive/10 text-destructive">
-              ⏸
-            </span>
-          </div>
-          <p className="text-3xl font-extrabold tracking-tight text-destructive">{inativos}</p>
-          <p className="text-[11px] text-destructive/80">Cancelados ou arquivados</p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-border/80 bg-card/70 backdrop-blur-md p-6 shadow-sm space-y-4">
-        <h3 className="font-bold text-base text-foreground tracking-tight">Distribuição por Canal de Atendimento</h3>
-        <div className="space-y-3">
-          {Object.entries(porCanal).length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum dado registrado.
-            </p>
-          ) : (
-            Object.entries(porCanal).map(([canal, qtd]) => {
-              const perc = total ? Math.round((qtd / total) * 100) : 0;
-              return (
-                <div key={canal} className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold text-foreground">
-                    <span>{canal}</span>
-                    <span>
-                      {qtd} ({perc}%)
-                    </span>
-                  </div>
-                  <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500 rounded-full"
-                      style={{ width: `${perc}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return <AtendimentosAnalyticsDashboard atendimentos={atendimentos} />;
 }
 
 interface AtendimentoListProps {
@@ -618,10 +494,10 @@ export function NovoAtendimentoForm({
 
   function selecionarUsuario(usuario: MeuUser) {
     setUserIdSelecionado(usuario.id);
-    setNome(usuario.nome);
-    if (usuario.telefone) setTelefone(usuario.telefone);
-    if (usuario.email) setEmail(usuario.email);
-    if (usuario.cpfCnpj) setCpf(usuario.cpfCnpj);
+    setNome(usuario.nome ?? '');
+    setTelefone(usuario.telefone ?? '');
+    setEmail(usuario.email ?? '');
+    setCpf(usuario.cpfCnpj ?? '');
     setDropdownAberto(false);
     setSugestoes([]);
   }
@@ -746,11 +622,11 @@ export function NovoAtendimentoForm({
                             className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10 hover:text-primary transition-colors"
                           >
                             <div className="font-medium">{usuario.nome}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {usuario.telefone ||
-                                usuario.email ||
-                                usuario.cpfCnpj ||
-                                'Sem contato'}
+                            <div className="text-xs text-muted-foreground flex flex-wrap gap-x-2">
+                              {usuario.telefone && <span>Tel: {usuario.telefone}</span>}
+                              {usuario.email && <span>Email: {usuario.email}</span>}
+                              {usuario.cpfCnpj && <span>Doc: {usuario.cpfCnpj}</span>}
+                              {!usuario.telefone && !usuario.email && !usuario.cpfCnpj && <span>Sem contato cadastrado</span>}
                             </div>
                           </button>
                         </li>
@@ -788,12 +664,9 @@ export function NovoAtendimentoForm({
           </div>
           <div className="space-y-1.5">
             <label className={campoLabel}>CPF/CNPJ</label>
-            <input
-              type="text"
+            <CpfCnpjInput
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
-              className={campoInput}
-              placeholder="000.000.000-00"
+              onChange={setCpf}
             />
           </div>
         </div>

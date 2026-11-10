@@ -148,14 +148,19 @@ export function FrotaSidebar({
       >
         Novo Veículo
       </SidebarButton>
-      <SidebarNote>
-        Frota: veículos, km diário, abastecimentos e manutenções.
-      </SidebarNote>
     </>
   );
 }
 
-export function FrotaLinksSidebar() {
+export function FrotaLinksSidebar({
+  paginaAtiva,
+  viewAtiva,
+  onNavegar,
+}: {
+  paginaAtiva?: 'veiculos' | 'frota-km' | 'abastecimentos' | 'manutencoes-veiculos';
+  viewAtiva?: 'analises' | 'lista' | 'novo';
+  onNavegar?: (view: 'analises' | 'lista' | 'novo') => void;
+} = {}) {
   return (
     <>
       <SidebarLink
@@ -188,6 +193,87 @@ export function FrotaLinksSidebar() {
       >
         Manutenções
       </SidebarLink>
+    </>
+  );
+}
+
+export function AbastecimentosSidebar({
+  viewAtiva,
+  onNavegar,
+}: {
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista') => void;
+}) {
+  return (
+    <>
+      <SidebarButton
+        active={viewAtiva === 'analises'}
+        onClick={() => onNavegar('analises')}
+        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+      >
+        Análises
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar('lista')}
+        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+      >
+        lista Abastecimento
+      </SidebarButton>
+    </>
+  );
+}
+
+export function FrotaKmSidebar({
+  viewAtiva,
+  onNavegar,
+}: {
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista') => void;
+}) {
+  return (
+    <>
+      <SidebarButton
+        active={viewAtiva === 'analises'}
+        onClick={() => onNavegar('analises')}
+        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+      >
+        Análises
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar('lista')}
+        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+      >
+        Lista Km
+      </SidebarButton>
+    </>
+  );
+}
+
+export function ManutencoesVeiculosSidebar({
+  viewAtiva,
+  onNavegar,
+}: {
+  viewAtiva: 'analises' | 'lista' | 'novo';
+  onNavegar: (view: 'analises' | 'lista') => void;
+}) {
+  return (
+    <>
+      <SidebarButton
+        active={viewAtiva === 'analises'}
+        onClick={() => onNavegar('analises')}
+        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+      >
+        Análises
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar('lista')}
+        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+      >
+        Lista Manutenções
+      </SidebarButton>
     </>
   );
 }
@@ -683,11 +769,25 @@ export function VocabularioSidebar({
   );
 }
 
-export function RetiradaDeItensSidebar() {
+export function RetiradaDeItensSidebar({
+  viewAtiva = 'lista',
+  onNavegar,
+}: {
+  viewAtiva?: 'analises' | 'lista';
+  onNavegar?: (view: 'analises' | 'lista') => void;
+} = {}) {
   return (
     <>
       <SidebarButton
-        active
+        active={viewAtiva === 'analises'}
+        onClick={() => onNavegar?.('analises')}
+        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+      >
+        Análises
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar?.('lista')}
         icon={icone('M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10')}
       >
         Retirada de Itens

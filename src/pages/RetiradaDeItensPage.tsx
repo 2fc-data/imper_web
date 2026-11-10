@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RetiradaDeItensAnalyticsDashboard } from '../components/analytics/RetiradaDeItensAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -82,7 +83,13 @@ function ItemStatusBadge({ status }: { status: string }) {
   );
 }
 
-export function RetiradaDeItensPage() {
+export function RetiradaDeItensPage({
+  viewAtiva = 'lista',
+  onNavegar,
+}: {
+  viewAtiva?: 'analises' | 'lista';
+  onNavegar?: (view: 'analises' | 'lista') => void;
+} = {}) {
   const [separacoes, setSeparacoes] = useState<SeparacaoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroStatus, setFiltroStatus] = useState('');
@@ -201,6 +208,23 @@ export function RetiradaDeItensPage() {
       (s.itens?.filter((i) => i.status === 'RETIRADO').length ?? 0),
     0,
   );
+
+  if (viewAtiva === 'analises') {
+    return (
+      <div className="p-6 space-y-6">
+        <RetiradaDeItensAnalyticsDashboard separacoes={separacoes} />
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onNavegar?.('lista')}
+          >
+            ← Voltar para lista de retiradas
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full">

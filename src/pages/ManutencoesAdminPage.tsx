@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { ManutencoesEquipamentosAnalyticsDashboard } from '../components/analytics/ManutencoesEquipamentosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -682,24 +683,7 @@ export default function ManutencoesAdminPage({
   if (viewAtiva === 'analises') {
     return (
       <div className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">Manutenções</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie a manutenção preventiva e corretiva dos equipamentos.
-          </p>
-        </header>
-
-        <ManutencoesAnalises manutencoes={manutencoes} />
-
-        {onNavegar && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onNavegar('lista')}
-          >
-            ← Voltar para a lista
-          </Button>
-        )}
+        <ManutencoesEquipamentosAnalyticsDashboard manutencoes={manutencoes} />
       </div>
     );
   }

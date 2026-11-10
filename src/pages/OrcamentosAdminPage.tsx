@@ -28,85 +28,14 @@ import {
   EvolucaoOrcamento,
 } from '../components/orcamentos/EvolucaoOrcamento';
 
+import { OrcamentosAnalyticsDashboard } from '../components/analytics/OrcamentosAnalyticsDashboard';
+
 interface OrcamentosAnalisesProps {
   orcamentos: OrcamentoAdminItem[];
 }
 
 export function OrcamentosAnalises({ orcamentos }: OrcamentosAnalisesProps) {
-  const total = orcamentos.length;
-  const rascunho = orcamentos.filter((o) => o.status === 'RASCUNHO').length;
-  const enviados = orcamentos.filter((o) => o.status === 'ENVIADO').length;
-  const aprovados = orcamentos.filter((o) => o.status === 'APROVADO').length;
-  const recusados = orcamentos.filter((o) => o.status === 'RECUSADO').length;
-
-  const valorTotalSum = orcamentos.reduce(
-    (acc, o) => acc + Number(o.valorTotal || 0),
-    0,
-  );
-
-  const valorAprovadoSum = orcamentos
-    .filter((o) => o.status === 'APROVADO')
-    .reduce((acc, o) => acc + Number(o.valorTotal || 0), 0);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight">
-          Análises de Orçamentos
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Métricas financeiras, conversão e visão geral dos orçamentos emitidos.
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">
-            Total Emitido
-          </p>
-          <p className="mt-2 text-2xl font-bold">
-            R${' '}
-            {valorTotalSum.toLocaleString('pt-BR', {
-              minimumFractionDigits: 2,
-            })}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {total} orçamentos
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-success">Total Aprovado</p>
-          <p className="mt-2 text-2xl font-bold">
-            R${' '}
-            {valorAprovadoSum.toLocaleString('pt-BR', {
-              minimumFractionDigits: 2,
-            })}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {aprovados} aprovados
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-info">
-            Aguardando Envio/Aprovação
-          </p>
-          <p className="mt-2 text-2xl font-bold">{rascunho + enviados}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {rascunho} rascunho / {enviados} enviados
-          </p>
-        </div>
-
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-destructive">
-            Recusados / Expirados
-          </p>
-          <p className="mt-2 text-2xl font-bold">{recusados}</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <OrcamentosAnalyticsDashboard orcamentos={orcamentos} />;
 }
 
 interface OrcamentoListProps {

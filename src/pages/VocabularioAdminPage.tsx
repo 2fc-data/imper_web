@@ -1,4 +1,5 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { EtapasDeObrasAnalyticsDashboard } from '../components/analytics/EtapasDeObrasAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -371,45 +372,21 @@ export default function VocabularioAdminPage({
   if (viewAtiva === 'analises') {
     return (
       <div className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">Etapas de obra</h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie etapas, termos e sub-serviços do orçamento
-          </p>
-        </header>
         {error && (
           <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         )}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-xl border bg-card p-4 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">
-              Etapas
-            </p>
-            <p className="mt-2 text-2xl font-bold">{etapas.length}</p>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">
-              Sub-serviços
-            </p>
-            <p className="mt-2 text-2xl font-bold">{subServicos.length}</p>
-          </div>
-          <div className="rounded-xl border bg-card p-4 shadow-sm">
-            <p className="text-xs font-medium text-muted-foreground">
-              Termos (total)
-            </p>
-            <p className="mt-2 text-2xl font-bold">
-              {DIMENSOES.reduce(
-                (acc, d) => acc + (termosPorDim[d.dim]?.length ?? 0),
-                0,
-              )}
-            </p>
-          </div>
+        <EtapasDeObrasAnalyticsDashboard
+          etapas={etapas}
+          subServicos={subServicos}
+          termosPorDim={termosPorDim}
+        />
+        <div>
+          <Button type="button" variant="outline" onClick={() => onNavegar('etapas')}>
+            ← Ir para etapas
+          </Button>
         </div>
-        <Button type="button" variant="outline" onClick={() => onNavegar('etapas')}>
-          ← Ir para etapas
-        </Button>
       </div>
     );
   }

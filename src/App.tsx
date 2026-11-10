@@ -5,15 +5,18 @@ import { LandingLayout } from './components/landing/LandingLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { PortalLayout } from './components/layout/PortalLayout';
 import {
+  AbastecimentosSidebar,
   AgendamentosSidebar,
   AtendimentosSidebar,
   CalendarioSidebar,
   DashboardSidebar,
   EpisSidebar,
   EquipamentosSidebar,
+  FrotaKmSidebar,
   FrotaLinksSidebar,
   FrotaSidebar,
   ManutencoesSidebar,
+  ManutencoesVeiculosSidebar,
   MateriaisSidebar,
   ObrasSidebar,
   OrcamentosSidebar,
@@ -401,34 +404,52 @@ function VeiculosRoute() {
 }
 
 function FrotaKmRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
   return (
     <ProtectedLayout
       requiredPermissions={['visualizar_frota', 'registrar_km_frota']}
-      sidebar={<FrotaLinksSidebar />}
+      sidebar={
+        <FrotaKmSidebar
+          viewAtiva={viewAtiva}
+          onNavegar={setViewAtiva}
+        />
+      }
     >
-      <FrotaKmPage />
+      <FrotaKmPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
 
 function AbastecimentosRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
   return (
     <ProtectedLayout
       requiredPermissions={['visualizar_frota', 'gerenciar_frota']}
-      sidebar={<FrotaLinksSidebar />}
+      sidebar={
+        <AbastecimentosSidebar
+          viewAtiva={viewAtiva}
+          onNavegar={setViewAtiva}
+        />
+      }
     >
-      <AbastecimentosPage />
+      <AbastecimentosPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
 
 function ManutencoesVeiculosRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
   return (
     <ProtectedLayout
       requiredPermissions={['visualizar_frota', 'gerenciar_frota']}
-      sidebar={<FrotaLinksSidebar />}
+      sidebar={
+        <ManutencoesVeiculosSidebar
+          viewAtiva={viewAtiva}
+          onNavegar={setViewAtiva}
+        />
+      }
     >
-      <ManutencoesVeiculosPage />
+      <ManutencoesVeiculosPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
@@ -554,12 +575,19 @@ function VocabularioRoute() {
 }
 
 function RetiradaDeItensRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
+
   return (
     <ProtectedLayout
       requiredPermissions={['gerenciar_estoque', 'gerenciar_equipamentos']}
-      sidebar={<RetiradaDeItensSidebar />}
+      sidebar={
+        <RetiradaDeItensSidebar
+          viewAtiva={viewAtiva}
+          onNavegar={setViewAtiva}
+        />
+      }
     >
-      <RetiradaDeItensPage />
+      <RetiradaDeItensPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }

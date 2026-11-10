@@ -63,6 +63,8 @@ const rotulosResultado: Record<ResultadoVisita, string> = {
   CLIENTE_AUSENTE: 'Cliente ausente',
 };
 
+import { AgendamentosAnalyticsDashboard } from '../components/analytics/AgendamentosAnalyticsDashboard';
+
 interface AgendamentosAnalisesProps {
   agendamentos: AgendamentoItem[];
 }
@@ -70,139 +72,7 @@ interface AgendamentosAnalisesProps {
 export function AgendamentosAnalises({
   agendamentos,
 }: AgendamentosAnalisesProps) {
-  const total = agendamentos.length;
-  const pendentes = agendamentos.filter((a) => a.status === 'PENDENTE').length;
-  const confirmados = agendamentos.filter(
-    (a) => a.status === 'CONFIRMADO',
-  ).length;
-  const realizados = agendamentos.filter(
-    (a) => a.status === 'REALIZADO',
-  ).length;
-  const cancelados = agendamentos.filter(
-    (a) => a.status === 'CANCELADO',
-  ).length;
-
-  const porTipo = agendamentos.reduce(
-    (acc, a) => {
-      acc[a.tipo] = (acc[a.tipo] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  const porStatus = agendamentos.reduce(
-    (acc, a) => {
-      acc[a.status] = (acc[a.status] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight">
-          Análises de Agendamentos
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Visão geral do volume e status dos agendamentos.
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">
-            Total de Agendamentos
-          </p>
-          <p className="mt-2 text-2xl font-bold">{total}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-warning">Pendentes</p>
-          <p className="mt-2 text-2xl font-bold">{pendentes}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-info">Confirmados</p>
-          <p className="mt-2 text-2xl font-bold">{confirmados}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-success">Realizados</p>
-          <p className="mt-2 text-2xl font-bold">{realizados}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-destructive">Cancelados</p>
-          <p className="mt-2 text-2xl font-bold">{cancelados}</p>
-        </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-          <h3 className="font-semibold text-base">Distribuição por Tipo</h3>
-          <div className="space-y-2">
-            {Object.entries(porTipo).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum dado registrado.
-              </p>
-            ) : (
-              Object.entries(porTipo).map(([tipo, qtd]) => {
-                const perc = total ? Math.round((qtd / total) * 100) : 0;
-                return (
-                  <div key={tipo} className="space-y-1">
-                    <div className="flex justify-between text-xs font-medium">
-                      <span>
-                        {rotulosTipo[tipo as TipoAgendamento] ?? tipo}
-                      </span>
-                      <span>
-                        {qtd} ({perc}%)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${perc}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-          <h3 className="font-semibold text-base">Distribuição por Status</h3>
-          <div className="space-y-2">
-            {Object.entries(porStatus).length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum dado registrado.
-              </p>
-            ) : (
-              Object.entries(porStatus).map(([status, qtd]) => {
-                const perc = total ? Math.round((qtd / total) * 100) : 0;
-                return (
-                  <div key={status} className="space-y-1">
-                    <div className="flex justify-between text-xs font-medium">
-                      <span>
-                        {rotulosStatus[status as StatusAgendamento] ?? status}
-                      </span>
-                      <span>
-                        {qtd} ({perc}%)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-primary/40 overflow-hidden">
-                      <div
-                        className="h-full bg-warning transition-all"
-                        style={{ width: `${perc}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <AgendamentosAnalyticsDashboard agendamentos={agendamentos} />;
 }
 
 interface DetalhesExtras {
