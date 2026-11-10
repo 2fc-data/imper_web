@@ -53,9 +53,19 @@ export function EpisAnalyticsDashboard({
     periodo: 'tudo',
   });
 
-  // Filtragem
+  // Normalize numeric fields to ensure they are numbers (not zero‑padded strings)
+  const episNormalized = useMemo(() =>
+    epis.map((e) => ({
+      ...e,
+      quantidade: Number(e.quantidade),
+      custoUnitario: e.custoUnitario != null ? Number(e.custoUnitario) : undefined,
+    })),
+    [epis]
+  );
+
+  // Filtragem using normalized data
   const episFiltrados = useMemo(() => {
-    return epis.filter((e) => {
+    return episNormalized.filter((e) => {
       // Categoria
       if (filtros.categoria && String(e.categoriaId) !== filtros.categoria) {
         return false;
@@ -83,11 +93,11 @@ export function EpisAnalyticsDashboard({
 
       return true;
     });
-  }, [epis, filtros]);
+  }, [episNormalized, filtros]);
 
   // KPIs
   const totalEstoqueFisico = useMemo(
-    () => episFiltrados.reduce((acc, e) => acc + e.quantidade, 0),
+    () => episFiltrados.reduce((acc, e) => acc + Number(e.quantidade), 0),
     [episFiltrados],
   );
 
@@ -161,7 +171,7 @@ export function EpisAnalyticsDashboard({
     else if (totalItens > 0) statusGeral = 'estavel';
 
     const cenario = [
-      `Parque de proteção conta com ${totalEstoqueFisico.toLocaleString('pt-BR')} unidades de EPIs com patrimônio avaliado em R$ ${valorTotalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
+      `Parque de proteção conta com ${totalEstoqueFisico === 0 ? '0' : totalEstoqueFisico.toLocaleString('pt-BR')} unidades de EPIs com patrimônio avaliado em R$ ${valorTotalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
       topCat ? `Categoria '${topCat.name}' lidera a disponibilidade com ${topCat.value} unidades em almoxarifado.` : 'Distribuição uniforme entre categorias de proteção.',
       `${totalVencidos} modelos estão com Certificado de Aprovação (CA) vencido e ${totalVencendo} vencem nos próximos 30 dias.`,
     ];
