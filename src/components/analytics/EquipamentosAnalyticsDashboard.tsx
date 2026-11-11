@@ -4,7 +4,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -274,24 +273,44 @@ export function EquipamentosAnalyticsDashboard({
           valor={`R$ ${patrimonioTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitulo="Valor de aquisição total dos ativos"
           destaque="primary"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Total de Equipamentos"
           valor={totalEquipamentos}
           subtitulo="Ativos físicos catalogados"
           destaque="default"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Equipamentos em Campo"
           valor={totalRetirados}
           subtitulo="Alocados em execução de obras"
           destaque={taxaAlocacao > 50 ? 'info' : 'default'}
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Disponíveis na Base"
           valor={totalDisponiveis}
           subtitulo="Prontos para retirada/uso"
           destaque={totalDisponiveis > 0 ? 'success' : 'destructive'}
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
       </div>
 
@@ -307,8 +326,8 @@ export function EquipamentosAnalyticsDashboard({
       {/* Gráficos Recharts */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Patrimônio por Categoria */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Patrimônio Imobilizado por Categoria (R$)
             </h3>
@@ -318,7 +337,7 @@ export function EquipamentosAnalyticsDashboard({
           </div>
           <div className="h-72 w-full">
             {dadosPorCategoria.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Sem dados de patrimônio cadastrado
               </div>
             ) : (
@@ -343,6 +362,7 @@ export function EquipamentosAnalyticsDashboard({
                       `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                       'Patrimônio',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
                   <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
                     {dadosPorCategoria.map((_, index) => (
@@ -366,8 +386,8 @@ export function EquipamentosAnalyticsDashboard({
         </div>
 
         {/* Status Operacional */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Status Operacional dos Equipamentos
             </h3>
@@ -377,7 +397,7 @@ export function EquipamentosAnalyticsDashboard({
           </div>
           <div className="h-72 w-full">
             {dadosStatusOperacional.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum equipamento cadastrado
               </div>
             ) : (
@@ -389,9 +409,11 @@ export function EquipamentosAnalyticsDashboard({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
+                    innerRadius={60}
+                    outerRadius={95}
+                    paddingAngle={4}
+                    label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                    labelLine={false}
                   >
                     {dadosStatusOperacional.map((item, index) => (
                       <Cell key={`cell-st-${index}`} fill={item.fill} />
@@ -402,8 +424,8 @@ export function EquipamentosAnalyticsDashboard({
                       `${Number(val).toLocaleString('pt-BR')} unidades`,
                       'Quantidade',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -425,8 +447,8 @@ export function EquipamentosAnalyticsDashboard({
         </div>
 
         {/* Alocação por Responsável */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs lg:col-span-2">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4 lg:col-span-2">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Equipamentos em Campo por Responsável / Condutor
             </h3>
@@ -436,7 +458,7 @@ export function EquipamentosAnalyticsDashboard({
           </div>
           <div className="h-64 w-full">
             {dadosPorResponsavel.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum equipamento retirado atualmente
               </div>
             ) : (
@@ -445,7 +467,7 @@ export function EquipamentosAnalyticsDashboard({
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
                   <XAxis dataKey="nome" stroke="var(--color-muted-foreground, #888)" fontSize={11} />
                   <YAxis stroke="var(--color-muted-foreground, #888)" fontSize={11} />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
                   <Bar dataKey="quantidade" name="Equipamentos sob posse" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
