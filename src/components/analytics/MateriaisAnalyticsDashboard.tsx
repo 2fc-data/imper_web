@@ -4,7 +4,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -285,24 +284,44 @@ export function MateriaisAnalyticsDashboard({
           valor={`R$ ${valorTotalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitulo="Patrimônio imobilizado em insumos"
           destaque="primary"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Saldo Físico Total"
           valor={saldoTotalFisico.toLocaleString('pt-BR')}
           subtitulo="Unidades físicas em almoxarifado"
           destaque="default"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Itens Abaixo do Mínimo"
           valor={totalAbaixoMinimo}
           subtitulo="Necessitam de reposição imediata"
           destaque={totalAbaixoMinimo > 0 ? 'warning' : 'default'}
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Itens Sem Estoque"
           valor={totalSemEstoque}
           subtitulo="Estoque totalmente esgotado"
           destaque={totalSemEstoque > 0 ? 'destructive' : 'default'}
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
       </div>
 
@@ -318,8 +337,8 @@ export function MateriaisAnalyticsDashboard({
       {/* Gráficos Recharts */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Top Materiais por Valor */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Top Materiais por Valor em Estoque (R$)
             </h3>
@@ -329,7 +348,7 @@ export function MateriaisAnalyticsDashboard({
           </div>
           <div className="h-72 w-full">
             {topPorValor.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Sem dados de estoque com valor cadastrado
               </div>
             ) : (
@@ -354,6 +373,7 @@ export function MateriaisAnalyticsDashboard({
                       `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                       'Valor Total',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
                   <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
                     {topPorValor.map((_, index) => (
@@ -377,8 +397,8 @@ export function MateriaisAnalyticsDashboard({
         </div>
 
         {/* Distribuição por Categoria */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Distribuição Financeira por Categoria
             </h3>
@@ -388,7 +408,7 @@ export function MateriaisAnalyticsDashboard({
           </div>
           <div className="h-72 w-full">
             {dadosPorCategoria.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum dado categorizado
               </div>
             ) : (
@@ -400,9 +420,11 @@ export function MateriaisAnalyticsDashboard({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
+                    innerRadius={60}
+                    outerRadius={95}
+                    paddingAngle={4}
+                    label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                    labelLine={false}
                   >
                     {dadosPorCategoria.map((_, index) => (
                       <Cell key={`cell-cat-${index}`} fill={CORES_PALETA[index % CORES_PALETA.length]} />
@@ -413,8 +435,8 @@ export function MateriaisAnalyticsDashboard({
                       `R$ ${Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                       'Valor Total',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -432,8 +454,8 @@ export function MateriaisAnalyticsDashboard({
         </div>
 
         {/* Comparativo Saldo vs Mínimo */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs lg:col-span-2">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4 lg:col-span-2">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Saldo Atual vs Estoque Mínimo (Ponto de Reposição)
             </h3>
@@ -441,9 +463,9 @@ export function MateriaisAnalyticsDashboard({
               Comparativo entre o volume físico em almoxarifado e o limite operacional de segurança
             </p>
           </div>
-          <div className="h-72 w-full">
+          <div className="h-64 w-full">
             {dadosComparativoEstoque.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum material com quantidade mínima configurada
               </div>
             ) : (
@@ -452,8 +474,7 @@ export function MateriaisAnalyticsDashboard({
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
                   <XAxis dataKey="nome" stroke="var(--color-muted-foreground, #888)" fontSize={11} />
                   <YAxis stroke="var(--color-muted-foreground, #888)" fontSize={11} />
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
                   <Bar dataKey="saldo" name="Saldo Atual" fill="#10b981" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="minimo" name="Estoque Mínimo" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
