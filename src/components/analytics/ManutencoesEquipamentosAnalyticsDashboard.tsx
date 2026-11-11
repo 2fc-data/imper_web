@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -311,24 +310,44 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
           valor={`R$ ${custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitulo="Gastos acumulados em manutenção"
           destaque="primary"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Total de Ordens"
           valor={totalOrdens}
           subtitulo="Manutenções no período selecionado"
           destaque="default"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Custo Médio / Ordem"
           valor={`R$ ${custoMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           subtitulo="Média por equipamento atendido"
           destaque="default"
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m-6 4h.01M9 15h.01M13 15h.01M17 15h.01M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+            </svg>
+          }
         />
         <KpiCard
           titulo="Ordens em Aberto"
           valor={emAberto}
           subtitulo="Pendentes e em andamento"
           destaque={emAberto > 0 ? 'warning' : 'default'}
+          icone={
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
       </div>
 
@@ -344,8 +363,8 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
       {/* Gráficos Recharts */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Evolução de Custos */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Evolução Temporal dos Custos (R$)
             </h3>
@@ -355,7 +374,7 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
           </div>
           <div className="h-72 w-full">
             {dadosEvolucaoCustos.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhum custo registrado no período
               </div>
             ) : (
@@ -379,6 +398,7 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
                       `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                       'Custo',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
                   <Area
                     type="monotone"
@@ -401,8 +421,8 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
         </div>
 
         {/* Tipos de Manutenção */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Distribuição por Tipo de Manutenção
             </h3>
@@ -412,7 +432,7 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
           </div>
           <div className="h-72 w-full">
             {dadosPorTipo.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Nenhuma manutenção registrada
               </div>
             ) : (
@@ -424,9 +444,11 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
+                    innerRadius={60}
+                    outerRadius={95}
+                    paddingAngle={4}
+                    label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                    labelLine={false}
                   >
                     {dadosPorTipo.map((_, index) => (
                       <Cell key={`cell-tipo-man-${index}`} fill={CORES_PALETA[index % CORES_PALETA.length]} />
@@ -437,8 +459,8 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
                       `${Number(val).toLocaleString('pt-BR')} ordens`,
                       'Quantidade',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -456,8 +478,8 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
         </div>
 
         {/* Top Equipamentos com Maior Custo */}
-        <div className="rounded-xl border bg-card p-5 shadow-2xs lg:col-span-2">
-          <div className="mb-4">
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4 lg:col-span-2">
+          <div>
             <h3 className="text-base font-semibold text-foreground">
               Top Equipamentos com Maior Custo Acumulado (R$)
             </h3>
@@ -465,9 +487,9 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
               Ferramentas e máquinas que geraram maior despesa em manutenções
             </p>
           </div>
-          <div className="h-72 w-full">
+          <div className="h-64 w-full">
             {topEquipamentosCusto.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                 Sem custos registrados nos equipamentos
               </div>
             ) : (
@@ -492,6 +514,7 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
                       `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                       'Custo Total',
                     ]}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
                   <Bar dataKey="custo" radius={[0, 6, 6, 0]}>
                     {topEquipamentosCusto.map((_, index) => (
