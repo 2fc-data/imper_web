@@ -6,6 +6,26 @@ export {
 } from './core.js';
 export type { LoginResponse } from './core.js';
 
+// Dashboard
+export { obterDashboardObras } from './dashboard.js';
+export type {
+  DashboardObrasParams,
+  DashboardObrasResponse,
+  DashboardObrasPeriodo,
+  DashboardObrasGranularidade,
+  DashboardObrasKpis,
+  DashboardObrasKpisAnterior,
+  DashboardObrasVariacoes,
+  DashboardObrasSerieItem,
+  DashboardObrasDistribuicaoItem,
+  DashboardObrasDistribuicoes,
+  DashboardObrasFinanceiro,
+  DashboardObraCritica,
+  DashboardObraAlerta,
+  DashboardObraAlertaTipo,
+  DashboardObraAlertaSeveridade,
+} from './dashboard.js';
+
 // Auth
 export {
   login,

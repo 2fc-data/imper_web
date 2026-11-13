@@ -99,7 +99,7 @@ export function EtapasDeObrasAnalyticsDashboard({
     const densidade = totalEtapas > 0 ? (totalSubServicos / totalEtapas).toFixed(1) : '0';
     const percentAtivos = totalEtapas > 0 ? Math.round((etapasAtivas / totalEtapas) * 100) : 0;
 
-    let statusGeral: 'otimo' | 'atencao' | 'critico' | 'estavel' = 'estavel';
+    let statusGeral: 'otimo' | 'atencao' | 'critico' | 'estavel';
     if (totalEtapas === 0) statusGeral = 'atencao';
     else if (etapasAtivas < totalEtapas * 0.6) statusGeral = 'atencao';
     else statusGeral = 'otimo';

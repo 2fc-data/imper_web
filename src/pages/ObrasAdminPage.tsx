@@ -9,6 +9,7 @@ import { PageHeader } from '../components/ui/page-header';
 import { EmptyState, ErrorState, LoadingState } from '../components/ui/states';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Table, TableWrapper, Th } from '../components/ui/table';
+import { ObrasAnalyticsDashboard } from '../components/analytics/ObrasAnalyticsDashboard';
 
 const STATUS_OBRA = [
   { valor: 'EM_PREPARACAO', rotulo: 'Em Preparação' },
@@ -33,7 +34,7 @@ function moeda(valor: unknown) {
   });
 }
 
-export function ObrasAdminPage() {
+function ObrasListaView() {
   const [obras, setObras] = useState<ObraListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -210,4 +211,24 @@ export function ObrasAdminPage() {
       )}
     </div>
   );
+}
+
+export function ObrasAdminPage({
+  viewAtiva = 'lista',
+}: {
+  viewAtiva?: 'analises' | 'lista' | 'novo';
+}) {
+  if (viewAtiva === 'analises') {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Análises de Obras"
+          description="Indicadores, tendências e obras que exigem atenção."
+        />
+        <ObrasAnalyticsDashboard />
+      </div>
+    );
+  }
+
+  return <ObrasListaView />;
 }

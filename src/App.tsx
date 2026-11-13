@@ -604,14 +604,17 @@ function ExecucaoDashboardRoute() {
 }
 
 function ObrasRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>('lista');
+  const [searchParams] = useSearchParams();
+  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista' | 'novo'>(
+    searchParams.get('aba') === 'analises' ? 'analises' : 'lista',
+  );
 
   return (
     <ProtectedLayout
       requiredPermissions={['ver_obras']}
       sidebar={<ObrasSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />}
     >
-      <ObrasAdminPage />
+      <ObrasAdminPage viewAtiva={viewAtiva} />
     </ProtectedLayout>
   );
 }

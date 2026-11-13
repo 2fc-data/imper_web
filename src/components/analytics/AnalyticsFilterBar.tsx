@@ -1,7 +1,14 @@
 import React from 'react';
 import { Button } from '../ui/button';
 
-export type PeriodoOpcao = '7d' | '30d' | 'mes' | 'ano' | 'tudo' | 'custom';
+export type PeriodoOpcao =
+  | '7d'
+  | '30d'
+  | '90d'
+  | 'mes'
+  | 'ano'
+  | 'tudo'
+  | 'custom';
 
 export interface FiltrosAnalyticsState {
   periodo: PeriodoOpcao;
@@ -10,6 +17,7 @@ export interface FiltrosAnalyticsState {
   status?: string;
   categoria?: string; // canal ou tipo
   busca?: string;
+  comparar?: boolean;
 }
 
 interface AnalyticsFilterBarProps {
@@ -21,6 +29,9 @@ interface AnalyticsFilterBarProps {
   onExportarCsv?: () => void;
   onExportarPdf?: () => void;
   isExporting?: boolean;
+  periodosExtras?: { id: PeriodoOpcao; label: string }[];
+  periodoReset?: PeriodoOpcao;
+  permitirComparar?: boolean;
 }
 
 export function AnalyticsFilterBar({
@@ -32,10 +43,14 @@ export function AnalyticsFilterBar({
   onExportarCsv,
   onExportarPdf,
   isExporting = false,
+  periodosExtras = [],
+  periodoReset = 'tudo',
+  permitirComparar = false,
 }: AnalyticsFilterBarProps) {
   const periodos: { id: PeriodoOpcao; label: string }[] = [
     { id: '7d', label: '7 dias' },
     { id: '30d', label: '30 dias' },
+    ...periodosExtras,
     { id: 'mes', label: 'Este mês' },
     { id: 'ano', label: 'Este ano' },
     { id: 'tudo', label: 'Tudo' },
@@ -203,12 +218,31 @@ export function AnalyticsFilterBar({
           </div>
         )}
 
-        {(filtros.status || filtros.categoria || filtros.busca || filtros.periodo !== 'tudo') && (
+        {permitirComparar && (
+          <label className="flex cursor-pointer items-center gap-1.5 text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={filtros.comparar ?? true}
+              onChange={(e) =>
+                onChange({ ...filtros, comparar: e.target.checked })
+              }
+              className="h-3.5 w-3.5 rounded border-input accent-primary"
+            />
+            Comparar período anterior
+          </label>
+        )}
+
+        {(filtros.status ||
+          filtros.categoria ||
+          filtros.busca ||
+          filtros.comparar === false ||
+          filtros.periodo !== periodoReset) && (
           <button
             type="button"
             onClick={() =>
               onChange({
-                periodo: 'tudo',
+                periodo: periodoReset,
+                comparar: true,
                 status: undefined,
                 categoria: undefined,
                 busca: undefined,
