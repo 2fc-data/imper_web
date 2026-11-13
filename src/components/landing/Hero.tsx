@@ -20,11 +20,11 @@ export function Hero() {
   }, []);
 
   const slideVariants = {
-    hidden: { opacity: 1, scale: 1 },
-    visible: { opacity: 0, scale: 1.1, transition: { duration: 9 } },
-    exit: { opacity: 1, transition: { duration: 9 } },
+    hidden: { opacity: 0, scale: 1 },
+    visible: { opacity: 1, scale: 1.1, transition: { duration: 9 } },
+    exit: { opacity: 0.3, transition: { duration: 6 } },
   };
-
+  
   return (
     <section
       id="inicio"
