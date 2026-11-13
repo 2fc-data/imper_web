@@ -1,4 +1,3 @@
-import AreaAtuacaoPage from './AreaAtuacaoPage';
 import ComoTrabalhamosPage from './ComoTrabalhamosPage';
 import ContatoPage from './ContatoPage';
 import HomePage from './HomePage';
@@ -10,7 +9,6 @@ export default function LandingContent() {
       <HomePage />
       <ServicosPage />
       <ComoTrabalhamosPage />
-      <AreaAtuacaoPage />
       <ContatoPage />
     </>
   );

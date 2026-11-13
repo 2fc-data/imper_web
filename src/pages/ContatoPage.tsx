@@ -8,7 +8,6 @@ import {
 } from '../components/landing/SocialIconButtons';
 import { WHATSAPP_TEXT, WHATSAPP_URL } from '../lib/landing';
 import { fadeUp, stagger, VIEWPORT } from '../lib/motion';
-import { cn } from '../lib/utils';
 
 export default function ContatoPage() {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -20,64 +19,64 @@ export default function ContatoPage() {
       className="bg-background py-12 my-16 sm:py-16 sm:my-24 dark:bg-card/60"
     >
       <div className="mx-auto w-full max-w-[1400px] px-4">
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif">
-          Canais de atendimento
+        <h2 className="font-serif text-2xl font-bold tracking-tight sm:text-3xl">
+          Canais de Atendimento
         </h2>
-        <p className="mt-2 text-muted-foreground">
-          Saiba qual o melhor sistema impermeabilizante para a sua obra.
+        <p className="mt-2 text-base text-muted-foreground sm:text-lg">
+          Atendemos em toda região do Sul de Minas
         </p>
         <m.div
           ref={cardRef}
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           variants={fadeUp}
-          className="mt-8 overflow-hidden rounded-2xl bg-foreground text-primary-foreground"
+          className="mt-8 overflow-hidden rounded-2xl border bg-card"
         >
           <div className="p-6 sm:p-10">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <h3 className="text-xl font-bold tracking-tight sm:text-2xl">
               Solicite uma visita técnica
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-primary-foreground/80 sm:text-base">
+            </h3>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
               Peça orçamentos ou tire dúvidas sobre nossos serviços.
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   WhatsApp
                 </p>
                 <a
                   href={`${WHATSAPP_URL}?text=${encodeURIComponent(WHATSAPP_TEXT)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 block rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
+                  className="focus-gold mt-1 -mx-1 block rounded px-1 py-1.5 font-semibold text-foreground transition-colors hover:text-primary hover:underline underline-offset-2"
                 >
                   (35) 99673-0651
                 </a>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Telefones
                 </p>
                 <a
                   href="tel:+553537211674"
-                  className="mt-1 block rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
+                  className="focus-gold mt-1 -mx-1 block rounded px-1 py-1.5 font-semibold text-foreground transition-colors hover:text-primary hover:underline underline-offset-2"
                 >
                   (35) 3721-1674
                 </a>
                 <a
                   href="tel:+553537222514"
-                  className="mt-1 block rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
+                  className="focus-gold mt-1 -mx-1 block rounded px-1 py-1.5 font-semibold text-foreground transition-colors hover:text-primary hover:underline underline-offset-2"
                 >
                   (35) 3722-2514
                 </a>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/60">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   E-mail
                 </p>
                 <a
                   href="mailto:impershop@imperpocos.com.br"
-                  className="mt-1 block break-all rounded px-1 font-semibold text-secondary transition-colors hover:text-primary"
+                  className="focus-gold mt-1 -mx-1 block break-all rounded px-1 py-1.5 font-semibold text-foreground transition-colors hover:text-primary hover:underline underline-offset-2"
                 >
                   impershop@imperpocos.com.br
                 </a>
@@ -114,7 +113,7 @@ export default function ContatoPage() {
                 href="https://www.google.com/maps/search/?api=1&query=Rua+S%C3%A3o+Paulo,+511+-+Centro,+Po%C3%A7os+de+Caldas/MG"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded transition-colors hover:text-primary px-0 py-0.5 text-sm font-medium"
+                className="focus-gold inline-block rounded px-0 py-1.5 text-sm font-medium transition-colors hover:text-primary hover:underline underline-offset-2"
               >
                 Rua São Paulo, 511 — Centro
               </a>
@@ -167,16 +166,26 @@ export default function ContatoPage() {
                   to="/contato"
                   aria-label="Formulário de contato"
                   title="Formulário de contato"
-                  className={cn(
-                    'inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
-                  )}
+                  className="focus-gold inline-flex h-10 w-10 items-center justify-center rounded-xl bg-transparent text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                 >
-                  SO
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                    <path d="M22 6l-10 7L2 6" />
+                  </svg>
                 </Link>
 
-                <WhatsAppIconButton className="h-10 w-10 rounded-xl" />
-                <InstagramIconButton className="h-10 w-10 rounded-xl" />
-                <FacebookIconButton className="h-10 w-10 rounded-xl" />
+                <WhatsAppIconButton className="focus-gold h-10 w-10 rounded-xl" />
+                <InstagramIconButton className="focus-gold h-10 w-10 rounded-xl" />
+                <FacebookIconButton className="focus-gold h-10 w-10 rounded-xl" />
               </div>
             </div>
           </m.div>

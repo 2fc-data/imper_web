@@ -6,6 +6,29 @@ import { fadeUp, stagger, VIEWPORT } from '../lib/motion';
 import { useServicos } from '../lib/useServicos';
 import { cn } from '../lib/utils';
 
+const serviceImageModules = import.meta.glob('../assets/Services_images/*.webp', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>;
+
+const normalize = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const serviceImages = new Map(
+  Object.entries(serviceImageModules).map(([path, src]) => {
+    const file = path.split('/').pop() ?? '';
+    return [normalize(file.replace(/\.webp$/i, '')), src];
+  }),
+);
+
+function getServiceImage(titulo: string) {
+  return serviceImages.get(normalize(titulo));
+}
+
 export default function ServicosPage() {
   const { servicos, loading, error, retry } = useServicos();
   const gridRef = useRef<HTMLDivElement>(null);
@@ -37,7 +60,7 @@ export default function ServicosPage() {
             Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-col h-full rounded-xl border bg-card p-5 shadow-sm min-h-[88px]"
+                className="flex flex-col h-full rounded-xl border bg-card p-5 shadow-sm min-h-[264px]"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 animate-pulse rounded-lg bg-primary/20" />
@@ -64,13 +87,14 @@ export default function ServicosPage() {
           )}
           {!loading &&
             servicos.map((servico) => {
+              const image = getServiceImage(servico.titulo);
               const isOpen = openId === servico.id;
               return (
                 <m.div
                   key={servico.id}
                   variants={fadeUp}
                   className={cn(
-                    'relative flex flex-col h-full rounded-xl border bg-card shadow-sm transition-all hover:border-primary/40',
+                    'relative flex h-full flex-col rounded-xl border bg-card shadow-sm transition-all hover:border-primary/40',
                     isOpen && 'z-30 rounded-b-none border-primary/40 shadow-xl',
                   )}
                 >
@@ -78,41 +102,58 @@ export default function ServicosPage() {
                     type="button"
                     onClick={() => toggleAccordion(servico.id)}
                     aria-expanded={isOpen}
-                    className="flex w-full h-full items-center justify-between gap-4 p-5 text-left transition-colors group focus-gold min-h-[88px]"
+                    className={cn(
+                      'relative flex w-full items-center justify-between gap-4 overflow-hidden p-5 text-left focus-gold min-h-[264px]',
+                      isOpen ? 'rounded-t-xl' : 'rounded-xl',
+                    )}
                   >
-                    <div className="flex items-center gap-3.5">
-                      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-5 w-5"
-                          aria-hidden="true"
-                        >
-                          <path d={servico.icone} />
-                        </svg>
+                    {image && (
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-0"
+                      >
+                        <img
+                          src={image}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
                       </div>
-                      <h3 className="text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
-                        {servico.titulo}
-                      </h3>
-                    </div>
-                    <m.svg
-                      animate={{ rotate: isOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary shrink-0"
-                      aria-hidden="true"
+                    )}
+                    <h3
+                      className={cn(
+                        'relative text-lg font-semibold text-foreground',
+                        image &&
+                          'rounded-lg bg-black/45 px-3 py-1.5 text-white backdrop-blur-sm drop-shadow-sm',
+                      )}
                     >
-                      <path d="M6 9l6 6 6-6" />
-                    </m.svg>
+                      {servico.titulo}
+                    </h3>
+                    <span
+                      className={cn(
+                        'relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+                        image &&
+                          'bg-black/45 text-white/90 backdrop-blur-sm',
+                      )}
+                    >
+                      <m.svg
+                        animate={{ rotate: isOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={cn(
+                          'h-5 w-5',
+                          !image && 'text-muted-foreground',
+                        )}
+                        aria-hidden="true"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </m.svg>
+                    </span>
                   </button>
                   <AnimatePresence initial={false}>
                     {isOpen && (
@@ -121,19 +162,17 @@ export default function ServicosPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.98 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                         className="absolute left-[-1px] right-[-1px] top-[calc(100%-1px)] z-30 rounded-b-xl border border-t-0 border-primary/40 bg-card p-5 shadow-2xl overflow-hidden"
+                        className="absolute left-[-1px] right-[-1px] top-[calc(100%-1px)] z-30 overflow-hidden rounded-b-xl border border-t-0 border-primary/40 bg-white p-5 shadow-2xl"
                       >
-                        <p className="text-sm leading-relaxed text-muted-foreground">
+                        <p className="text-justify text-sm leading-relaxed text-gray-700">
                           {servico.descricao}
                         </p>
-                        <div className="mt-3 flex justify-end items-center gap-2">
+                        <div className="mt-3 flex items-center justify-end gap-2">
                           <Link
                             to={`/contato?servico=${encodeURIComponent(servico.titulo)}`}
                             aria-label={`Solicitar atendimento/contato para ${servico.titulo}`}
                             title="Solicitar Contato"
-                            className={cn(
-                              'inline-flex h-6 w-6 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground',
-                            )}
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                           >
                             <span aria-hidden="true">SO</span>
                           </Link>

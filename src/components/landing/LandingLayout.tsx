@@ -2,6 +2,7 @@ import { AnimatePresence, m } from 'framer-motion';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import logoImper from '../../assets/logo_imper.webp';
+import footerBg from '../../assets/Footer_images/footer_bg.webp';
 import { cn } from '../../lib/utils';
 import { ThemeToggle } from '../../theme/ThemeToggle';
 import {
@@ -12,23 +13,42 @@ import {
 
 const NAV_LINKS = [
   { to: '/', label: 'Início' },
-  { to: '/servicos', label: 'Serviços' },
+  { to: '/servicos', label: 'Especialidades' },
   { to: '/como-trabalhamos', label: 'Como trabalhamos' },
-  { to: '/area-de-atuacao', label: 'Área de atuação' },
-  { to: '/contato', label: 'Contato' },
+  { to: '/#contato', label: 'Canais de Atendimento' },
+  { to: '/contato', label: 'Envie sua mensagem' },  
 ];
 
 const SECTION_BY_ROUTE: Record<string, string> = {
   '/': 'inicio',
   '/servicos': 'servicos',
   '/como-trabalhamos': 'como-trabalhamos',
-  '/area-de-atuacao': 'area-de-atuacao',
   '/contato': 'contato',
 };
 
 export function LandingLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
   const navRef = useRef<HTMLElement>(null);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+      if (menuOpen || y < 80) {
+        setHeaderHidden(false);
+      } else if (delta > 6) {
+        setHeaderHidden(true);
+      } else if (delta < -6) {
+        setHeaderHidden(false);
+      }
+      lastScrollY.current = y;
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -60,28 +80,37 @@ export function LandingLayout({ children }: { children: ReactNode }) {
     nav.querySelector<HTMLElement>('a, button')?.focus();
     return () => document.removeEventListener('keydown', handleKey);
   }, [menuOpen]);
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    const id = SECTION_BY_ROUTE[pathname];
+    const id = hash ? hash.slice(1) : SECTION_BY_ROUTE[pathname];
     if (!id) return;
-    const el = document.getElementById(id);
-    if (!el) return;
-    const header = document.querySelector('header');
-    const offset = header ? header.offsetHeight : 0;
-    const top = el.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: 'smooth' });
-  }, [pathname]);
+    let attempts = 0;
+    let raf = 0;
+    const scrollToTarget = () => {
+      const el = document.getElementById(id);
+      if (!el) {
+        if (attempts++ < 30) raf = requestAnimationFrame(scrollToTarget);
+        return;
+      }
+      const header = document.querySelector('header');
+      const offset = header ? header.offsetHeight : 0;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    };
+    raf = requestAnimationFrame(scrollToTarget);
+    return () => cancelAnimationFrame(raf);
+  }, [pathname, hash]);
 
   return (
     <div className="flex min-h-full flex-col bg-background">
       <m.header
         initial={{ y: -24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        animate={{ y: headerHidden ? '-100%' : 0, opacity: headerHidden ? 0 : 1 }}
+        transition={{ duration: 0.35, ease: 'easeInOut' }}
         className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-md"
       >
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-3">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-5">
           <Link
             to="/"
             className="rounded px-1.5 py-0.5 text-lg font-bold tracking-tight text-primary transition-colors hover:text-primary/80"
@@ -230,15 +259,26 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         </AnimatePresence>
       </m.header>
 
-      <main className="flex-1 bg-background h-full mx-9">{children}</main>
+      <main className="flex-1 bg-background h-full">{children}</main>
 
-      <footer className="border-t bg-secondary py-8">
-        <div className="mx-auto grid w-full max-w-[1400px] gap-8 px-4 sm:grid-cols-4">
-          <div className="border-border/60 flex flex-col items-start gap-4 p-6 text-left rounded-xl shadow-lg">
-            <span className="text-lg font-bold tracking-tight text-center w-full text-primary font-serif">
+      <footer className="relative isolate overflow-hidden border-t py-16 min-h-[420px] sm:py-20">
+        <img
+          src={footerBg}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="absolute inset-0 -z-10 h-full w-full object-cover"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-background/75"
+        />
+        <div className="relative mx-auto grid w-full max-w-[1400px] gap-8 px-4 sm:grid-cols-4">
+          <div className="flex flex-col items-start gap-4 rounded-xl border border-border/60 bg-background/55 p-6 text-left backdrop-blur-sm">
+            <h3 className="w-full text-lg font-bold tracking-tight text-primary font-serif">
               Imperpoços
-            </span>
-            <p className="max-w-xl text-md text-muted-foreground">
+            </h3>
+            <p className="max-w-xl text-base text-muted-foreground">
               Engenharia em Impermeabilização.
             </p>
             <p className="max-w-xl px-1.5 text-sm text-muted-foreground">
@@ -249,23 +289,23 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 href="https://www.google.com/maps/search/?api=1&query=Rua+S%C3%A3o+Paulo,+511+-+Centro,+Po%C3%A7os+de+Caldas/MG"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded px-1.5 py-0.5 text-sm font-medium transition-colors hover:text-primary"
+                className="inline-flex items-center gap-2 rounded px-1.5 py-3 text-sm font-medium transition-colors hover:text-primary"
               >
                 Rua São Paulo, 511 — Centro
               </a>
             </p>
           </div>
-          <div className="border-border/60 flex flex-col items-center gap-3 text-center sm:items-center p-6 rounded-xl shadow-lg">
-            <p className="text-lg font-semibold tracking-tight text-foreground font-serif">
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-border/60 bg-background/55 p-6 text-left backdrop-blur-sm">
+            <h3 className="text-lg font-semibold tracking-tight text-foreground font-serif">
               Redes sociais
-            </p>
+            </h3>
             <div className="flex flex-col items-start gap-3">
               <a
                 href="https://www.facebook.com/imperpocos"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Imperpoços no Facebook"
-                className="inline-flex items-center gap-2 rounded px-0 py-0.5 text-sm font-medium transition-colors hover:text-primary"
+                className="inline-flex items-center gap-2 rounded px-0 py-3 text-sm font-medium transition-colors hover:text-primary"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -282,7 +322,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Imperpoços no Instagram"
-                className="inline-flex items-center gap-2 rounded px-0 py-0.5 text-sm font-medium transition-colors hover:text-primary"
+                className="inline-flex items-center gap-2 rounded px-0 py-3 text-sm font-medium transition-colors hover:text-primary"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -302,16 +342,16 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               </a>
             </div>
           </div>
-          <div className="border-border/60 flex flex-col items-center gap-3 text-center p-6 rounded-xl shadow-lg">
-            <p className="text-lg font-semibold tracking-tight text-foreground font-serif">
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-border/60 bg-background/55 p-6 text-left backdrop-blur-sm">
+            <h3 className="text-lg font-semibold tracking-tight text-foreground font-serif">
               Mapa do site
-            </p>
+            </h3>
             <ul className="flex flex-col items-start gap-2">
               {NAV_LINKS.map((link) => (
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="rounded px-1.5 py-0.5 text-sm transition-colors hover:text-primary"
+                    className="rounded px-1.5 py-3 text-sm transition-colors hover:text-primary"
                   >
                     {link.label}
                   </Link>
@@ -320,7 +360,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               <li>
                 <Link
                   to="/login"
-                  className="rounded px-1.5 py-0.5 text-sm transition-colors hover:text-primary"
+                  className="rounded px-1.5 py-3 text-sm transition-colors hover:text-primary"
                 >
                   Office
                 </Link>
@@ -331,13 +371,13 @@ export function LandingLayout({ children }: { children: ReactNode }) {
             <img
               src={logoImper}
               alt="Imperpoços"
-              className="h-45 w-auto rounded-md border-6 border-border object-contain opacity-90"
+              className="h-56 w-auto rounded-3xl object-contain opacity-90"
             />
           </div>
         </div>
         <div className="mx-auto w-full max-w-[1400px] px-4 pt-8 text-center">
-          <p className="text-xs text-muted-foreground">
-            © 2026 Imperpoços. Todos os direitos reservados.
+          <p className="inline-block rounded-full bg-background/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+            © {new Date().getFullYear()} Imperpoços. Todos os direitos reservados.
           </p>
         </div>
       </footer>

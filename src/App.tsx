@@ -717,14 +717,6 @@ export default function App() {
           <Route
             element={
               <LandingLayout>
-                <LandingContent />
-              </LandingLayout>
-            }
-            path="/area-de-atuacao"
-          />
-          <Route
-            element={
-              <LandingLayout>
                 <OrcamentoPage />
               </LandingLayout>
             }
