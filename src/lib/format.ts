@@ -9,6 +9,52 @@ export function formatPhone(value: string): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
+/**
+ * Converte um valor monetário para número.
+ * Aceita number e strings no formato brasileiro ("1.600,50") ou
+ * serializado pela API ("1600.5"). Retorna undefined se inválido/vazio.
+ */
+export function paraNumeroMoeda(
+  v: number | string | null | undefined,
+): number | undefined {
+  if (v === undefined || v === null || v === '') return undefined;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+  const s = String(v).trim();
+  if (!s) return undefined;
+  if (s.includes(',')) {
+    // formato brasileiro: remove pontos de milhar (ex: "1.600,50") e troca vírgula por ponto.
+    const n = Number(s.replace(/\./g, '').replace(',', '.'));
+    return Number.isFinite(n) ? n : undefined;
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** Soma valores monetários em centavos, evitando erros de ponto flutuante. */
+export function somarMoeda(
+  ...valores: (number | string | null | undefined)[]
+): number {
+  const totalCentavos = valores.reduce<number>((total, v) => {
+    const n = paraNumeroMoeda(v) ?? 0;
+    return total + Math.round(n * 100);
+  }, 0);
+  return totalCentavos / 100;
+}
+
+/**
+ * Aplica a máscara monetária "0.000,00" a um texto digitado/passado.
+ * Retorna o texto formatado com prefixo "R$" e o valor numérico correspondente.
+ */
+export function mascararMoeda(texto: string): {
+  texto: string;
+  valor: number | undefined;
+} {
+  const digitos = texto.replace(/\D/g, '').slice(0, 12);
+  if (!digitos) return { texto: '', valor: undefined };
+  const valor = Number(digitos) / 100;
+  return { texto: formatarMoedaInput(valor), valor };
+}
+
 /** Formata número como moeda brasileira (R$). Aceita string/number/null/undefined. */
 export function brl(v: number | string | null | undefined): string {
   return Number(v ?? 0).toLocaleString('pt-BR', {
@@ -30,9 +76,12 @@ export function parseMoedaInput(texto: string): number | undefined {
 }
 
 /** Formata número para exibição em input de moeda (R$ 1.600,00). */
-export function formatarMoedaInput(v: number | undefined | null): string {
-  if (v === undefined || v === null || Number.isNaN(v)) return '';
-  return v.toLocaleString('pt-BR', {
+export function formatarMoedaInput(
+  v: number | string | null | undefined,
+): string {
+  const n = paraNumeroMoeda(v);
+  if (n === undefined) return '';
+  return n.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 2,

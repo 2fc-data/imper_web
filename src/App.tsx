@@ -421,7 +421,9 @@ function FrotaKmRoute() {
 }
 
 function AbastecimentosRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'lista' | 'novo'
+  >('lista');
   return (
     <ProtectedLayout
       requiredPermissions={['visualizar_frota', 'gerenciar_frota']}
@@ -438,7 +440,9 @@ function AbastecimentosRoute() {
 }
 
 function ManutencoesVeiculosRoute() {
-  const [viewAtiva, setViewAtiva] = useState<'analises' | 'lista'>('lista');
+  const [viewAtiva, setViewAtiva] = useState<
+    'analises' | 'lista' | 'novo'
+  >('lista');
   return (
     <ProtectedLayout
       requiredPermissions={['visualizar_frota', 'gerenciar_frota']}

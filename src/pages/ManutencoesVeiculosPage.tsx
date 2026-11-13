@@ -14,7 +14,6 @@ import { Label } from '../components/ui/label';
 import {
   atualizarManutencaoVeiculo,
   criarManutencaoVeiculo,
-  excluirManutencaoVeiculo,
   buscarManutencoesVeiculosLookups,
   type ManutencaoVeiculoInput,
   type ManutencaoVeiculoItem,
@@ -23,6 +22,7 @@ import {
 } from '../lib/api';
 import { formatarData, formatarValor, fromLocalDate, toLocalDate } from '../lib/datetime';
 import { cn } from '../lib/utils';
+import { paraNumeroMoeda, somarMoeda } from '../lib/format';
 import {
   selectClasses,
   textareaClasses,
@@ -66,10 +66,10 @@ export default function ManutencoesVeiculosPage({
   viewAtiva: propViewAtiva,
   onNavegar: propOnNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista';
-  onNavegar?: (view: 'analises' | 'lista') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo';
+  onNavegar?: (view: 'analises' | 'lista' | 'novo') => void;
 } = {}) {
-  const [internalView, setInternalView] = useState<'analises' | 'lista'>('lista');
+  const [internalView, setInternalView] = useState<'analises' | 'lista' | 'novo'>('lista');
   const viewAtiva = propViewAtiva ?? internalView;
   const setViewAtiva = propOnNavegar ?? setInternalView;
 
@@ -82,9 +82,6 @@ export default function ManutencoesVeiculosPage({
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<ManutencaoVeiculoItem | null>(null);
   const [form, setForm] = useState<ManutencaoVeiculoInput>(emptyForm);
-  const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(null);
-  const [excluindo, setExcluindo] = useState<number | null>(null);
-
   const carregar = useCallback(async () => {
     setError(null);
     try {
@@ -103,6 +100,14 @@ export default function ManutencoesVeiculosPage({
     carregar();
   }, [carregar]);
 
+  useEffect(() => {
+    if (viewAtiva === 'novo') {
+      setMostrarForm(true);
+    } else {
+      setMostrarForm(false);
+    }
+  }, [viewAtiva]);
+
   function comecarEdicao(m: ManutencaoVeiculoItem) {
     setEditando(m);
     setForm({
@@ -111,8 +116,8 @@ export default function ManutencoesVeiculosPage({
       data: toLocalDate(m.data),
       descricao: m.descricao,
       local: m.local ?? undefined,
-      custoPecas: m.custoPecas,
-      custoMaoDeObra: m.custoMaoDeObra,
+      custoPecas: paraNumeroMoeda(m.custoPecas) ?? undefined,
+      custoMaoDeObra: paraNumeroMoeda(m.custoMaoDeObra) ?? undefined,
       proximaManutencao: toLocalDate(m.proximaManutencao),
       status: m.status,
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
@@ -126,6 +131,7 @@ export default function ManutencoesVeiculosPage({
     setForm(emptyForm);
     setError(null);
     setMostrarForm(false);
+    if (viewAtiva === 'novo') setViewAtiva('lista');
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -139,8 +145,8 @@ export default function ManutencoesVeiculosPage({
         data: fromLocalDate(form.data) ?? new Date().toISOString(),
         descricao: form.descricao,
         local: form.local || undefined,
-        custoPecas: form.custoPecas,
-        custoMaoDeObra: form.custoMaoDeObra,
+        custoPecas: form.custoPecas ?? 0,
+        custoMaoDeObra: form.custoMaoDeObra ?? 0,
         proximaManutencao: form.proximaManutencao
           ? fromLocalDate(form.proximaManutencao)
           : undefined,
@@ -173,20 +179,6 @@ export default function ManutencoesVeiculosPage({
     }
   }
 
-  async function handleExcluir(id: number) {
-    setExcluindo(id);
-    setError(null);
-    try {
-      await excluirManutencaoVeiculo(id);
-      setManutencoes((prev) => prev.filter((x) => x.id !== id));
-      setConfirmandoExclusao(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir manutenção');
-    } finally {
-      setExcluindo(null);
-    }
-  }
-
   const filtradas = manutencoes.filter((m) => {
     if (filtroStatus && m.status !== filtroStatus) return false;
     const texto = busca.trim().toLowerCase();
@@ -204,7 +196,7 @@ export default function ManutencoesVeiculosPage({
       .some((v) => String(v).toLowerCase().includes(texto));
   });
 
-  const custoTotalCalculado = (form.custoPecas ?? 0) + (form.custoMaoDeObra ?? 0);
+  const custoTotalCalculado = somarMoeda(form.custoPecas, form.custoMaoDeObra);
 
   const formulario = (
     <Card>
@@ -353,7 +345,7 @@ export default function ManutencoesVeiculosPage({
         />
       )}
 
-      {viewAtiva === 'lista' && (
+      {viewAtiva !== 'analises' && (
         <div className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
             <div className="flex flex-1 flex-col gap-3 sm:flex-row">
@@ -377,11 +369,6 @@ export default function ManutencoesVeiculosPage({
                 ))}
               </select>
             </div>
-            {!mostrarForm && !editando && (
-              <Button type="button" onClick={() => setMostrarForm(true)}>
-                + Nova Manutenção
-              </Button>
-            )}
           </div>
 
           {(mostrarForm || editando) && formulario}
@@ -427,16 +414,6 @@ export default function ManutencoesVeiculosPage({
                       </Button>
                     )}
                     <Button type="button" variant="outline" size="sm" onClick={() => comecarEdicao(m)}>Editar</Button>
-                    {confirmandoExclusao === m.id ? (
-                      <>
-                        <Button type="button" variant="destructive" size="sm" disabled={excluindo === m.id} onClick={() => handleExcluir(m.id)}>
-                          {excluindo === m.id ? 'Excluindo...' : 'Confirmar exclusão'}
-                        </Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(null)}>Cancelar</Button>
-                      </>
-                    ) : (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmandoExclusao(m.id)}>Excluir</Button>
-                    )}
                   </div>
                 </CardContent>
               </Card>

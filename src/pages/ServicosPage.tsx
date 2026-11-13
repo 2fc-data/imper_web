@@ -22,10 +22,9 @@ export default function ServicosPage() {
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl font-serif text-foreground">
           Nossas especialidades
         </h2>
-        <p className="mt-2 text-muted-foreground">
-          Soluções de engenharia para cada tipo de exposição à água e à umidade.
-          Clique em um serviço para ver os detalhes.
-        </p>
+        <h4 className="mt-2 text-muted-foreground">
+          Soluções profissionais para proteger seu patrimônio
+        </h4>
 
         <m.div
           ref={gridRef}

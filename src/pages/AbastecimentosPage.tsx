@@ -38,10 +38,10 @@ export default function AbastecimentosPage({
   viewAtiva: propViewAtiva,
   onNavegar: propOnNavegar,
 }: {
-  viewAtiva?: 'analises' | 'lista';
-  onNavegar?: (view: 'analises' | 'lista') => void;
+  viewAtiva?: 'analises' | 'lista' | 'novo';
+  onNavegar?: (view: 'analises' | 'lista' | 'novo') => void;
 } = {}) {
-  const [internalView, setInternalView] = useState<'analises' | 'lista'>('lista');
+  const [internalView, setInternalView] = useState<'analises' | 'lista' | 'novo'>('lista');
   const viewAtiva = propViewAtiva ?? internalView;
   const setViewAtiva = propOnNavegar ?? setInternalView;
 
@@ -77,6 +77,14 @@ export default function AbastecimentosPage({
     carregar();
   }, [carregar]);
 
+  useEffect(() => {
+    if (viewAtiva === 'novo') {
+      setMostrarForm(true);
+    } else {
+      setMostrarForm(false);
+    }
+  }, [viewAtiva]);
+
   function comecarEdicao(a: AbastecimentoItem) {
     setEditando(a);
     setForm({
@@ -95,6 +103,7 @@ export default function AbastecimentosPage({
     setForm(emptyForm);
     setError(null);
     setMostrarForm(false);
+    if (viewAtiva === 'novo') setViewAtiva('lista');
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -264,7 +273,7 @@ export default function AbastecimentosPage({
         />
       )}
 
-      {viewAtiva === 'lista' && (
+      {viewAtiva !== 'analises' && (
         <div className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end justify-between">
             <div className="space-y-1.5 flex-1 max-w-sm">
@@ -283,11 +292,6 @@ export default function AbastecimentosPage({
                 ))}
               </select>
             </div>
-            {!mostrarForm && !editando && (
-              <Button type="button" onClick={() => setMostrarForm(true)}>
-                + Novo Abastecimento
-              </Button>
-            )}
           </div>
 
           {(mostrarForm || editando) && formulario}
