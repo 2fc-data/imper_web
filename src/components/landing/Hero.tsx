@@ -1,19 +1,59 @@
-import { m } from 'framer-motion';
+import { m, AnimatePresence, motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const imageModules = import.meta.glob('/src/assets/Hero_images/*.webp', {
+  eager: true,
+  import: 'default',
+});
+
+const heroImages = Object.values(imageModules) as string[];
+
 export function Hero() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const slideVariants = {
+    hidden: { opacity: 1, scale: 1 },
+    visible: { opacity: 0, scale: 1.1, transition: { duration: 9 } },
+    exit: { opacity: 1, transition: { duration: 9 } },
+  };
+
   return (
     <section
       id="inicio"
-      className="relative flex min-h-[90vh] items-center justify-center overflow-hidden bg-background pt-12"
+      className="relative flex min-h-[90vh] flex-col overflow-hidden bg-background pt-12"
     >
-      <div className="mx-auto max-w-[1400px] px-4 py-24 text-center sm:px-6 lg:px-8">
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <AnimatePresence mode="wait">
+          {heroImages.map((img, i) => (
+            <motion.div
+              key={img}
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${img})` }}
+              variants={slideVariants}
+              initial="hidden"
+              animate={i === currentSlide ? 'visible' : 'hidden'}
+              exit="hidden"
+            />
+          ))}
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-8">
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl font-serif">
+          <h1 className="text-3xl font-bold tracking-tight text-secondary sm:text-4xl lg:text-5xl font-serif">
             Engenharia de Impermeabilização
           </h1>
         </m.div>
@@ -22,31 +62,22 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mt-6 text-2xl font-bold sm:text-3xl lg:text-4xl font-serif"
+          className="mt-12 text-2xl font-bold sm:text-3xl lg:text-4xl font-serif"
         >
-          <span className="text-primary">Qualidade e Confiança</span> há mais de
+          <span className="text-secondary text-3xl">Qualidade e Confiança</span> há mais de
           30 anos
         </m.h2>
 
-        <m.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl font-serif"
-        >
-          Soluções profissionais para proteger seu patrimônio em Poços de Caldas
-          e região. Telhados, piscinas, fachadas, fundações e muito mais.
-        </m.p>
 
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-10 flex flex-wrap items-center justify-center gap-4"
+          className="mt-12 flex flex-wrap items-center justify-center gap-4"
         >
           <Link
             to="/contato"
-            className="rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:text-primary-foreground hover:shadow-lg hover:shadow-primary/25 active:scale-[0.98]"
+            className="rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-base/90 hover:text-base hover:shadow-lg hover:shadow-base/25 active:scale-[0.98]"
           >
             Entrar em Contato
           </Link>
@@ -62,15 +93,15 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
-          className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-10"
+          className="mt-auto pt-24 flex flex-wrap items-center justify-center gap-6 sm:gap-10"
         >
-          <span className="flex items-center gap-2 text-muted-foreground">
+          <span className="flex items-center gap-2 text-secondary">
             <svg
               aria-hidden="true"
               className="h-5 w-5 shrink-0 text-primary"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="secondary"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -80,13 +111,13 @@ export function Hero() {
             </svg>
             30+ Anos de Experiência
           </span>
-          <span className="flex items-center gap-2 text-muted-foreground">
+          <span className="flex items-center gap-2 text-secondary">
             <svg
               aria-hidden="true"
               className="h-5 w-5 shrink-0 text-primary"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="secondary"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -95,13 +126,13 @@ export function Hero() {
             </svg>
             CNPJ 71.189.955/0001-87
           </span>
-          <span className="flex items-center gap-2 text-muted-foreground">
+          <span className="flex items-center gap-2 text-secondary">
             <svg
               aria-hidden="true"
               className="h-5 w-5 shrink-0 text-primary"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="secondary"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -117,11 +148,11 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1 }}
-          className="mt-16"
+          className="pt-6"
         >
           <Link
             to="/servicos"
-            className="flex flex-col items-center gap-1 font-medium text-muted-foreground transition-colors hover:text-primary font-serif"
+            className="flex flex-col items-center gap-1 font-medium text-secondary transition-colors hover:text-primary font-serif"
           >
             Saiba mais
             <svg
@@ -129,7 +160,7 @@ export function Hero() {
               className="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="secondary"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"

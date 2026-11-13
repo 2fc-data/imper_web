@@ -202,7 +202,7 @@ export function AbastecimentosSidebar({
   onNavegar,
 }: {
   viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista') => void;
+  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
 }) {
   return (
     <>
@@ -219,6 +219,13 @@ export function AbastecimentosSidebar({
         icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
       >
         lista Abastecimento
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'novo'}
+        onClick={() => onNavegar('novo')}
+        icon={icone('M12 4v16m8-8H4')}
+      >
+        Novo Abastecimento
       </SidebarButton>
     </>
   );
@@ -256,7 +263,7 @@ export function ManutencoesVeiculosSidebar({
   onNavegar,
 }: {
   viewAtiva: 'analises' | 'lista' | 'novo';
-  onNavegar: (view: 'analises' | 'lista') => void;
+  onNavegar: (view: 'analises' | 'lista' | 'novo') => void;
 }) {
   return (
     <>
@@ -273,6 +280,13 @@ export function ManutencoesVeiculosSidebar({
         icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
       >
         Lista Manutenções
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'novo'}
+        onClick={() => onNavegar('novo')}
+        icon={icone('M12 4v16m8-8H4')}
+      >
+        Nova Manutenção
       </SidebarButton>
     </>
   );

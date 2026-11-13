@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Input } from './input';
-import { formatarMoedaInput, parseMoedaInput } from '../../lib/format';
+import { formatarMoedaInput, mascararMoeda } from '../../lib/format';
 
 export function InputMoeda({
   id,
@@ -10,24 +10,32 @@ export function InputMoeda({
   required,
 }: {
   id: string;
-  value: number | undefined;
+  value: number | string | undefined;
   onChange: (v: number | undefined) => void;
   disabled?: boolean;
   required?: boolean;
 }) {
+  const ref = useRef<HTMLInputElement>(null);
   const [texto, setTexto] = useState<string | null>(null);
+
+  const formatado = formatarMoedaInput(value);
   return (
     <Input
+      ref={ref}
       id={id}
       inputMode="decimal"
       disabled={disabled}
       required={required}
       placeholder="R$ 0,00"
-      value={texto ?? formatarMoedaInput(value)}
-      onFocus={() => setTexto(value != null ? String(value).replace('.', ',') : '')}
+      value={texto ?? formatado}
+      onFocus={(e) => {
+        setTexto(formatado);
+        e.currentTarget.select();
+      }}
       onChange={(e) => {
-        setTexto(e.target.value);
-        onChange(parseMoedaInput(e.target.value));
+        const { texto: formatadoTexto, valor } = mascararMoeda(e.target.value);
+        setTexto(formatadoTexto);
+        onChange(valor);
       }}
       onBlur={() => setTexto(null)}
     />
