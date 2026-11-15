@@ -2,7 +2,7 @@ import { AnimatePresence, m, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { WhatsAppIconButton } from '../components/landing/SocialIconButtons';
-import { fadeUp, stagger, VIEWPORT } from '../lib/motion';
+import { EASE, fadeUp, stagger, VIEWPORT } from '../lib/motion';
 import { useServicos } from '../lib/useServicos';
 import { cn } from '../lib/utils';
 
@@ -95,17 +95,14 @@ export default function ServicosPage() {
                   variants={fadeUp}
                   className={cn(
                     'relative flex h-full flex-col rounded-xl border bg-card shadow-sm transition-all hover:border-primary/40',
-                    isOpen && 'z-30 rounded-b-none border-primary/40 shadow-xl',
+                    isOpen && 'z-30 border-primary/40 shadow-xl',
                   )}
                 >
                   <button
                     type="button"
                     onClick={() => toggleAccordion(servico.id)}
                     aria-expanded={isOpen}
-                    className={cn(
-                      'relative flex w-full items-center justify-between gap-4 overflow-hidden p-5 text-left focus-gold min-h-[264px]',
-                      isOpen ? 'rounded-t-xl' : 'rounded-xl',
-                    )}
+                    className="group relative flex min-h-[264px] w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-5 text-left focus-gold"
                   >
                     {image && (
                       <div
@@ -116,7 +113,7 @@ export default function ServicosPage() {
                           src={image}
                           alt=""
                           loading="lazy"
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                         />
                       </div>
                     )}
@@ -129,42 +126,43 @@ export default function ServicosPage() {
                     >
                       {servico.titulo}
                     </h3>
-                    <span
-                      className={cn(
-                        'relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                        image &&
-                          'bg-black/45 text-white/90 backdrop-blur-sm',
-                      )}
-                    >
-                      <m.svg
-                        animate={{ rotate: isOpen ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={cn(
-                          'h-5 w-5',
-                          !image && 'text-muted-foreground',
-                        )}
-                        aria-hidden="true"
-                      >
-                        <path d="M6 9l6 6 6-6" />
-                      </m.svg>
-                    </span>
                   </button>
                   <AnimatePresence initial={false}>
                     {isOpen && (
                       <m.div
-                        initial={{ opacity: 0, y: -6, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="absolute left-[-1px] right-[-1px] top-[calc(100%-1px)] z-30 overflow-hidden rounded-b-xl border border-t-0 border-primary/40 bg-white p-5 shadow-2xl"
+                        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                        transition={{ duration: 0.22, ease: EASE }}
+                        className="absolute inset-0 z-20 flex flex-col overflow-hidden rounded-xl border border-primary/40 bg-white p-5 shadow-2xl"
                       >
-                        <p className="text-justify text-sm leading-relaxed text-gray-700">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="text-lg font-semibold text-foreground">
+                            {servico.titulo}
+                          </h3>
+                          <m.button
+                            type="button"
+                            onClick={() => setOpenId(null)}
+                            aria-label="Fechar descrição"
+                            title="Fechar"
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.92 }}
+                            className="-mr-1 -mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-gold"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-5 w-5"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              aria-hidden="true"
+                            >
+                              <path d="M6 6l12 12M18 6L6 18" />
+                            </svg>
+                          </m.button>
+                        </div>
+                        <p className="mt-3 min-h-0 flex-1 overflow-y-auto text-justify text-sm leading-relaxed text-gray-700">
                           {servico.descricao}
                         </p>
                         <div className="mt-3 flex items-center justify-end gap-2">

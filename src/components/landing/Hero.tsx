@@ -86,7 +86,7 @@ export function Hero() {
           transition={{ duration: 0.6 }}
         >
           <h1 className="font-display w-fit max-w-3xl rounded-lg bg-black/25 px-4 py-2 text-2xl font-semibold leading-[1.05] tracking-[-0.02em] text-white drop-shadow-sm backdrop-blur-sm sm:text-3xl lg:text-4xl">
-            Engenharia de Impermeabilização
+            Imperpoços
           </h1>
         </m.div>
 
@@ -96,7 +96,7 @@ export function Hero() {
           transition={{ duration: 0.6 }}
           className="mt-8 font-display w-fit max-w-2xl rounded-lg bg-black/25 px-4 py-2 text-xl font-semibold leading-[1.15] tracking-[-0.015em] text-white/90 drop-shadow-sm backdrop-blur-sm sm:text-2xl lg:text-3xl"
         >
-          <span className="text-2xl text-white sm:text-3xl">Qualidade </span> e Confiança
+          Engenharia de Impermeabilização
         </m.h2>
 
 

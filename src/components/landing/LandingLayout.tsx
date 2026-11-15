@@ -2,6 +2,7 @@ import { AnimatePresence, m } from 'framer-motion';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import logoImper from '../../assets/logo_imper.webp';
+import logoImper_footer from '../../assets/logo_imper_footer.webp';
 import footerBg from '../../assets/Footer_images/footer_bg.webp';
 import { cn } from '../../lib/utils';
 import { ThemeToggle } from '../../theme/ThemeToggle';
@@ -110,12 +111,17 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         transition={{ duration: 0.35, ease: 'easeInOut' }}
         className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-md"
       >
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-5">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-2 sm:px-6 lg:px-8">
           <Link
             to="/"
-            className="rounded px-1.5 py-0.5 text-lg font-bold tracking-tight text-primary transition-colors hover:text-primary/80"
+            aria-label="Imperpoços - Página inicial"
+            className="rounded px-1.5 py-0.3 transition-opacity hover:opacity-80"
           >
-            IMPERPOÇOS
+            <img
+              src={logoImper}
+              alt="Imperpoços"
+              className="h-18 w-auto object-contain"
+            />
           </Link>
           <nav className="hidden lg:block">
             <ul className="flex items-center gap-x-1">
@@ -271,7 +277,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         />
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-background/75"
+          className="absolute inset-0 -z-10 bg-background/36"
         />
         <div className="relative mx-auto grid w-full max-w-[1400px] gap-8 px-4 sm:grid-cols-4">
           <div className="flex flex-col items-start gap-4 rounded-xl border border-border/60 bg-background/55 p-6 text-left backdrop-blur-sm">
@@ -369,7 +375,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex flex-col items-center justify-center gap-3 text-center sm:items-center">
             <img
-              src={logoImper}
+              src={logoImper_footer}
               alt="Imperpoços"
               className="h-56 w-auto rounded-3xl object-contain opacity-90"
             />
