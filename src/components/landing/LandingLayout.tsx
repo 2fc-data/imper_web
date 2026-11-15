@@ -109,7 +109,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: headerHidden ? '-100%' : 0, opacity: headerHidden ? 0 : 1 }}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur-md"
+        className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md"
       >
         <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-2 sm:px-6 lg:px-8">
           <Link

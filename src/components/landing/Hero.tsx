@@ -56,7 +56,7 @@ export function Hero() {
   return (
     <section
       id="inicio"
-      className="relative flex min-h-[90vh] flex-col overflow-hidden bg-background pt-12"
+      className="relative isolate flex min-h-[90vh] flex-col overflow-hidden bg-background pt-12"
     >
       <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
         <AnimatePresence initial={false}>
