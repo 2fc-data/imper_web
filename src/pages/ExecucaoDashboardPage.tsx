@@ -9,6 +9,7 @@ import {
 import {
   listarExecucoes,
   listarSeparacoes,
+  obraIdDaSeparacao,
   type ExecucaoAtividadeItem,
   type SeparacaoItem,
 } from '../lib/api';
@@ -177,7 +178,7 @@ export function ExecucaoDashboardPage({ viewAtiva: _viewAtiva }: Props) {
                 >
                   <div className="text-sm">
                     <span className="font-medium">
-                      Obra {sep.obraId ?? '#'}
+                      Obra {obraIdDaSeparacao(sep) ?? '#'}
                     </span>
                   </div>
                   <span className="text-xs text-muted-foreground">

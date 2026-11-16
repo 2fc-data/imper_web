@@ -3,21 +3,55 @@ import type { MaterialItem } from './materiais.js';
 import type { EpiItem } from './epis.js';
 import type { EquipamentoItem } from './equipamentos.js';
 
+export interface EnderecoSeparacaoObra {
+  logradouro: string;
+  numero: string | null;
+  bairro: string | null;
+  cidade: string | null;
+}
+
+export interface ObraSeparacao {
+  id: number;
+  codigo: string;
+  user?: { nome: string } | null;
+  endereco?: EnderecoSeparacaoObra | null;
+}
+
 export interface SeparacaoItem {
   id: number;
   codigo: string;
   status: string;
   statusNovo?: string;
-  obraId: number | null;
   dataPrevista: string | null;
   dataNecessidade?: string | null;
   dataConfirmacao: string | null;
   confirmadoPorId: number | null;
   totalItens?: number;
   criadoEm: string;
-  executucaoAtividadeId?: number | null;
+  createdAt?: string;
+  executucaoAtividadeId?: string | null;
+  executucaoAtividade?: {
+    atividade?: {
+      obraEtapa?: {
+        obraId: number;
+        obra?: ObraSeparacao | null;
+      } | null;
+    } | null;
+  } | null;
   confirmadoPor?: { id: number; nome: string } | null;
   itens?: SeparacaoItemDetalhe[];
+}
+
+export function obraIdDaSeparacao(separacao: SeparacaoItem): number | null {
+  return (
+    separacao.executucaoAtividade?.atividade?.obraEtapa?.obraId ?? null
+  );
+}
+
+export function obraDaSeparacao(
+  separacao: SeparacaoItem,
+): ObraSeparacao | null {
+  return separacao.executucaoAtividade?.atividade?.obraEtapa?.obra ?? null;
 }
 
 export interface SeparacaoItemDetalhe {
@@ -37,7 +71,11 @@ export interface SeparacaoItemDetalhe {
   material?: MaterialItem;
   epi?: EpiItem;
   equipamento?: EquipamentoItem;
-  colaborador?: { id: number; nome: string } | null;
+  colaborador?: {
+    id: number;
+    nome: string;
+    papeis?: { papel: { nome: string } }[] | null;
+  } | null;
 }
 
 export async function listarSeparacoes(params?: {
@@ -73,6 +111,22 @@ export async function registrarDevolucaoSeparacao(
   return api.put<SeparacaoItem>(`/separacao/${id}/devolucao`);
 }
 
+export interface NovoItemSeparacao {
+  materialId?: number;
+  epiId?: number;
+  equipamentoId?: number;
+  quantidade: number;
+  colaboradorId?: number;
+  observacao?: string;
+}
+
+export async function adicionarItemSeparacao(
+  separacaoId: number,
+  dados: NovoItemSeparacao,
+): Promise<SeparacaoItemDetalhe> {
+  return api.post<SeparacaoItemDetalhe>(`/separacao/${separacaoId}/itens`, dados);
+}
+
 export async function registrarRetiradaItemSeparacao(
   separacaoId: number,
   itemId: number,
@@ -87,6 +141,13 @@ export async function registrarDevolucaoItemSeparacao(
   dados: { observacao?: string; status?: 'DEVOLVIDO' | 'PERDIDO' },
 ): Promise<unknown> {
   return api.put(`/separacao/${separacaoId}/itens/${itemId}/devolver`, dados);
+}
+
+export async function removerItemSeparacao(
+  separacaoId: number,
+  itemId: number,
+): Promise<void> {
+  return api.del<void>(`/separacao/${separacaoId}/itens/${itemId}`);
 }
 
 export async function excluirSeparacao(id: number): Promise<void> {

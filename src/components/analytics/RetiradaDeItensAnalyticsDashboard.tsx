@@ -13,6 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import type { SeparacaoItem } from '../../lib/api';
+import { obraIdDaSeparacao } from '../../lib/api';
 import {
   AnalyticsFilterBar,
   type FiltrosAnalyticsState,
@@ -201,7 +202,7 @@ export function RetiradaDeItensAnalyticsDashboard({
     const linhas = separacoesFiltradas.map((s) => [
       s.id,
       s.codigo,
-      s.obraId ? `#${s.obraId}` : '—',
+      obraIdDaSeparacao(s) ? `#${obraIdDaSeparacao(s)}` : '—',
       STATUS_LABELS[s.status] ?? s.status,
       s.totalItens ?? s.itens?.length ?? 0,
       s.criadoEm ? new Date(s.criadoEm).toLocaleDateString('pt-BR') : '—',
@@ -214,7 +215,7 @@ export function RetiradaDeItensAnalyticsDashboard({
     const linhas = separacoesFiltradas.map((s) => [
       s.id,
       s.codigo,
-      s.obraId ? `#${s.obraId}` : '—',
+      obraIdDaSeparacao(s) ? `#${obraIdDaSeparacao(s)}` : '—',
       STATUS_LABELS[s.status] ?? s.status,
       s.totalItens ?? s.itens?.length ?? 0,
       s.criadoEm ? new Date(s.criadoEm).toLocaleDateString('pt-BR') : '—',

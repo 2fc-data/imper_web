@@ -1,33 +1,16 @@
 import { type ReactNode, useState } from 'react';
 import {
-  type BaseLookup,
-  categoriasApi,
-  categoriasEpiApi,
-  categoriasMaterialApi,
-  coresEpiApi,
-  coresMaterialApi,
-  type EpiLookups,
-  type EquipamentoLookups,
-  estadosConservacaoApi,
-  type FornecedorInput,
-  type FornecedorItem,
-  fornecedoresApi,
-  fornecedoresEpiApi,
-  type LookupInput,
-  localizacoesApi,
-  localizacoesEpiApi,
-  type MaterialLookups,
-  marcasApi,
-  marcasEpiApi,
-  marcasMaterialApi,
-  type SubcategoriaInput,
-  statusEquipamentoApi,
-  subcategoriasApi,
-  subcategoriasEpiApi,
-  subcategoriasMaterialApi,
-  tamanhosEpiApi,
-  tiposManutencaoApi,
-  unidadesMedidaApi,
+  catalogos as catApi,
+  type RecursoCatalogo,
+  type TipoInsumo,
+  type CatalogoItem,
+  type SubcategoriaCatalogoItem,
+  type FornecedorCatalogoItem,
+  type CorItem,
+  type TipoDespesaItem,
+  type UnidadeMedidaItem,
+  RECURSO_TIPO_FIXO,
+  RECURSO_TIPOS_PERMITIDOS,
 } from '../lib/api';
 import { cn } from '../lib/utils';
 import { Accordion } from './Accordion';
@@ -46,33 +29,73 @@ import { EmailInput } from './ui/email-input';
 import { Label } from './ui/label';
 import { selectClasses } from './ui/form-classes';
 
-type Modulo = 'EQUIPAMENTO' | 'EPI' | 'MATERIAIS';
+type ItemLookup = CatalogoItem & {
+  descricao?: string | null;
+  sigla?: string | null;
+  cnpj?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+  codigoHex?: string | null;
+  requerObra?: boolean;
+};
+
+interface CrudApi {
+  criar: (input: Record<string, unknown>, tipoInsumo: TipoInsumo) => Promise<unknown>;
+  atualizar: (
+    id: number,
+    input: Record<string, unknown>,
+    tipoInsumo?: TipoInsumo,
+  ) => Promise<unknown>;
+  desativar: (id: number) => Promise<unknown>;
+}
+
+const APIS: Record<RecursoCatalogo, CrudApi> = {
+  categorias: catApi.categoriasApi as unknown as CrudApi,
+  subcategorias: catApi.subcategoriasApi as unknown as CrudApi,
+  marcas: catApi.marcasApi as unknown as CrudApi,
+  fornecedores: catApi.fornecedoresApi as unknown as CrudApi,
+  localizacoes: catApi.localizacoesApi as unknown as CrudApi,
+  'unidades-medida': catApi.unidadesMedidaApi as unknown as CrudApi,
+  cores: catApi.coresApi as unknown as CrudApi,
+  tamanhos: catApi.tamanhosApi as unknown as CrudApi,
+  'status-equipamento': catApi.statusEquipamentoApi as unknown as CrudApi,
+  'estados-conservacao': catApi.estadosConservacaoApi as unknown as CrudApi,
+  'tipos-manutencao': catApi.tiposManutencaoApi as unknown as CrudApi,
+  'tipos-despesas': catApi.tiposDespesasApi as unknown as CrudApi,
+};
+
+const TIPO_LABEL: Record<TipoInsumo, string> = {
+  EQUIPAMENTO: 'Equipamento',
+  EPI: 'EPI',
+  MATERIAL: 'Material',
+  DESPESAS_EXTRAS: 'Despesas Extras',
+  VEICULO: 'Veículo',
+  SERVICO: 'Serviço',
+};
 
 interface CatalogosOperacionaisProps {
-  modulo: Modulo;
-  lookups: EquipamentoLookups | EpiLookups | MaterialLookups | null;
+  payload: catApi.CatalogosPayload;
   relerLookups: () => Promise<void>;
-  ocultarTitulo?: boolean;
 }
 
 function ModalEditarLookup({
   item,
   api,
+  tipoFixo,
+  tiposPermitidos,
   aoSalvar,
   onFechar,
 }: {
-  item: BaseLookup & { descricao?: string | null };
-  api: {
-    atualizar: (
-      id: number,
-      input: Partial<LookupInput> & { ativo?: boolean },
-    ) => Promise<unknown>;
-  };
+  item: ItemLookup;
+  api: CrudApi;
+  tipoFixo?: TipoInsumo;
+  tiposPermitidos: TipoInsumo[];
   aoSalvar: () => Promise<void>;
   onFechar: () => void;
 }) {
   const [nome, setNome] = useState(item.nome);
   const [descricao, setDescricao] = useState(item.descricao ?? '');
+  const [tipoInsumo, setTipoInsumo] = useState<TipoInsumo>(item.tipoInsumo);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -82,10 +105,15 @@ function ModalEditarLookup({
     setBusy(true);
     setErr(null);
     try {
-      await api.atualizar(item.id, {
-        nome: nome.trim(),
-        descricao: descricao.trim() || undefined,
-      });
+      await api.atualizar(
+        item.id,
+        {
+          nome: nome.trim(),
+          descricao: descricao.trim() || undefined,
+          ...(tipoFixo ? {} : { tipoInsumo }),
+        },
+        tipoFixo ?? tipoInsumo,
+      );
       await aoSalvar();
       onFechar();
     } catch (e) {
@@ -99,9 +127,25 @@ function ModalEditarLookup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <form
         onSubmit={salvar}
-        className="w-full max-w-md space-y-4 rounded-xl bg-background p-6 shadow-xl border"
+        className="w-full max-w-md space-y-4 rounded-xl border bg-background p-6 shadow-xl"
       >
         <h3 className="text-lg font-bold">Editar Item</h3>
+        {!tipoFixo && tiposPermitidos.length > 1 && (
+          <div className="space-y-2">
+            <Label>Tipo de insumo</Label>
+            <select
+              value={tipoInsumo}
+              onChange={(e) => setTipoInsumo(e.target.value as TipoInsumo)}
+              className={selectClasses}
+            >
+              {tiposPermitidos.map((t) => (
+                <option key={t} value={t}>
+                  {TIPO_LABEL[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="space-y-2">
           <Label>Nome</Label>
           <Input
@@ -139,68 +183,18 @@ function ModalEditarLookup({
   );
 }
 
-function SeletorAtualizacaoLookup({
-  item,
-  api,
-  aoSalvar,
-}: {
-  item: BaseLookup & { descricao?: string | null };
-  api: {
-    atualizar: (
-      id: number,
-      input: Partial<LookupInput> & { ativo?: boolean },
-    ) => Promise<unknown>;
-  };
-  aoSalvar: () => Promise<void>;
-}) {
-  const [value, setValue] = useState(item.descricao ?? '');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function salvar() {
-    setBusy(true);
-    setErr(null);
-    try {
-      await api.atualizar(item.id, { descricao: value || undefined });
-      await aoSalvar();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Falha ao atualizar');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={salvar}
-        placeholder="Descrição (opcional)"
-        className="h-9 max-w-[220px]"
-      />
-      {busy && (
-        <span className="text-xs text-muted-foreground">Salvando...</span>
-      )}
-      {err && <span className="text-xs text-destructive">{err}</span>}
-    </div>
-  );
-}
-
 function LinhaLookup({
   item,
   api,
+  tipoFixo,
+  tiposPermitidos,
   aoSalvar,
   extra,
 }: {
-  item: BaseLookup & { descricao?: string | null };
-  api: {
-    atualizar: (
-      id: number,
-      input: Partial<LookupInput> & { ativo?: boolean },
-    ) => Promise<unknown>;
-    desativar: (id: number) => Promise<unknown>;
-  };
+  item: ItemLookup;
+  api: CrudApi;
+  tipoFixo?: TipoInsumo;
+  tiposPermitidos: TipoInsumo[];
   aoSalvar: () => Promise<void>;
   extra?: ReactNode;
 }) {
@@ -212,7 +206,11 @@ function LinhaLookup({
     setToggling(true);
     setErr(null);
     try {
-      await api.atualizar(item.id, { ativo: !item.ativo });
+      await api.atualizar(
+        item.id,
+        { ativo: !item.ativo },
+        tipoFixo ?? item.tipoInsumo,
+      );
       await aoSalvar();
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Falha ao atualizar');
@@ -236,16 +234,18 @@ function LinhaLookup({
           >
             {item.ativo ? 'Ativo' : 'Inativo'}
           </span>
+          {!tipoFixo && (
+            <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-600">
+              {TIPO_LABEL[item.tipoInsumo]}
+            </span>
+          )}
         </div>
         {item.descricao && (
-          <span className="text-xs text-muted-foreground">
-            {item.descricao}
-          </span>
+          <span className="text-xs text-muted-foreground">{item.descricao}</span>
         )}
         {extra}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <SeletorAtualizacaoLookup item={item} api={api} aoSalvar={aoSalvar} />
         <Button
           type="button"
           variant="ghost"
@@ -268,6 +268,8 @@ function LinhaLookup({
         <ModalEditarLookup
           item={item}
           api={api}
+          tipoFixo={tipoFixo}
+          tiposPermitidos={tiposPermitidos}
           aoSalvar={aoSalvar}
           onFechar={() => setEditing(false)}
         />
@@ -277,45 +279,66 @@ function LinhaLookup({
   );
 }
 
-function CardCatologo({
+function CardCatalogo<T extends ItemLookup>({
+  recurso,
   titulo,
   descricao,
   itens,
-  api,
   aoSalvar,
-  formularioNovo,
+  tipos,
+  mostrarTipoNaLinha = false,
+  formularioExtra,
+  montarPayload,
+  bloqueadoQuandoTipoAtivo = false,
 }: {
+  recurso: RecursoCatalogo;
   titulo: string;
   descricao: string;
-  itens: (BaseLookup & { descricao?: string | null })[];
-  api: {
-    criar: (input: LookupInput) => Promise<unknown>;
-    atualizar: (
-      id: number,
-      input: Partial<LookupInput> & { ativo?: boolean },
-    ) => Promise<unknown>;
-    desativar: (id: number) => Promise<unknown>;
-  };
+  itens: T[];
   aoSalvar: () => Promise<void>;
-  formularioNovo?: (
-    form: LookupInput,
-    setForm: (f: LookupInput) => void,
+  tipos?: TipoInsumo[];
+  mostrarTipoNaLinha?: boolean;
+  formularioExtra?: (
+    form: Record<string, unknown>,
+    setForm: (f: Record<string, unknown>) => void,
   ) => ReactNode;
+  montarPayload?: (form: Record<string, unknown>) => Record<string, unknown>;
+  bloqueadoQuandoTipoAtivo?: boolean;
 }) {
-  const [form, setForm] = useState<LookupInput>({ nome: '', descricao: '' });
+  const tipoFixo = RECURSO_TIPO_FIXO[recurso];
+  const tiposPermitidos = tipos ?? RECURSO_TIPOS_PERMITIDOS[recurso] ?? [];
+  const [form, setForm] = useState<Record<string, unknown>>({
+    nome: '',
+    descricao: '',
+  });
+  const [tipoInsumoForm, setTipoInsumoForm] = useState<TipoInsumo | ''>(
+    tipoFixo ?? '',
+  );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const tipoEfetivo = tipoFixo ?? (tipoInsumoForm || undefined);
+
   async function criar() {
-    if (!form.nome.trim()) return;
+    const nome = String(form.nome ?? '').trim();
+    if (!nome) return;
+    if (!tipoEfetivo) {
+      setErr('Selecione o tipo de insumo');
+      return;
+    }
     setSaving(true);
     setErr(null);
     try {
-      await api.criar({
-        nome: form.nome.trim(),
+      const base = montarPayload ? montarPayload(form) : {
+        nome,
         descricao: form.descricao || undefined,
-      });
+      };
+      await APIS[recurso].criar(
+        { ...base, nome },
+        tipoEfetivo,
+      );
       setForm({ nome: '', descricao: '' });
+      if (!tipoFixo) setTipoInsumoForm('');
       await aoSalvar();
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Falha ao cadastrar');
@@ -323,6 +346,8 @@ function CardCatologo({
       setSaving(false);
     }
   }
+
+  const tipoAviso = bloqueadoQuandoTipoAtivo ? tipoEfetivo : undefined;
 
   return (
     <Card>
@@ -335,19 +360,48 @@ function CardCatologo({
           <div className="space-y-1.5">
             <Label>Nome</Label>
             <Input
-              value={form.nome}
-              onChange={(e) => setForm({ ...form, nome: e.target.value.toUpperCase() })}
+              value={form.nome as string}
+              onChange={(e) =>
+                setForm({ ...form, nome: e.target.value.toUpperCase() })
+              }
               placeholder="Nome do item"
             />
           </div>
-          {formularioNovo?.(form, setForm)}
+          {formularioExtra?.(form, setForm)}
+          {!tipoFixo && tiposPermitidos.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Tipo de insumo</Label>
+              <select
+                value={tipoInsumoForm}
+                onChange={(e) =>
+                  setTipoInsumoForm(e.target.value as TipoInsumo | '')
+                }
+                className={selectClasses}
+              >
+                <option value="">Selecione...</option>
+                {tiposPermitidos.map((t) => (
+                  <option key={t} value={t}>
+                    {TIPO_LABEL[t]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
+        {tipoAviso && (
+          <p className="text-xs text-muted-foreground">
+            {titulo} é fixo em {TIPO_LABEL[tipoAviso]}. Registros de veículo são
+            gerenciados na Frota.
+          </p>
+        )}
         {form.descricao !== undefined && (
           <div className="space-y-1.5">
             <Label>Descrição</Label>
             <Input
-              value={form.descricao ?? ''}
-              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+              value={(form.descricao ?? '') as string}
+              onChange={(e) =>
+                setForm({ ...form, descricao: e.target.value })
+              }
               placeholder="Descrição (opcional)"
             />
           </div>
@@ -361,8 +415,17 @@ function CardCatologo({
             <LinhaLookup
               key={item.id}
               item={item}
-              api={api}
+              api={APIS[recurso]}
+              tipoFixo={tipoFixo}
+              tiposPermitidos={tiposPermitidos}
               aoSalvar={aoSalvar}
+              extra={
+                mostrarTipoNaLinha && (
+                  <span className="text-xs text-muted-foreground">
+                    Tipo: {TIPO_LABEL[item.tipoInsumo]}
+                  </span>
+                )
+              }
             />
           ))}
           {itens.length === 0 && (
@@ -376,10 +439,9 @@ function CardCatologo({
   );
 }
 
-function ItemFornecedor({ item }: { item: FornecedorItem }) {
+function ItemFornecedor({ item }: { item: FornecedorCatalogoItem }) {
   return (
     <div className="flex flex-col">
-      <span className="text-xs text-muted-foreground">{item.nome}</span>
       <span className="text-xs text-muted-foreground">
         {[
           item.cnpj && `CNPJ: ${item.cnpj}`,
@@ -393,57 +455,168 @@ function ItemFornecedor({ item }: { item: FornecedorItem }) {
   );
 }
 
-export function CatalogosOperacionais({
-  modulo,
-  lookups,
-  relerLookups,
-  ocultarTitulo,
-}: CatalogosOperacionaisProps) {
-  const [categoriaParaSub, setCategoriaParaSub] = useState<number | ''>('');
-  const [formFornecedor, setFormFornecedor] = useState<FornecedorInput>({
+function CardFornecedores({
+  itens,
+  aoSalvar,
+}: {
+  itens: FornecedorCatalogoItem[];
+  aoSalvar: () => Promise<void>;
+}) {
+  const [form, setForm] = useState<Partial<FornecedorCatalogoItem>>({
     nome: '',
     cnpj: '',
     telefone: '',
     email: '',
   });
-  const [savingFornecedor, setSavingFornecedor] = useState(false);
-  const [formSub, setFormSub] = useState<LookupInput>({
+  const [tipoInsumo, setTipoInsumo] = useState<TipoInsumo | ''>('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const tipos = RECURSO_TIPOS_PERMITIDOS.fornecedores;
+
+  async function criar() {
+    if (!form.nome?.trim()) return;
+    if (!tipoInsumo) {
+      setErr('Selecione o tipo de insumo');
+      return;
+    }
+    setSaving(true);
+    setErr(null);
+    try {
+      await catApi.fornecedoresApi.criar(
+        {
+          nome: form.nome.trim(),
+          cnpj: form.cnpj || undefined,
+          telefone: form.telefone || undefined,
+          email: form.email || undefined,
+        },
+        tipoInsumo,
+      );
+      setForm({ nome: '', cnpj: '', telefone: '', email: '' });
+      setTipoInsumo('');
+      await aoSalvar();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Falha ao cadastrar fornecedor');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Fornecedores</CardTitle>
+        <CardDescription>Empresas fornecedoras.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input
+              value={form.nome ?? ''}
+              onChange={(e) =>
+                setForm({ ...form, nome: e.target.value.toUpperCase() })
+              }
+              placeholder="Nome do fornecedor"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Tipo de insumo</Label>
+            <select
+              value={tipoInsumo}
+              onChange={(e) => setTipoInsumo(e.target.value as TipoInsumo | '')}
+              className={selectClasses}
+            >
+              <option value="">Selecione...</option>
+              {tipos.map((t) => (
+                <option key={t} value={t}>
+                  {TIPO_LABEL[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>CNPJ</Label>
+            <CpfCnpjInput
+              value={form.cnpj ?? ''}
+              onChange={(valor) => setForm({ ...form, cnpj: valor })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Telefone</Label>
+            <PhoneInput
+              value={form.telefone ?? ''}
+              onChange={(valor) => setForm({ ...form, telefone: valor })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Email</Label>
+            <EmailInput
+              value={form.email ?? ''}
+              onChange={(val) => setForm({ ...form, email: val })}
+              placeholder="Opcional"
+            />
+          </div>
+        </div>
+        {err && <span className="text-xs text-destructive">{err}</span>}
+        <Button type="button" size="sm" disabled={saving} onClick={criar}>
+          {saving ? 'Salvando...' : 'Adicionar'}
+        </Button>
+        <div className="space-y-2 pt-2">
+          {itens.map((item) => (
+            <LinhaLookup
+              key={item.id}
+              item={item}
+              api={APIS.fornecedores}
+              tiposPermitidos={tipos}
+              aoSalvar={aoSalvar}
+              extra={<ItemFornecedor item={item} />}
+            />
+          ))}
+          {itens.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Nenhum fornecedor cadastrado.
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function CatalogosOperacionais({
+  payload,
+  relerLookups,
+}: CatalogosOperacionaisProps) {
+  const [categoriaParaSub, setCategoriaParaSub] = useState<number | ''>('');
+  const [formSub, setFormSub] = useState<Partial<SubcategoriaCatalogoItem>>({
     nome: '',
     descricao: '',
   });
   const [savingSub, setSavingSub] = useState(false);
   const [errSub, setErrSub] = useState<string | null>(null);
-  const [errFornecedor, setErrFornecedor] = useState<string | null>(null);
-
-  if (!lookups) {
-    return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
-        Carregando catálogos...
-      </p>
-    );
-  }
-
-  const somenteEpi = modulo === 'EPI';
-  const somenteMaterial = modulo === 'MATERIAIS';
 
   async function criarSubcategoria() {
-    if (!formSub.nome.trim() || !categoriaParaSub) return;
+    if (!formSub.nome || !categoriaParaSub) return;
     setSavingSub(true);
     setErrSub(null);
     try {
-      const input: SubcategoriaInput = {
-        nome: formSub.nome.trim(),
-        descricao: formSub.descricao || undefined,
-        categoriaId: Number(categoriaParaSub),
-      };
-      if (somenteMaterial) {
-        await subcategoriasMaterialApi.criar(input);
-      } else if (somenteEpi) {
-        await subcategoriasEpiApi.criar(input);
-      } else {
-        await subcategoriasApi.criar(input);
+      const categoria = payload.categorias.find(
+        (c) => c.id === Number(categoriaParaSub),
+      );
+      if (!categoria) {
+        setErrSub('Selecione uma categoria válida');
+        return;
       }
+      await catApi.subcategoriasApi.criar(
+        {
+          nome: formSub.nome.trim(),
+          descricao: formSub.descricao || undefined,
+          categoriaId: Number(categoriaParaSub),
+        } as unknown as { nome: string } & Partial<SubcategoriaCatalogoItem>,
+        categoria.tipoInsumo,
+      );
       setFormSub({ nome: '', descricao: '' });
+      setCategoriaParaSub('');
       await relerLookups();
     } catch (e) {
       setErrSub(
@@ -454,71 +627,54 @@ export function CatalogosOperacionais({
     }
   }
 
-  async function criarFornecedor() {
-    if (!formFornecedor.nome.trim()) return;
-    setSavingFornecedor(true);
-    setErrFornecedor(null);
-    try {
-      const input: FornecedorInput = {
-        nome: formFornecedor.nome.trim(),
-        cnpj: formFornecedor.cnpj || undefined,
-        telefone: formFornecedor.telefone || undefined,
-        email: formFornecedor.email || undefined,
-      };
-      if (somenteEpi) {
-        await fornecedoresEpiApi.criar(input);
-      } else {
-        await fornecedoresApi.criar(input);
-      }
-      setFormFornecedor({ nome: '', cnpj: '', telefone: '', email: '' });
-      await relerLookups();
-    } catch (e) {
-      setErrFornecedor(
-        e instanceof Error ? e.message : 'Falha ao cadastrar fornecedor',
-      );
-    } finally {
-      setSavingFornecedor(false);
-    }
-  }
+  const subcategoriasAtivas = payload.subcategorias;
 
-  const titulo = somenteMaterial
-    ? 'Catálogos de Materiais'
-    : somenteEpi
-      ? 'Catálogos de EPIs'
-      : 'Catálogos de Equipamentos';
-  const descricao = somenteMaterial
-    ? 'Tabelas auxiliares usadas no cadastro de materiais.'
-    : somenteEpi
-      ? 'Tabelas auxiliares usadas no cadastro de EPIs.'
-      : 'Tabelas auxiliares usadas no cadastro de equipamentos.';
-  const subcategoriasAtivas = lookups.subcategorias.filter((s) => s.ativo);
+  const corForm = (
+    form: Record<string, unknown>,
+    setForm: (f: Record<string, unknown>) => void,
+  ) => (
+    <div className="space-y-1.5">
+      <Label>Código da cor</Label>
+      <Input
+        value={(form.codigoHex ?? '') as string}
+        onChange={(e) => setForm({ ...form, codigoHex: e.target.value })}
+        placeholder="#000000 (opcional)"
+      />
+    </div>
+  );
+
+  const despesaForm = (
+    form: Record<string, unknown>,
+    setForm: (f: Record<string, unknown>) => void,
+  ) => (
+    <div className="space-y-1.5">
+      <Label>Requer obra</Label>
+      <select
+        value={String(form.requerObra ?? 'false')}
+        onChange={(e) =>
+          setForm({ ...form, requerObra: e.target.value === 'true' })
+        }
+        className={selectClasses}
+      >
+        <option value="false">Não</option>
+        <option value="true">Sim</option>
+      </select>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      {!ocultarTitulo && (
-        <div>
-          <h2 className="text-xl font-bold tracking-tight">{titulo}</h2>
-          <p className="text-sm text-muted-foreground">{descricao}</p>
-        </div>
-      )}
-
       <Accordion
         items={[
           {
             titulo: 'Categorias',
             descricao: 'Agrupamentos gerais.',
             conteudo: (
-              <CardCatologo
+              <CardCatalogo
+                recurso="categorias"
                 titulo="Categorias"
                 descricao="Agrupamentos gerais."
-                itens={lookups.categorias}
-                api={
-                  somenteMaterial
-                    ? categoriasMaterialApi
-                    : somenteEpi
-                      ? categoriasEpiApi
-                      : categoriasApi
-                }
+                itens={payload.categorias}
                 aoSalvar={relerLookups}
               />
             ),
@@ -528,7 +684,10 @@ export function CatalogosOperacionais({
             descricao: 'Refinamento das categorias.',
             conteudo: (
               <Card>
-                <CardContent className="space-y-3 pt-0">
+                <CardDescription className="px-6 pt-4">
+                  O tipo é herdado da categoria pai.
+                </CardDescription>
+                <CardContent className="space-y-3">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label>Categoria pai</Label>
@@ -542,9 +701,9 @@ export function CatalogosOperacionais({
                         className={selectClasses}
                       >
                         <option value="">Selecione...</option>
-                        {lookups.categorias.map((c) => (
+                        {payload.categorias.map((c) => (
                           <option key={c.id} value={c.id}>
-                            {c.nome}
+                            {c.nome} — {TIPO_LABEL[c.tipoInsumo]}
                           </option>
                         ))}
                       </select>
@@ -552,9 +711,12 @@ export function CatalogosOperacionais({
                     <div className="space-y-1.5">
                       <Label>Nome</Label>
                       <Input
-                        value={formSub.nome}
+                        value={formSub.nome ?? ''}
                         onChange={(e) =>
-                          setFormSub({ ...formSub, nome: e.target.value.toUpperCase() })
+                          setFormSub({
+                            ...formSub,
+                            nome: e.target.value.toUpperCase(),
+                          })
                         }
                         placeholder="Nome da subcategoria"
                       />
@@ -583,7 +745,7 @@ export function CatalogosOperacionais({
                   </Button>
                   <div className="space-y-2 pt-2">
                     {subcategoriasAtivas.map((s) => {
-                      const nomeCategoria = lookups.categorias.find(
+                      const nomeCategoria = payload.categorias.find(
                         (c) => c.id === s.categoriaId,
                       )?.nome;
 
@@ -591,13 +753,8 @@ export function CatalogosOperacionais({
                         <LinhaLookup
                           key={s.id}
                           item={s}
-                          api={
-                            somenteMaterial
-                              ? subcategoriasMaterialApi
-                              : somenteEpi
-                                ? subcategoriasEpiApi
-                                : subcategoriasApi
-                          }
+                          api={APIS.subcategorias}
+                          tiposPermitidos={RECURSO_TIPOS_PERMITIDOS.subcategorias}
                           aoSalvar={relerLookups}
                           extra={
                             <span className="text-xs text-muted-foreground">
@@ -621,17 +778,11 @@ export function CatalogosOperacionais({
             titulo: 'Marcas',
             descricao: 'Fabricantes.',
             conteudo: (
-              <CardCatologo
+              <CardCatalogo
+                recurso="marcas"
                 titulo="Marcas"
                 descricao="Fabricantes."
-                itens={lookups.marcas}
-                api={
-                  somenteMaterial
-                    ? marcasMaterialApi
-                    : somenteEpi
-                      ? marcasEpiApi
-                      : marcasApi
-                }
+                itens={payload.marcas}
                 aoSalvar={relerLookups}
               />
             ),
@@ -640,211 +791,124 @@ export function CatalogosOperacionais({
             titulo: 'Unidades de Medida',
             descricao: 'Unidades usadas em materiais, serviços e orçamentos.',
             conteudo: (
-              <CardCatologo
+              <CardCatalogo<UnidadeMedidaItem>
+                recurso="unidades-medida"
                 titulo="Unidades de Medida"
                 descricao="Unidades usadas em materiais, serviços e orçamentos."
-                itens={lookups.unidadesMedida ?? []}
-                api={unidadesMedidaApi}
+                itens={payload.unidadesMedida}
                 aoSalvar={relerLookups}
               />
             ),
           },
-          ...(!somenteMaterial
-            ? [
-                {
-                  titulo: 'Localizações',
-                  descricao: 'Onde os itens ficam instalados.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Localizações"
-                      descricao="Onde os itens ficam instalados."
-                      itens={lookups.localizacoes ?? []}
-                      api={somenteEpi ? localizacoesEpiApi : localizacoesApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-              ]
-            : []),
-          ...(somenteEpi && 'cores' in lookups
-            ? [
-                {
-                  titulo: 'Cores',
-                  descricao: 'Cores disponíveis.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Cores"
-                      descricao="Cores disponíveis."
-                      itens={lookups.cores}
-                      api={coresEpiApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-                {
-                  titulo: 'Tamanhos',
-                  descricao: 'Tamanhos disponíveis.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Tamanhos"
-                      descricao="Tamanhos disponíveis."
-                      itens={lookups.tamanhos ?? []}
-                      api={tamanhosEpiApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-              ]
-            : []),
-          ...(!somenteEpi && !somenteMaterial
-            ? [
-                {
-                  titulo: 'Status de equipamento',
-                  descricao: 'Situação operacional do equipamento.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Status de equipamento"
-                      descricao="Situação operacional do equipamento."
-                      itens={lookups.statuses ?? []}
-                      api={statusEquipamentoApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-                {
-                  titulo: 'Estados de conservação',
-                  descricao: 'Condição física do equipamento.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Estados de conservação"
-                      descricao="Condição física do equipamento."
-                      itens={lookups.estadosConservacao ?? []}
-                      api={estadosConservacaoApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-                {
-                  titulo: 'Tipos de manutenção',
-                  descricao: 'Classificação das manutenções.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Tipos de manutenção"
-                      descricao="Classificação das manutenções."
-                      itens={lookups.tiposManutencao ?? []}
-                      api={tiposManutencaoApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-              ]
-            : []),
-          ...(somenteMaterial && 'cores' in lookups
-            ? [
-                {
-                  titulo: 'Cores',
-                  descricao: 'Cores disponíveis.',
-                  conteudo: (
-                    <CardCatologo
-                      titulo="Cores"
-                      descricao="Cores disponíveis."
-                      itens={lookups.cores}
-                      api={coresMaterialApi}
-                      aoSalvar={relerLookups}
-                    />
-                  ),
-                },
-              ]
-            : []),
+          {
+            titulo: 'Localizações',
+            descricao: 'Onde os itens ficam instalados.',
+            conteudo: (
+              <CardCatalogo
+                recurso="localizacoes"
+                titulo="Localizações"
+                descricao="Onde os itens ficam instalados."
+                itens={payload.localizacoes}
+                aoSalvar={relerLookups}
+              />
+            ),
+          },
+          {
+            titulo: 'Cores',
+            descricao: 'Cores disponíveis.',
+            conteudo: (
+              <CardCatalogo<CorItem>
+                recurso="cores"
+                titulo="Cores"
+                descricao="Cores disponíveis."
+                itens={payload.cores}
+                aoSalvar={relerLookups}
+                formularioExtra={corForm}
+              />
+            ),
+          },
+          {
+            titulo: 'Tamanhos',
+            descricao: 'Tamanhos disponíveis (EPI).',
+            conteudo: (
+              <CardCatalogo
+                recurso="tamanhos"
+                titulo="Tamanhos"
+                descricao="Tamanhos disponíveis (EPI)."
+                itens={payload.tamanhos}
+                aoSalvar={relerLookups}
+              />
+            ),
+          },
+          {
+            titulo: 'Status de equipamento',
+            descricao: 'Situação operacional do equipamento.',
+            conteudo: (
+              <CardCatalogo
+                recurso="status-equipamento"
+                titulo="Status de equipamento"
+                descricao="Situação operacional do equipamento."
+                itens={payload.statusEquipamento}
+                aoSalvar={relerLookups}
+                bloqueadoQuandoTipoAtivo
+              />
+            ),
+          },
+          {
+            titulo: 'Estados de conservação',
+            descricao: 'Condição física do equipamento.',
+            conteudo: (
+              <CardCatalogo
+                recurso="estados-conservacao"
+                titulo="Estados de conservação"
+                descricao="Condição física do equipamento."
+                itens={payload.estadosConservacao}
+                aoSalvar={relerLookups}
+                bloqueadoQuandoTipoAtivo
+              />
+            ),
+          },
+          {
+            titulo: 'Tipos de manutenção',
+            descricao: 'Classificação das manutenções.',
+            conteudo: (
+              <CardCatalogo
+                recurso="tipos-manutencao"
+                titulo="Tipos de manutenção"
+                descricao="Classificação das manutenções."
+                itens={payload.tiposManutencao}
+                aoSalvar={relerLookups}
+                bloqueadoQuandoTipoAtivo
+              />
+            ),
+          },
+          {
+            titulo: 'Tipos de despesa',
+            descricao: 'Tipos de despesas extras.',
+            conteudo: (
+              <CardCatalogo<TipoDespesaItem>
+                recurso="tipos-despesas"
+                titulo="Tipos de despesa"
+                descricao="Tipos de despesas extras."
+                itens={payload.tiposDespesas}
+                aoSalvar={relerLookups}
+                formularioExtra={despesaForm}
+                montarPayload={(form) => ({
+                  descricao: form.descricao || undefined,
+                  requerObra: Boolean(form.requerObra),
+                })}
+                bloqueadoQuandoTipoAtivo
+              />
+            ),
+          },
           {
             titulo: 'Fornecedores',
             descricao: 'Empresas fornecedoras.',
             conteudo: (
-              <Card>
-                <CardContent className="space-y-3 pt-0">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <Label>Nome</Label>
-                      <Input
-                        value={formFornecedor.nome}
-                        onChange={(e) =>
-                          setFormFornecedor({
-                            ...formFornecedor,
-                            nome: e.target.value.toUpperCase(),
-                          })
-                        }
-                        placeholder="Nome do fornecedor"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>CNPJ</Label>
-                      <CpfCnpjInput
-                        value={formFornecedor.cnpj ?? ''}
-                        onChange={(valor) =>
-                          setFormFornecedor({
-                            ...formFornecedor,
-                            cnpj: valor,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Telefone</Label>
-                      <PhoneInput
-                        value={formFornecedor.telefone ?? ''}
-                        onChange={(valor) =>
-                          setFormFornecedor({
-                            ...formFornecedor,
-                            telefone: valor,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Email</Label>
-                      <EmailInput
-                        value={formFornecedor.email ?? ''}
-                        onChange={(val) =>
-                          setFormFornecedor({
-                            ...formFornecedor,
-                            email: val,
-                          })
-                        }
-                        placeholder="Opcional"
-                      />
-                    </div>
-                  </div>
-                  {errFornecedor && (
-                    <span className="text-xs text-destructive">
-                      {errFornecedor}
-                    </span>
-                  )}
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={savingFornecedor}
-                    onClick={criarFornecedor}
-                  >
-                    {savingFornecedor ? 'Salvando...' : 'Adicionar'}
-                  </Button>
-                  <div className="space-y-2 pt-2">
-                    {(lookups.fornecedores ?? []).map((item) => (
-                      <LinhaLookup
-                        key={item.id}
-                        item={item}
-                        api={somenteEpi ? fornecedoresEpiApi : fornecedoresApi}
-                        aoSalvar={relerLookups}
-                        extra={<ItemFornecedor item={item} />}
-                      />
-                    ))}
-                    {(lookups.fornecedores ?? []).length === 0 && (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        Nenhum fornecedor cadastrado.
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <CardFornecedores
+                itens={payload.fornecedores}
+                aoSalvar={relerLookups}
+              />
             ),
           },
         ]}

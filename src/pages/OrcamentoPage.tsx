@@ -304,7 +304,7 @@ export default function OrcamentoPage() {
                 imediato.
               </p>
               <Link
-                to="/contato"
+                to="/#contato"
                 className={cn(
                   buttonVariants({
                     size: 'lg',

@@ -12,6 +12,7 @@ import {
 } from '../components/ui/card';
 import {
   atualizarMaterial,
+  catalogos as catApi,
   criarMaterial,
   excluirMaterial,
   listarLookupsMateriais,
@@ -331,8 +332,13 @@ export default function DespesasExtrasAdminPage({
 
   useEffect(() => {
     carregarTodos();
-    listarLookupsMateriais()
-      .then(setLookups)
+    Promise.all([
+      listarLookupsMateriais(),
+      catApi.unidadesMedidaApi.listar(),
+    ])
+      .then(([lk, unidades]) =>
+        setLookups({ ...lk, unidadesMedida: unidades }),
+      )
       .catch(() => { });
   }, [carregarTodos]);
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   type AtendimentoItemVocabulario,
   type UnidadeMedida,
-  unidadesMedidaApi,
+  catalogos as catApi,
   type VisitaItemVocabulario,
 } from '../../lib/api';
 import { CascataVocabulario } from '../orcamentos/CascataVocabulario';
@@ -54,13 +54,11 @@ export function GestorItensVocabulario({
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    if (modo === 'visita') {
-      unidadesMedidaApi
-        .listar()
-        .then((res) => setUnidades(res))
-        .catch(() => {});
-    }
-  }, [modo]);
+    catApi.unidadesMedidaApi
+      .listar()
+      .then((res) => setUnidades(res))
+      .catch(() => {});
+  }, []);
 
   const podeAdicionar =
     cascata.etapaId != null &&

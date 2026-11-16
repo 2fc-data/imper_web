@@ -171,6 +171,27 @@ export type {
   EpiLookups,
 } from './lookups.js';
 
+// Catalogos unificados por tipo de insumo
+export * as catalogos from './catalogos.js';
+export type {
+  TipoInsumo,
+  RecursoCatalogo,
+  CatalogoItem,
+  CatalogosPayload,
+  SubcategoriaItem as SubcategoriaCatalogoItem,
+  FornecedorItem as FornecedorCatalogoItem,
+  CorItem,
+  TipoDespesaItem,
+  UnidadeMedidaItem,
+} from './catalogos.js';
+export {
+  listarCatalogos,
+  listarRecurso,
+  RECURSO_LABEL,
+  RECURSO_TIPO_FIXO,
+  RECURSO_TIPOS_PERMITIDOS,
+} from './catalogos.js';
+
 // Atendimentos
 export {
   listarAtendimentos,
@@ -384,13 +405,20 @@ export {
   confirmarSeparacao,
   registrarRetiradaSeparacao,
   registrarDevolucaoSeparacao,
+  adicionarItemSeparacao,
   registrarRetiradaItemSeparacao,
   registrarDevolucaoItemSeparacao,
+  removerItemSeparacao,
   excluirSeparacao,
+  obraIdDaSeparacao,
+  obraDaSeparacao,
 } from './separacao.js';
 export type {
   SeparacaoItem,
   SeparacaoItemDetalhe,
+  NovoItemSeparacao,
+  ObraSeparacao,
+  EnderecoSeparacaoObra,
 } from './separacao.js';
 
 // Disponibilidade

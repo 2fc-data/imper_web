@@ -169,10 +169,10 @@ export default function ServicosPage() {
                           <Link
                             to={`/contato?servico=${encodeURIComponent(servico.titulo)}`}
                             aria-label={`Solicitar atendimento/contato para ${servico.titulo}`}
-                            title="Solicitar Contato"
-                            className="inline-flex h-6 w-6 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                            title="Formulário de Contato"
+                            className="inline-flex h-6 w-21 items-center justify-center rounded-xl bg-transparent text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                           >
-                            <span aria-hidden="true">SO</span>
+                            <span aria-hidden="true">Formulário</span>
                           </Link>
                           <WhatsAppIconButton
                             className="h-6 w-6 rounded-xl"
