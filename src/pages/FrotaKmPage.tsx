@@ -13,6 +13,7 @@ import { Label } from '../components/ui/label';
 import {
   atualizarRegistroKm,
   listarRegistrosKm,
+  listarTodosRegistrosKm,
   listarVeiculos,
   registrarKm,
   type RegistroKmInput,
@@ -45,6 +46,7 @@ export default function FrotaKmPage({
   const [colaboradores, setColaboradores] = useState<{ id: number; nome: string }[]>([]);
   const [veiculoId, setVeiculoId] = useState<number | ''>('');
   const [registros, setRegistros] = useState<RegistroKmItem[]>([]);
+  const [todosRegistros, setTodosRegistros] = useState<RegistroKmItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<RegistroKmInput>({ odometro: 0, observacao: '' });
@@ -77,10 +79,26 @@ export default function FrotaKmPage({
     }
   }, []);
 
+  const carregarTodosRegistros = useCallback(async () => {
+    try {
+      const lista = await listarTodosRegistrosKm();
+      setTodosRegistros(lista);
+    } catch {
+      // silencioso
+    }
+  }, []);
+
   useEffect(() => {
     carregarVeiculos();
     carregarColaboradores();
-  }, [carregarVeiculos, carregarColaboradores]);
+    carregarTodosRegistros();
+  }, [carregarVeiculos, carregarColaboradores, carregarTodosRegistros]);
+
+  useEffect(() => {
+    if (viewAtiva === 'analises') {
+      carregarTodosRegistros();
+    }
+  }, [viewAtiva, carregarTodosRegistros]);
 
   const carregarRegistros = useCallback(
     async (veiculo: number, mes: number, ano: number) => {
@@ -209,7 +227,7 @@ export default function FrotaKmPage({
 
       {viewAtiva === 'analises' && (
         <FrotaKmAnalyticsDashboard
-          registros={registros}
+          registros={todosRegistros.length > 0 ? todosRegistros : registros}
           veiculos={veiculos}
         />
       )}
@@ -235,7 +253,9 @@ export default function FrotaKmPage({
             </div>
             {veiculoSelecionado && (
               <div className="rounded-lg border bg-card px-4 py-2 text-sm">
-                <span className="text-muted-foreground">Odômetro atual: </span>
+                <span className="text-muted-foreground">
+                  {veiculoSelecionado.nome} — {veiculoSelecionado.placa} · Odômetro atual:{' '}
+                </span>
                 <span className="font-semibold">{formatarKm(veiculoSelecionado.odometroAtual)} km</span>
               </div>
             )}
@@ -244,7 +264,9 @@ export default function FrotaKmPage({
           {veiculoId !== '' && veiculoSelecionado && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Registrar KM — {veiculoSelecionado.nome} ({veiculoSelecionado.placa})</CardTitle>
+                <CardTitle className="text-base">
+                  Registrar KM — {veiculoSelecionado.nome} — {veiculoSelecionado.placa}
+                </CardTitle>
                 <CardDescription>Informe a leitura do odômetro ao final do dia.</CardDescription>
               </CardHeader>
               <CardContent>
@@ -316,7 +338,9 @@ export default function FrotaKmPage({
           ) : (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold">Registros de KM</h2>
+            <h2 className="text-lg font-semibold">
+              Registros de KM{veiculoSelecionado ? ` — ${veiculoSelecionado.nome} — ${veiculoSelecionado.placa}` : ''}
+            </h2>
             <Button
               type="button"
               variant="outline"

@@ -20,6 +20,18 @@ import { KpiCard } from './KpiCard';
 import { StorytellingPanel } from './StorytellingPanel';
 import { ChartStorytellingNote } from './ChartStorytellingNote';
 
+function parseData(val: string): Date {
+  if (typeof val === 'string' && val.length >= 10) {
+    const y = parseInt(val.slice(0, 4), 10);
+    const m = parseInt(val.slice(5, 7), 10) - 1;
+    const d = parseInt(val.slice(8, 10), 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(y, m, d, 12, 0, 0);
+    }
+  }
+  return new Date(val);
+}
+
 interface FrotaKmAnalyticsDashboardProps {
   registros: RegistroKmItem[];
   veiculos: VeiculoItem[];
@@ -37,15 +49,22 @@ export function FrotaKmAnalyticsDashboard({
   const registrosFiltrados = useMemo(() => {
     const agora = new Date();
     return registros.filter((r) => {
-      const dataItem = new Date(r.data);
+      const dataItem = parseData(r.data);
 
       if (filtros.periodo === '7d') {
         const limite = new Date(agora);
         limite.setDate(limite.getDate() - 7);
+        limite.setHours(0, 0, 0, 0);
         if (dataItem < limite) return false;
       } else if (filtros.periodo === '30d') {
         const limite = new Date(agora);
         limite.setDate(limite.getDate() - 30);
+        limite.setHours(0, 0, 0, 0);
+        if (dataItem < limite) return false;
+      } else if (filtros.periodo === '90d') {
+        const limite = new Date(agora);
+        limite.setDate(limite.getDate() - 90);
+        limite.setHours(0, 0, 0, 0);
         if (dataItem < limite) return false;
       } else if (filtros.periodo === 'mes') {
         if (
@@ -69,9 +88,18 @@ export function FrotaKmAnalyticsDashboard({
 
       if (filtros.categoria && String(r.veiculoId) !== filtros.categoria) return false;
 
+      if (filtros.busca) {
+        const termo = filtros.busca.trim().toLowerCase();
+        const v = r.veiculo || veiculos.find((x) => x.id === r.veiculoId);
+        const matchVeiculo = v ? `${v.nome} ${v.placa}`.toLowerCase().includes(termo) : false;
+        const matchCondutor = r.colaborador?.nome.toLowerCase().includes(termo) ?? false;
+        const matchObs = r.observacao?.toLowerCase().includes(termo) ?? false;
+        if (!matchVeiculo && !matchCondutor && !matchObs) return false;
+      }
+
       return true;
     });
-  }, [registros, filtros]);
+  }, [registros, filtros, veiculos]);
 
   // KPIs
   const totalApontamentos = registrosFiltrados.length;
@@ -81,18 +109,20 @@ export function FrotaKmAnalyticsDashboard({
   );
   const mediaKmPorDia = totalApontamentos > 0 ? kmRodadosTotal / totalApontamentos : 0;
 
-  // Gráfico 1: Evolução de Km Rodados por Dia
+  // Gráfico 1: Evolução de Km Rodados por Dia (ordenado cronologicamente)
   const dadosEvolucao = useMemo(() => {
-    const agrupado: Record<string, { data: string; km: number }> = {};
+    const agrupado: Record<string, { data: string; km: number; timestamp: number }> = {};
     registrosFiltrados.forEach((r) => {
-      const d = new Date(r.data);
+      const d = parseData(r.data);
       const chave = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       if (!agrupado[chave]) {
-        agrupado[chave] = { data: chave, km: 0 };
+        agrupado[chave] = { data: chave, km: 0, timestamp: d.getTime() };
       }
       agrupado[chave].km += Number(r.kmPercorrido || 0);
     });
-    return Object.values(agrupado);
+    return Object.values(agrupado)
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map(({ data, km }) => ({ data, km }));
   }, [registrosFiltrados]);
 
   // Gráfico 2: Km Rodados por Condutor (Barras)
@@ -107,10 +137,30 @@ export function FrotaKmAnalyticsDashboard({
       .sort((a, b) => b.km - a.km);
   }, [registrosFiltrados]);
 
+  // Gráfico 3: Km por Veículo (Nome + Placa)
+  const dadosPorVeiculo = useMemo(() => {
+    const agrupado: Record<string, { rotulo: string; nome: string; placa: string; km: number }> = {};
+    registrosFiltrados.forEach((r) => {
+      const v = r.veiculo || veiculos.find((x) => x.id === r.veiculoId);
+      const chave = String(r.veiculoId);
+      const nome = v?.nome || `Veículo #${r.veiculoId}`;
+      const placa = v?.placa || '';
+      const rotulo = placa ? `${nome} — ${placa}` : nome;
+      if (!agrupado[chave]) {
+        agrupado[chave] = { rotulo, nome, placa, km: 0 };
+      }
+      agrupado[chave].km += Number(r.kmPercorrido || 0);
+    });
+    return Object.values(agrupado).sort((a, b) => b.km - a.km);
+  }, [registrosFiltrados, veiculos]);
+
   // Storytelling Dinâmico
   const storytelling = useMemo(() => {
     const topCondutor = dadosPorCondutor[0];
+    const topVeiculo = dadosPorVeiculo[0];
+    const veiculoFiltroItem = filtros.categoria ? veiculos.find((v) => String(v.id) === filtros.categoria) : null;
     const percentTopCondutor = kmRodadosTotal > 0 && topCondutor ? ((topCondutor.km / kmRodadosTotal) * 100).toFixed(1) : '0';
+    const percentTopVeiculo = kmRodadosTotal > 0 && topVeiculo ? ((topVeiculo.km / kmRodadosTotal) * 100).toFixed(1) : '0';
 
     let statusGeral: 'otimo' | 'atencao' | 'critico' | 'estavel' = 'estavel';
     if (totalApontamentos === 0) statusGeral = 'atencao';
@@ -118,10 +168,15 @@ export function FrotaKmAnalyticsDashboard({
     else if (totalApontamentos > 0) statusGeral = 'otimo';
 
     const cenario = [
-      `Frota percorreu ${kmRodadosTotal.toLocaleString('pt-BR')} km distribuídos em ${totalApontamentos} registros no período selecionado.`,
+      veiculoFiltroItem
+        ? `Veículo '${veiculoFiltroItem.nome} — ${veiculoFiltroItem.placa}' percorreu ${kmRodadosTotal.toLocaleString('pt-BR')} km em ${totalApontamentos} registros no período selecionado.`
+        : `Frota percorreu ${kmRodadosTotal.toLocaleString('pt-BR')} km distribuídos em ${totalApontamentos} registros no período selecionado.`,
       `Média diária de ${mediaKmPorDia.toFixed(1)} km rodados por apontamento de viagem.`,
+      topVeiculo && !veiculoFiltroItem
+        ? `Veículo '${topVeiculo.rotulo}' lidera a rodagem acumulando ${percentTopVeiculo}% do percurso (${topVeiculo.km.toLocaleString('pt-BR')} km).`
+        : '',
       topCondutor ? `Condutor '${topCondutor.nome}' responde por ${percentTopCondutor}% do total quilometrado (${topCondutor.km.toLocaleString('pt-BR')} km).` : 'Quilometragem distribuída igualmente entre os motoristas.',
-    ];
+    ].filter(Boolean);
 
     const diagnostico = [
       totalApontamentos === 0
@@ -129,6 +184,9 @@ export function FrotaKmAnalyticsDashboard({
         : mediaKmPorDia > 200
         ? `Alta intensidade de rodagem diária: desgaste acelerado de pneus, freios e aproximação rápida da revisão periódica.`
         : `Rotina de deslocamento compatível com o raio operacional da empresa.`,
+      topVeiculo
+        ? `Desgaste operacional concentrado no veículo '${topVeiculo.rotulo}', demandando monitoramento do odômetro.`
+        : `Rotas equilibradas entre a frota.`,
       topCondutor
         ? `Frente de trabalho de '${topCondutor.nome}' opera em rota de maior distância ou com múltiplos deslocamentos diários entre canteiros.`
         : `Rotas equilibradas entre as equipes de serviço.`,
@@ -138,41 +196,54 @@ export function FrotaKmAnalyticsDashboard({
       totalApontamentos === 0
         ? `Reforçar obrigatoriedade do apontamento diário de KM para manter o controle de revisões preventivas em dia.`
         : `Acompanhar odômetro total dos veículos para agendamento de troca de óleo a cada 10.000 km.`,
+      topVeiculo
+        ? `Revisar alinhamento, balanceamento e pneus do veículo '${topVeiculo.rotulo}'.`
+        : `Revisar alinhamento e balanceamento dos veículos com maior média de km rodados por dia.`,
       `Otimizar itinerários agrupando atendimentos por região geográfica para reduzir a quilometragem ociosa.`,
-      `Revisar alinhamento e balanceamento dos veículos com maior média de km rodados por dia.`,
     ];
 
     const resumoExecutivo = totalApontamentos > 0
-      ? `Total de ${kmRodadosTotal.toLocaleString('pt-BR')} km percorridos com média de ${mediaKmPorDia.toFixed(1)} km/dia. Deslocamento monitorado e sob controle.`
+      ? veiculoFiltroItem
+        ? `Veículo ${veiculoFiltroItem.nome} — ${veiculoFiltroItem.placa}: total de ${kmRodadosTotal.toLocaleString('pt-BR')} km percorridos com média de ${mediaKmPorDia.toFixed(1)} km/dia. Deslocamento monitorado e sob controle.`
+        : `Total de ${kmRodadosTotal.toLocaleString('pt-BR')} km percorridos com média de ${mediaKmPorDia.toFixed(1)} km/dia. Deslocamento monitorado e sob controle.`
       : `Nenhum apontamento de KM encontrado para o período ou filtro selecionado.`;
 
     return { statusGeral, resumoExecutivo, cenario, diagnostico, recomendacoes };
-  }, [kmRodadosTotal, totalApontamentos, mediaKmPorDia, dadosPorCondutor]);
+  }, [kmRodadosTotal, totalApontamentos, mediaKmPorDia, dadosPorCondutor, dadosPorVeiculo, filtros.categoria, veiculos]);
 
   // Exportações
   const handleExportarCsv = () => {
-    const colunas = ['ID', 'Data', 'Veículo ID', 'Condutor', 'Odômetro (km)', 'Km Rodados', 'Obs'];
-    const linhas = registrosFiltrados.map((r) => [
-      r.id,
-      new Date(r.data).toLocaleDateString('pt-BR'),
-      r.veiculoId,
-      r.colaborador?.nome ?? '—',
-      r.odometro,
-      r.kmPercorrido ?? 0,
-      r.observacao ?? '',
-    ]);
+    const colunas = ['ID', 'Data', 'Veículo', 'Condutor', 'Odômetro (km)', 'Km Rodados', 'Obs'];
+    const linhas = registrosFiltrados.map((r) => {
+      const v = r.veiculo || veiculos.find((x) => x.id === r.veiculoId);
+      const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${r.veiculoId}`;
+      return [
+        r.id,
+        parseData(r.data).toLocaleDateString('pt-BR'),
+        veicLabel,
+        r.colaborador?.nome ?? '—',
+        r.odometro,
+        r.kmPercorrido ?? 0,
+        r.observacao ?? '',
+      ];
+    });
     exportarCsv('relatorio_km_diario_frota', colunas, linhas);
   };
 
   const handleExportarPdf = () => {
-    const colunas = ['Data', 'Condutor', 'Odômetro', 'Km Rodados', 'Obs'];
-    const linhas = registrosFiltrados.map((r) => [
-      new Date(r.data).toLocaleDateString('pt-BR'),
-      r.colaborador?.nome ?? '—',
-      `${r.odometro} km`,
-      `${r.kmPercorrido ?? 0} km`,
-      r.observacao ?? '',
-    ]);
+    const colunas = ['Data', 'Veículo', 'Condutor', 'Odômetro', 'Km Rodados', 'Obs'];
+    const linhas = registrosFiltrados.map((r) => {
+      const v = r.veiculo || veiculos.find((x) => x.id === r.veiculoId);
+      const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${r.veiculoId}`;
+      return [
+        parseData(r.data).toLocaleDateString('pt-BR'),
+        veicLabel,
+        r.colaborador?.nome ?? '—',
+        `${r.odometro} km`,
+        `${r.kmPercorrido ?? 0} km`,
+        r.observacao ?? '',
+      ];
+    });
     const kpis = [
       { rotulo: 'Km Total Rodado', valor: `${kmRodadosTotal.toLocaleString('pt-BR')} km` },
       { rotulo: 'Apontamentos', valor: totalApontamentos },
@@ -212,7 +283,7 @@ export function FrotaKmAnalyticsDashboard({
         labelCategoria="Veículo"
         opcoesCategoria={veiculos.map((v) => ({
           valor: String(v.id),
-          rotulo: `${v.placa} (${v.modelo})`,
+          rotulo: `${v.nome} — ${v.placa}`,
         }))}
         onExportarCsv={handleExportarCsv}
         onExportarPdf={handleExportarPdf}
@@ -341,6 +412,44 @@ export function FrotaKmAnalyticsDashboard({
             impacto="Motoristas com alta quilometragem concentrada demandam atenção à fadiga e cumprimento de intervalos de descanso."
             acaoRecomendada="Revezar motoristas em rotas de longa distância e promover check-up periódico de ergonomia e segurança veicular."
             destaque={dadosPorCondutor.length > 0 ? 'info' : 'neutro'}
+          />
+        </div>
+
+        {/* Gráfico 3: Km por Veículo */}
+        <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4 lg:col-span-2">
+          <div>
+            <h3 className="font-semibold text-base text-foreground">Quilometragem por Veículo (km)</h3>
+            <p className="text-xs text-muted-foreground">Distribuição da rodagem entre os veículos da frota</p>
+          </div>
+          <div className="h-72 w-full">
+            {dadosPorVeiculo.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                Nenhum dado registrado.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosPorVeiculo} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="rotulo" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    formatter={(val) => [`${val} km`, 'Deslocamento']}
+                    contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
+                  />
+                  <Bar dataKey="km" name="Km Rodado" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+          <ChartStorytellingNote
+            oQueAconteceu={
+              dadosPorVeiculo[0]
+                ? `O veículo '${dadosPorVeiculo[0].rotulo}' acumulou o maior trajeto (${dadosPorVeiculo[0].km.toLocaleString('pt-BR')} km).`
+                : 'Sem registros veiculares.'
+            }
+            impacto="Veículos com maior quilometragem aproximam-se mais rapidamente dos prazos de revisão e substituição de consumíveis."
+            acaoRecomendada="Verificar alinhamento, balanceamento e cronograma de revisões periódicas do ativo mais exigido."
+            destaque={dadosPorVeiculo.length > 0 ? 'info' : 'neutro'}
           />
         </div>
       </div>

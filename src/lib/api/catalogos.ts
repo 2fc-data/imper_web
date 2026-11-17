@@ -156,7 +156,6 @@ export const RECURSO_LABEL: Record<RecursoCatalogo, string> = {
 export const RECURSO_TIPO_FIXO: Partial<Record<RecursoCatalogo, TipoInsumo>> = {
   'status-equipamento': 'EQUIPAMENTO',
   'estados-conservacao': 'EQUIPAMENTO',
-  'tipos-manutencao': 'EQUIPAMENTO',
   tamanhos: 'EPI',
   'tipos-despesas': 'DESPESAS_EXTRAS',
 };
@@ -164,7 +163,7 @@ export const RECURSO_TIPO_FIXO: Partial<Record<RecursoCatalogo, TipoInsumo>> = {
 export const RECURSO_TIPOS_PERMITIDOS: Record<RecursoCatalogo, TipoInsumo[]> = {
   categorias: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
   subcategorias: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
-  marcas: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
+  marcas: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS', 'VEICULO'],
   fornecedores: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
   localizacoes: ['EQUIPAMENTO', 'EPI'],
   'unidades-medida': ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
@@ -172,6 +171,6 @@ export const RECURSO_TIPOS_PERMITIDOS: Record<RecursoCatalogo, TipoInsumo[]> = {
   tamanhos: ['EPI'],
   'status-equipamento': ['EQUIPAMENTO'],
   'estados-conservacao': ['EQUIPAMENTO'],
-  'tipos-manutencao': ['EQUIPAMENTO'],
+  'tipos-manutencao': ['EQUIPAMENTO', 'VEICULO'],
   'tipos-despesas': ['DESPESAS_EXTRAS'],
 };

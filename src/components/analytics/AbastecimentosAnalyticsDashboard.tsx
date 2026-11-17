@@ -26,6 +26,18 @@ import { ChartStorytellingNote } from './ChartStorytellingNote';
 
 const CORES_PALETA = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
+function parseData(val: string): Date {
+  if (typeof val === 'string' && val.length >= 10) {
+    const y = parseInt(val.slice(0, 4), 10);
+    const m = parseInt(val.slice(5, 7), 10) - 1;
+    const d = parseInt(val.slice(8, 10), 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(y, m, d, 12, 0, 0);
+    }
+  }
+  return new Date(val);
+}
+
 interface AbastecimentosAnalyticsDashboardProps {
   abastecimentos: AbastecimentoItem[];
   veiculos: VeiculoItem[];
@@ -43,15 +55,22 @@ export function AbastecimentosAnalyticsDashboard({
   const abastecimentosFiltrados = useMemo(() => {
     const agora = new Date();
     return abastecimentos.filter((a) => {
-      const dataItem = new Date(a.data);
+      const dataItem = parseData(a.data);
 
       if (filtros.periodo === '7d') {
         const limite = new Date(agora);
         limite.setDate(limite.getDate() - 7);
+        limite.setHours(0, 0, 0, 0);
         if (dataItem < limite) return false;
       } else if (filtros.periodo === '30d') {
         const limite = new Date(agora);
         limite.setDate(limite.getDate() - 30);
+        limite.setHours(0, 0, 0, 0);
+        if (dataItem < limite) return false;
+      } else if (filtros.periodo === '90d') {
+        const limite = new Date(agora);
+        limite.setDate(limite.getDate() - 90);
+        limite.setHours(0, 0, 0, 0);
         if (dataItem < limite) return false;
       } else if (filtros.periodo === 'mes') {
         if (
@@ -75,9 +94,18 @@ export function AbastecimentosAnalyticsDashboard({
 
       if (filtros.categoria && String(a.veiculoId) !== filtros.categoria) return false;
 
+      if (filtros.busca) {
+        const termo = filtros.busca.trim().toLowerCase();
+        const v = a.veiculo || veiculos.find((x) => x.id === a.veiculoId);
+        const matchVeiculo = v ? `${v.nome} ${v.placa}`.toLowerCase().includes(termo) : false;
+        const matchMotorista = a.motorista?.nome.toLowerCase().includes(termo) ?? false;
+        const matchFornecedor = a.fornecedor?.nome.toLowerCase().includes(termo) ?? false;
+        if (!matchVeiculo && !matchMotorista && !matchFornecedor) return false;
+      }
+
       return true;
     });
-  }, [abastecimentos, filtros]);
+  }, [abastecimentos, filtros, veiculos]);
 
   // KPIs
   const totalAbastecimentos = abastecimentosFiltrados.length;
@@ -93,34 +121,38 @@ export function AbastecimentosAnalyticsDashboard({
   const ticketMedioAbastecimento =
     totalAbastecimentos > 0 ? valorTotalGasto / totalAbastecimentos : 0;
 
-  // Gráfico 1: Evolução de Gastos Diários (R$)
+  // Gráfico 1: Evolução de Gastos Diários (R$) - ordenado cronologicamente
   const dadosEvolucao = useMemo(() => {
-    const agrupado: Record<string, { data: string; valor: number; litros: number }> = {};
+    const agrupado: Record<string, { data: string; valor: number; litros: number; timestamp: number }> = {};
     abastecimentosFiltrados.forEach((a) => {
-      const d = new Date(a.data);
+      const d = parseData(a.data);
       const chave = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       if (!agrupado[chave]) {
-        agrupado[chave] = { data: chave, valor: 0, litros: 0 };
+        agrupado[chave] = { data: chave, valor: 0, litros: 0, timestamp: d.getTime() };
       }
       agrupado[chave].valor += Number(a.valorTotal || 0);
       agrupado[chave].litros += Number(a.litros || 0);
     });
-    return Object.values(agrupado);
+    return Object.values(agrupado)
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map(({ data, valor, litros }) => ({ data, valor, litros }));
   }, [abastecimentosFiltrados]);
 
   // Gráfico 2: Gasto por Veículo (Barras)
   const dadosPorVeiculo = useMemo(() => {
-    const agrupado: Record<string, number> = {};
+    const agrupado: Record<string, { rotulo: string; nome: string; placa: string; valor: number }> = {};
     abastecimentosFiltrados.forEach((a) => {
-      const nomeVeiculo =
-        a.veiculo?.placa ||
-        veiculos.find((v) => v.id === a.veiculoId)?.placa ||
-        `Veículo #${a.veiculoId}`;
-      agrupado[nomeVeiculo] = (agrupado[nomeVeiculo] || 0) + Number(a.valorTotal || 0);
+      const v = a.veiculo || veiculos.find((x) => x.id === a.veiculoId);
+      const chave = String(a.veiculoId);
+      const nome = v?.nome || `Veículo #${a.veiculoId}`;
+      const placa = v?.placa || '';
+      const rotulo = placa ? `${nome} — ${placa}` : nome;
+      if (!agrupado[chave]) {
+        agrupado[chave] = { rotulo, nome, placa, valor: 0 };
+      }
+      agrupado[chave].valor += Number(a.valorTotal || 0);
     });
-    return Object.entries(agrupado)
-      .map(([placa, valor]) => ({ placa, valor }))
-      .sort((a, b) => b.valor - a.valor);
+    return Object.values(agrupado).sort((a, b) => b.valor - a.valor);
   }, [abastecimentosFiltrados, veiculos]);
 
   // Gráfico 3: Consumo em Litros por Motorista (Pizza)
@@ -148,12 +180,12 @@ export function AbastecimentosAnalyticsDashboard({
     const cenario = [
       `Custo total com combustíveis de R$ ${valorTotalGasto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} para ${totalLitros.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} litros em ${totalAbastecimentos} abastecimentos.`,
       `Preço médio apurado na bomba em R$ ${precoMedioLitro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/litro com ticket médio de R$ ${ticketMedioAbastecimento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
-      topVeic ? `Veículo '${topVeic.placa}' lidera o consumo acumulando ${percentTopVeic}% dos gastos de combustível.` : 'Gastos diluídos na frota.',
+      topVeic ? `Veículo '${topVeic.rotulo}' lidera o consumo acumulando ${percentTopVeic}% dos gastos de combustível.` : 'Gastos diluídos na frota.',
     ];
 
     const diagnostico = [
       topVeic
-        ? `Consumo concentrado na placa '${topVeic.placa}' (R$ ${topVeic.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}). Requer verificação da média de km/L para identificar possíveis desregulagens mecânicas.`
+        ? `Consumo concentrado no veículo '${topVeic.rotulo}' (R$ ${topVeic.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}). Requer verificação da média de km/L para identificar possíveis desregulagens mecânicas.`
         : `Consumo proporcional à quilometragem rodada por cada unidade.`,
       topMot
         ? `Condutor '${topMot.name}' gerencia o maior volume físico (${topMot.value.toFixed(1)} L), condizente com a rotina de deslocamento da frente operacional.`
@@ -165,12 +197,12 @@ export function AbastecimentosAnalyticsDashboard({
 
     const recomendacoes = [
       `Firmar convênio com rede de postos com desconto garantido por litro ou cartão combustível corporativo para eliminar notas avulsas.`,
-      topVeic ? `Avaliar manutenção do sistema de injeção e pneus do veículo '${topVeic.placa}' para otimizar a eficiência energética.` : `Monitorar médias semanais de consumo km/litro por categoria de veículo.`,
+      topVeic ? `Avaliar manutenção do sistema de injeção e pneus do veículo '${topVeic.rotulo}' para otimizar a eficiência energética.` : `Monitorar médias semanais de consumo km/litro por categoria de veículo.`,
       `Exigir o registro rigoroso do odômetro a cada abastecimento para cruzamento de dados com o odômetro diário.`,
     ];
 
     const resumoExecutivo = totalAbastecimentos > 0
-      ? `Desembolso de R$ ${valorTotalGasto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em combustível com preço médio de R$ ${precoMedioLitro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/L. Acompanhar eficiência por placa.`
+      ? `Desembolso de R$ ${valorTotalGasto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em combustível com preço médio de R$ ${precoMedioLitro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/L. Acompanhar eficiência por veículo.`
       : `Nenhum abastecimento registrado no intervalo de datas selecionado.`;
 
     return { statusGeral, resumoExecutivo, cenario, diagnostico, recomendacoes };
@@ -178,29 +210,37 @@ export function AbastecimentosAnalyticsDashboard({
 
   // Exportações
   const handleExportarCsv = () => {
-    const colunas = ['ID', 'Veículo Placa', 'Motorista', 'Litros', 'Valor Total (R$)', 'Odômetro (km)', 'Data'];
-    const linhas = abastecimentosFiltrados.map((a) => [
-      a.id,
-      a.veiculo?.placa || veiculos.find((v) => v.id === a.veiculoId)?.placa || `#${a.veiculoId}`,
-      a.motorista?.nome ?? 'Não informado',
-      Number(a.litros || 0).toFixed(2),
-      Number(a.valorTotal || 0).toFixed(2),
-      a.odometro ?? '—',
-      new Date(a.data).toLocaleDateString('pt-BR'),
-    ]);
+    const colunas = ['ID', 'Veículo', 'Motorista', 'Litros', 'Valor Total (R$)', 'Odômetro (km)', 'Data'];
+    const linhas = abastecimentosFiltrados.map((a) => {
+      const v = a.veiculo || veiculos.find((x) => x.id === a.veiculoId);
+      const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${a.veiculoId}`;
+      return [
+        a.id,
+        veicLabel,
+        a.motorista?.nome ?? 'Não informado',
+        Number(a.litros || 0).toFixed(2),
+        Number(a.valorTotal || 0).toFixed(2),
+        a.odometro ?? '—',
+        parseData(a.data).toLocaleDateString('pt-BR'),
+      ];
+    });
     exportarCsv('relatorio_abastecimentos_frota', colunas, linhas);
   };
 
   const handleExportarPdf = () => {
     const colunas = ['ID', 'Veículo', 'Motorista', 'Litros', 'Valor (R$)', 'Data'];
-    const linhas = abastecimentosFiltrados.map((a) => [
-      a.id,
-      a.veiculo?.placa || veiculos.find((v) => v.id === a.veiculoId)?.placa || `#${a.veiculoId}`,
-      a.motorista?.nome ?? 'Não informado',
-      `${Number(a.litros || 0).toFixed(1)} L`,
-      `R$ ${Number(a.valorTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      new Date(a.data).toLocaleDateString('pt-BR'),
-    ]);
+    const linhas = abastecimentosFiltrados.map((a) => {
+      const v = a.veiculo || veiculos.find((x) => x.id === a.veiculoId);
+      const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${a.veiculoId}`;
+      return [
+        a.id,
+        veicLabel,
+        a.motorista?.nome ?? 'Não informado',
+        `${Number(a.litros || 0).toFixed(1)} L`,
+        `R$ ${Number(a.valorTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        parseData(a.data).toLocaleDateString('pt-BR'),
+      ];
+    });
     const kpis = [
       {
         rotulo: 'Total Gasto',
@@ -247,7 +287,7 @@ export function AbastecimentosAnalyticsDashboard({
         labelCategoria="Veículo"
         opcoesCategoria={veiculos.map((v) => ({
           valor: String(v.id),
-          rotulo: `${v.placa} (${v.modelo})`,
+          rotulo: `${v.nome} — ${v.placa}`,
         }))}
         onExportarCsv={handleExportarCsv}
         onExportarPdf={handleExportarPdf}
@@ -373,7 +413,7 @@ export function AbastecimentosAnalyticsDashboard({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dadosPorVeiculo} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="placa" tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="rotulo" tick={{ fontSize: 11 }} />
                   <YAxis
                     tick={{ fontSize: 11 }}
                     tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
@@ -393,7 +433,7 @@ export function AbastecimentosAnalyticsDashboard({
           <ChartStorytellingNote
             oQueAconteceu={
               dadosPorVeiculo[0]
-                ? `O veículo '${dadosPorVeiculo[0].placa}' registrou o maior dispêndio financeiro (R$ ${dadosPorVeiculo[0].valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`
+                ? `O veículo '${dadosPorVeiculo[0].rotulo}' registrou o maior dispêndio financeiro (R$ ${dadosPorVeiculo[0].valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`
                 : 'Consumo homogêneo na frota.'
             }
             impacto="Veículos com custo fora do padrão podem apresentar vazamentos, hábitos de condução agressivos ou pneus descalibrados."

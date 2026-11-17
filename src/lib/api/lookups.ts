@@ -72,6 +72,7 @@ export interface EquipamentoLookups {
   statuses: LookupItem[];
   estadosConservacao: LookupItem[];
   tiposManutencao: LookupItem[];
+  responsaveis: { id: number; nome: string }[];
   unidadesMedida: UnidadeMedida[];
 }
 

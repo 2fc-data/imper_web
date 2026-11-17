@@ -108,3 +108,13 @@ export async function atualizarEquipamento(
 export async function excluirEquipamento(id: number): Promise<EquipamentoItem> {
   return api.del<EquipamentoItem>(`/equipamentos/${id}`);
 }
+
+export interface PatrimoniosDisponiveis {
+  disponiveis: number[];
+  proximo: number;
+  existentes: number[];
+}
+
+export async function obterPatrimoniosDisponiveis(): Promise<PatrimoniosDisponiveis> {
+  return api.get<PatrimoniosDisponiveis>('/equipamentos/patrimonios-disponiveis');
+}

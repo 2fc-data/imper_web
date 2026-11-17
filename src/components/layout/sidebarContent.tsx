@@ -812,3 +812,33 @@ export function RetiradaDeItensSidebar({
     </>
   );
 }
+
+export function CatalogosSidebar({
+  viewAtiva = 'lista',
+  onNavegar,
+}: {
+  viewAtiva?: 'lista' | 'novo';
+  onNavegar?: (view: 'lista' | 'novo') => void;
+} = {}) {
+  return (
+    <>
+      <SidebarButton
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar?.('lista')}
+        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+      >
+        Listagem
+      </SidebarButton>
+      <SidebarButton
+        active={viewAtiva === 'novo'}
+        onClick={() => onNavegar?.('novo')}
+        icon={icone('M12 4v16m8-8H4')}
+      >
+        Novo Cadastro
+      </SidebarButton>
+      <SidebarNote>
+        Gestão de catálogos para materiais, equipamentos e EPIs.
+      </SidebarNote>
+    </>
+  );
+}

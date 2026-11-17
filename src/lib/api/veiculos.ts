@@ -57,7 +57,7 @@ export interface RegistroKmItem {
   registradoPor?: { id: number; nome: string } | null;
   colaboradorId: number | null;
   colaborador?: { id: number; nome: string } | null;
-  veiculo?: { id: number; codigo: string; placa: string };
+  veiculo?: { id: number; codigo: string; nome: string; placa: string };
 }
 
 export interface RegistroKmInput {
@@ -215,6 +215,19 @@ export async function excluirVeiculo(id: number): Promise<VeiculoItem> {
 }
 
 // ---- Registros KM ----
+export async function listarTodosRegistrosKm(params?: {
+  veiculoId?: number;
+  mes?: number;
+  ano?: number;
+}): Promise<RegistroKmItem[]> {
+  const sp = new URLSearchParams();
+  if (params?.veiculoId) sp.set('veiculoId', String(params.veiculoId));
+  if (params?.mes) sp.set('mes', String(params.mes));
+  if (params?.ano) sp.set('ano', String(params.ano));
+  const qs = sp.toString();
+  return api.get<RegistroKmItem[]>(`/registros-km${qs ? `?${qs}` : ''}`);
+}
+
 export async function listarRegistrosKm(
   veiculoId: number,
   params?: { mes?: number; ano?: number },

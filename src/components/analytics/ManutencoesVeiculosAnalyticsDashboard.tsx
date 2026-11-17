@@ -41,6 +41,18 @@ const CORES_STATUS: Record<string, string> = {
 
 const CORES_PALETA = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
+function parseData(val: string): Date {
+  if (typeof val === 'string' && val.length >= 10) {
+    const y = parseInt(val.slice(0, 4), 10);
+    const m = parseInt(val.slice(5, 7), 10) - 1;
+    const d = parseInt(val.slice(8, 10), 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(y, m, d, 12, 0, 0);
+    }
+  }
+  return new Date(val);
+}
+
 interface ManutencoesVeiculosAnalyticsDashboardProps {
   manutencoes: ManutencaoVeiculoItem[];
   lookups: ManutencoesVeiculosLookups | null;
@@ -58,15 +70,22 @@ export function ManutencoesVeiculosAnalyticsDashboard({
   const manutencoesFiltradas = useMemo(() => {
     const agora = new Date();
     return manutencoes.filter((m) => {
-      const dataItem = new Date(m.data);
+      const dataItem = parseData(m.data);
 
       if (filtros.periodo === '7d') {
         const limite = new Date(agora);
         limite.setDate(limite.getDate() - 7);
+        limite.setHours(0, 0, 0, 0);
         if (dataItem < limite) return false;
       } else if (filtros.periodo === '30d') {
         const limite = new Date(agora);
         limite.setDate(limite.getDate() - 30);
+        limite.setHours(0, 0, 0, 0);
+        if (dataItem < limite) return false;
+      } else if (filtros.periodo === '90d') {
+        const limite = new Date(agora);
+        limite.setDate(limite.getDate() - 90);
+        limite.setHours(0, 0, 0, 0);
         if (dataItem < limite) return false;
       } else if (filtros.periodo === 'mes') {
         if (
@@ -91,9 +110,20 @@ export function ManutencoesVeiculosAnalyticsDashboard({
       if (filtros.status && m.status !== filtros.status) return false;
       if (filtros.categoria && String(m.veiculoId) !== filtros.categoria) return false;
 
+      if (filtros.busca) {
+        const termo = filtros.busca.trim().toLowerCase();
+        const v = m.veiculo || lookups?.veiculos?.find((x) => x.id === m.veiculoId);
+        const matchVeiculo = v ? `${v.nome} ${v.placa}`.toLowerCase().includes(termo) : false;
+        const matchDesc = m.descricao?.toLowerCase().includes(termo) ?? false;
+        const matchLocal = m.local?.toLowerCase().includes(termo) ?? false;
+        const matchTipo = m.tipo?.nome.toLowerCase().includes(termo) ?? false;
+        const matchResp = m.responsavelManutencao?.nome.toLowerCase().includes(termo) ?? false;
+        if (!matchVeiculo && !matchDesc && !matchLocal && !matchTipo && !matchResp) return false;
+      }
+
       return true;
     });
-  }, [manutencoes, filtros]);
+  }, [manutencoes, filtros, lookups]);
 
   // KPIs
   const total = manutencoesFiltradas.length;
@@ -120,18 +150,22 @@ export function ManutencoesVeiculosAnalyticsDashboard({
 
   // Gráfico 1: Custos por Veículo (Barras)
   const dadosCustosPorVeiculo = useMemo(() => {
-    const agrupado: Record<string, number> = {};
+    const agrupado: Record<string, { rotulo: string; nome: string; placa: string; custo: number }> = {};
     manutencoesFiltradas.forEach((m) => {
-      const nome = m.veiculo?.placa || `Veículo #${m.veiculoId}`;
-      agrupado[nome] =
-        (agrupado[nome] || 0) +
+      const v = m.veiculo || lookups?.veiculos?.find((x) => x.id === m.veiculoId);
+      const chave = String(m.veiculoId);
+      const nome = v?.nome || `Veículo #${m.veiculoId}`;
+      const placa = v?.placa || '';
+      const rotulo = placa ? `${nome} — ${placa}` : nome;
+      if (!agrupado[chave]) {
+        agrupado[chave] = { rotulo, nome, placa, custo: 0 };
+      }
+      agrupado[chave].custo +=
         Number(m.custoPecas || 0) +
         Number(m.custoMaoDeObra || 0);
     });
-    return Object.entries(agrupado)
-      .map(([placa, custo]) => ({ placa, custo }))
-      .sort((a, b) => b.custo - a.custo);
-  }, [manutencoesFiltradas]);
+    return Object.values(agrupado).sort((a, b) => b.custo - a.custo);
+  }, [manutencoesFiltradas, lookups]);
 
   // Gráfico 2: Divisão entre Peças vs Mão de Obra (Donut)
   const dadosPecasVsMaoDeObra = useMemo(() => {
@@ -169,7 +203,7 @@ export function ManutencoesVeiculosAnalyticsDashboard({
     const cenario = [
       `Registradas ${total} ordens de serviço totalizando R$ ${custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em manutenção de frota.`,
       `Divisão orçamentária: ${percentPecas}% alocados em reposição de peças e ${percentMaoDeObra}% em serviços mecânicos especializados.`,
-      topVeiculo ? `Veículo '${topVeiculo.placa}' concentrou o maior volume de despesas com R$ ${topVeiculo.custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.` : 'Custos distribuídos uniformemente entre os veículos da frota.',
+      topVeiculo ? `Veículo '${topVeiculo.rotulo}' concentrou o maior volume de despesas com R$ ${topVeiculo.custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.` : 'Custos distribuídos uniformemente entre os veículos da frota.',
     ];
 
     const diagnostico = [
@@ -185,7 +219,7 @@ export function ManutencoesVeiculosAnalyticsDashboard({
       emAndamentoPendente > 0
         ? `Cobrar previsão de entrega das oficinas para os veículos pendentes e providenciar remanejamento temporário de equipes.`
         : `Manter o calendário de revisões preventivas (óleo, suspensão e freios) em dia para mitigar quebras inesperadas.`,
-      `Auditar notas fiscais de peças do veículo '${topVeiculo?.placa || 'líder em custos'}' para avaliar viabilidade econômica de renovação do ativo.`,
+      `Auditar notas fiscais de peças do veículo '${topVeiculo?.rotulo || 'líder em custos'}' para avaliar viabilidade econômica de renovação do ativo.`,
     ];
 
     const resumoExecutivo = total === 0
@@ -198,29 +232,37 @@ export function ManutencoesVeiculosAnalyticsDashboard({
   // Exportações
   const handleExportarCsv = () => {
     const colunas = ['ID', 'Veículo', 'Tipo', 'Data', 'Status', 'Peças (R$)', 'Mão de Obra (R$)', 'Total (R$)'];
-    const linhas = manutencoesFiltradas.map((m) => [
-      m.id,
-      m.veiculo?.placa ?? `#${m.veiculoId}`,
-      m.tipo?.nome ?? '—',
-      new Date(m.data).toLocaleDateString('pt-BR'),
-      STATUS_LABEL[m.status] ?? m.status,
-      Number(m.custoPecas || 0).toFixed(2),
-      Number(m.custoMaoDeObra || 0).toFixed(2),
-      (Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0)).toFixed(2),
-    ]);
+    const linhas = manutencoesFiltradas.map((m) => {
+      const v = m.veiculo || lookups?.veiculos?.find((x) => x.id === m.veiculoId);
+      const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${m.veiculoId}`;
+      return [
+        m.id,
+        veicLabel,
+        m.tipo?.nome ?? '—',
+        parseData(m.data).toLocaleDateString('pt-BR'),
+        STATUS_LABEL[m.status] ?? m.status,
+        Number(m.custoPecas || 0).toFixed(2),
+        Number(m.custoMaoDeObra || 0).toFixed(2),
+        (Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0)).toFixed(2),
+      ];
+    });
     exportarCsv('relatorio_manutencoes_frota', colunas, linhas);
   };
 
   const handleExportarPdf = () => {
     const colunas = ['ID', 'Veículo', 'Tipo', 'Data', 'Status', 'Total'];
-    const linhas = manutencoesFiltradas.map((m) => [
-      m.id,
-      m.veiculo?.placa ?? `#${m.veiculoId}`,
-      m.tipo?.nome ?? '—',
-      new Date(m.data).toLocaleDateString('pt-BR'),
-      STATUS_LABEL[m.status] ?? m.status,
-      `R$ ${(Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-    ]);
+    const linhas = manutencoesFiltradas.map((m) => {
+      const v = m.veiculo || lookups?.veiculos?.find((x) => x.id === m.veiculoId);
+      const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${m.veiculoId}`;
+      return [
+        m.id,
+        veicLabel,
+        m.tipo?.nome ?? '—',
+        parseData(m.data).toLocaleDateString('pt-BR'),
+        STATUS_LABEL[m.status] ?? m.status,
+        `R$ ${(Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      ];
+    });
     const kpis = [
       {
         rotulo: 'Custo Total',
@@ -268,7 +310,7 @@ export function ManutencoesVeiculosAnalyticsDashboard({
         labelCategoria="Veículo"
         opcoesCategoria={lookups?.veiculos?.map((v) => ({
           valor: String(v.id),
-          rotulo: `${v.placa} (${v.nome})`,
+          rotulo: `${v.nome} — ${v.placa}`,
         }))}
         opcoesStatus={Object.entries(STATUS_LABEL).map(([valor, rotulo]) => ({
           valor,
@@ -352,7 +394,7 @@ export function ManutencoesVeiculosAnalyticsDashboard({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dadosCustosPorVeiculo} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="placa" tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="rotulo" tick={{ fontSize: 11 }} />
                   <YAxis
                     tick={{ fontSize: 11 }}
                     tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
@@ -372,7 +414,7 @@ export function ManutencoesVeiculosAnalyticsDashboard({
           <ChartStorytellingNote
             oQueAconteceu={
               dadosCustosPorVeiculo[0]
-                ? `Veículo '${dadosCustosPorVeiculo[0].placa}' lidera o ranking de custos somando R$ ${dadosCustosPorVeiculo[0].custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`
+                ? `Veículo '${dadosCustosPorVeiculo[0].rotulo}' lidera o ranking de custos somando R$ ${dadosCustosPorVeiculo[0].custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`
                 : 'Nenhum custo veicular registrado.'
             }
             impacto="Concentração excessiva de custos em uma única placa pode sinalizar sinistro grave ou fim de vida útil do ativo."

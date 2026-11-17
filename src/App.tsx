@@ -9,6 +9,7 @@ import {
   AgendamentosSidebar,
   AtendimentosSidebar,
   CalendarioSidebar,
+  CatalogosSidebar,
   DashboardSidebar,
   EpisSidebar,
   EquipamentosSidebar,
@@ -517,16 +518,20 @@ function DespesasExtrasRoute() {
 }
 
 function CatalogosRoute() {
+  const [viewAtiva, setViewAtiva] = useState<'lista' | 'novo'>('lista');
   return (
     <ProtectedLayout
       requiredPermissions={[
+        'gerenciar_catalogo',
         'gerenciar_estoque',
         'gerenciar_equipamentos',
         'gerenciar_epis',
       ]}
-      sidebar={<DashboardSidebar />}
+      sidebar={
+        <CatalogosSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+      }
     >
-      <CatalogosPage />
+      <CatalogosPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
     </ProtectedLayout>
   );
 }
@@ -583,7 +588,11 @@ function RetiradaDeItensRoute() {
 
   return (
     <ProtectedLayout
-      requiredPermissions={['gerenciar_estoque', 'gerenciar_equipamentos']}
+      requiredPermissions={[
+        'gerenciar_estoque',
+        'gerenciar_equipamentos',
+        'separar_item',
+      ]}
       sidebar={
         <RetiradaDeItensSidebar
           viewAtiva={viewAtiva}
@@ -741,6 +750,7 @@ export default function App() {
           <Route element={<ObrasRoute />} path="/obras" />
           <Route element={<ObraDetalheRoute />} path="/obras/:id" />
           <Route element={<CatalogosRoute />} path="/catalogos" />
+          <Route element={<CatalogosRoute />} path="/catalogos/:recurso" />
           <Route element={<EquipamentosRoute />} path="/equipamentos" />
           <Route element={<ManutencoesRoute />} path="/manutencoes" />
           <Route element={<VeiculosRoute />} path="/veiculos" />

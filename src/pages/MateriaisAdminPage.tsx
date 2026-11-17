@@ -17,12 +17,15 @@ import {
   excluirMaterial,
   listarLookupsMateriais,
   listarMateriais,
+  type FornecedorItem,
   type MaterialInput,
   type MaterialItem,
   type MaterialLookups,
   type StatusMaterial,
   type UnidadeMedida,
 } from '../lib/api';
+import { Label } from '../components/ui/label';
+import { selectClasses } from '../components/ui/form-classes';
 import { formatarData, formatarValor } from '../lib/datetime';
 import { cn } from '../lib/utils';
 
@@ -50,6 +53,7 @@ const emptyForm = {
   nome: '',
   categoriaId: '' as number | '',
   unidadeId: '' as number | '',
+  fornecedorId: '' as number | '',
   quantidadeMinima: '',
   custoUnitario: '',
   status: 'ATIVO' as StatusMaterial,
@@ -171,6 +175,7 @@ interface MaterialFormProps {
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onCancel: () => void;
   unidadesMedida: UnidadeMedida[];
+  fornecedores: FornecedorItem[];
   categorias: MaterialLookups['categorias'];
 }
 
@@ -182,6 +187,7 @@ function MaterialForm({
   onSubmit,
   onCancel,
   unidadesMedida,
+  fornecedores,
   categorias,
 }: MaterialFormProps) {
   const inputCls =
@@ -193,8 +199,9 @@ function MaterialForm({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="mb-1 block text-sm font-medium">Nome</label>
+          <Label htmlFor="nome" required>Descrição</Label>
           <input
+            id="nome"
             type="text"
             required
             minLength={2}
@@ -205,8 +212,9 @@ function MaterialForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Categoria</label>
+          <Label htmlFor="categoriaId">Categoria</Label>
           <select
+            id="categoriaId"
             value={form.categoriaId}
             onChange={(e) =>
               setForm({
@@ -214,7 +222,7 @@ function MaterialForm({
                 categoriaId: e.target.value ? Number(e.target.value) : '',
               })
             }
-            className={inputCls}
+            className={selectClasses}
           >
             <option value="">Selecione...</option>
             {[...categorias]
@@ -227,15 +235,17 @@ function MaterialForm({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Unidade de Medida</label>
+          <Label htmlFor="unidadeId" required>Unidade de Medida</Label>
           <select
+            id="unidadeId"
+            required
             value={form.unidadeId}
             onChange={(e) =>
               setForm({ ...form, unidadeId: e.target.value === '' ? '' : Number(e.target.value) })
             }
-            className={inputCls}
+            className={selectClasses}
           >
-            <option value=""></option>
+            <option value="">Selecione...</option>
             {[...unidadesMedida]
               .sort((a, b) => a.nome.localeCompare(b.nome))
               .map((u) => (
@@ -246,10 +256,32 @@ function MaterialForm({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">
-            Estoque mínimo
-          </label>
+          <Label htmlFor="fornecedorId">Fornecedor</Label>
+          <select
+            id="fornecedorId"
+            value={form.fornecedorId}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                fornecedorId: e.target.value ? Number(e.target.value) : '',
+              })
+            }
+            className={selectClasses}
+          >
+            <option value="">Sem fornecedor</option>
+            {[...(fornecedores ?? [])]
+              .sort((a, b) => a.nome.localeCompare(b.nome))
+              .map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.nome}
+                </option>
+              ))}
+          </select>
+        </div>
+        <div>
+          <Label htmlFor="quantidadeMinima">Estoque mínimo</Label>
           <input
+            id="quantidadeMinima"
             type="number"
             min={0}
             value={form.quantidadeMinima}
@@ -261,10 +293,9 @@ function MaterialForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">
-            Custo unitário
-          </label>
+          <Label htmlFor="custoUnitario">Custo unitário (R$)</Label>
           <input
+            id="custoUnitario"
             type="number"
             min={0}
             step="0.01"
@@ -335,13 +366,18 @@ export default function MateriaisAdminPage({
 
   useEffect(() => {
     carregarTodos();
-    Promise.all([
-      listarLookupsMateriais(),
-      catApi.unidadesMedidaApi.listar(),
-    ])
-      .then(([lk, unidades]) =>
-        setLookups({ ...lk, unidadesMedida: unidades }),
-      )
+    listarLookupsMateriais()
+      .then(async (lk) => {
+        let f = lk.fornecedores;
+        let u = lk.unidadesMedida;
+        if (!f || f.length === 0) {
+          f = await catApi.fornecedoresApi.listar().catch(() => []);
+        }
+        if (!u || u.length === 0) {
+          u = await catApi.unidadesMedidaApi.listar().catch(() => []);
+        }
+        setLookups({ ...lk, fornecedores: f, unidadesMedida: u });
+      })
       .catch(() => {});
   }, [carregarTodos]);
 
@@ -351,6 +387,7 @@ export default function MateriaisAdminPage({
       nome: m.nome,
       categoriaId: m.categoriaId ?? '',
       unidadeId: m.unidadeId ?? '',
+      fornecedorId: m.fornecedorId ?? '',
       quantidadeMinima:
         m.quantidadeMinima === null ? '' : String(m.quantidadeMinima),
       custoUnitario:
@@ -375,8 +412,9 @@ export default function MateriaisAdminPage({
     try {
       const payload: MaterialInput = {
         nome: form.nome,
-        categoriaId: form.categoriaId === '' ? null : form.categoriaId,
-        unidadeId: form.unidadeId === '' ? null : form.unidadeId,
+        categoriaId: form.categoriaId === '' ? null : Number(form.categoriaId),
+        unidadeId: form.unidadeId === '' ? null : Number(form.unidadeId),
+        fornecedorId: form.fornecedorId === '' ? null : Number(form.fornecedorId),
         quantidadeMinima: numOuNull(form.quantidadeMinima) ?? undefined,
         custoUnitario: numOuNull(form.custoUnitario) ?? undefined,
       };
@@ -487,6 +525,7 @@ export default function MateriaisAdminPage({
           onSubmit={handleSubmit}
           onCancel={cancelarEdicao}
           unidadesMedida={lookups?.unidadesMedida ?? []}
+          fornecedores={lookups?.fornecedores ?? []}
           categorias={lookups?.categorias ?? []}
         />
       </div>

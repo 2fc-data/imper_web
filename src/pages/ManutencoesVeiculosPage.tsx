@@ -290,6 +290,25 @@ export default function ManutencoesVeiculosPage({
               />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="responsavelManutencaoId">Responsável</Label>
+              <select
+                id="responsavelManutencaoId"
+                value={form.responsavelManutencaoId ?? ''}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    responsavelManutencaoId: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                className={selectClasses}
+              >
+                <option value="">Selecione o responsável...</option>
+                {(lookups?.responsaveis ?? []).map((r) => (
+                  <option key={r.id} value={r.id}>{r.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="local">Local da manutenção</Label>
               <Input
                 id="local"

@@ -118,7 +118,11 @@ export const NAV_ITEMS: NavItem[] = [
         to: '/retirada-de-itens',
         label: 'Retirada de Itens',
         icon: <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />,
-        requiredPermissions: ['gerenciar_estoque', 'gerenciar_equipamentos'],
+        requiredPermissions: [
+          'gerenciar_estoque',
+          'gerenciar_equipamentos',
+          'separar_item',
+        ],
       },
       {
         to: '/etapas-de-obra',
@@ -189,16 +193,6 @@ export const NAV_ITEMS: NavItem[] = [
     icon: <Icon d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />,
     children: [
       {
-        to: '/catalogos',
-        label: 'Catálogos',
-        icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" />,
-        requiredPermissions: [
-          'gerenciar_estoque',
-          'gerenciar_equipamentos',
-          'gerenciar_epis',
-        ],
-      },
-      {
         to: '/epis',
         label: 'EPIs',
         icon: (
@@ -244,6 +238,94 @@ export const NAV_ITEMS: NavItem[] = [
         label: 'Despesas Extras',
         icon: <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z" />,
         requiredPermissions: ['gerenciar_estoque', 'criar_lista_compras'],
+      },
+    ],
+  },
+  {
+    label: 'Catálogos',
+    icon: <Icon d="M4 6h16M4 10h16M4 14h16M4 18h16" />,
+    requiredPermissions: [
+      'gerenciar_catalogo',
+      'gerenciar_estoque',
+      'gerenciar_equipamentos',
+      'gerenciar_epis',
+    ],
+    children: [
+      {
+        to: '/catalogos/categorias',
+        label: 'Categorias',
+        icon: (
+          <Icon d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        ),
+      },
+      {
+        to: '/catalogos/subcategorias',
+        label: 'Subcategorias',
+        icon: <Icon d="M7 7h10M7 12h7M7 17h4" />,
+      },
+      {
+        to: '/catalogos/marcas',
+        label: 'Marcas',
+        icon: (
+          <Icon d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        ),
+      },
+      {
+        to: '/catalogos/unidades-medida',
+        label: 'Unidades de Medida',
+        icon: <Icon d="M3 6h18M6 6v4m6-4v6m6-6v4M3 18h18" />,
+      },
+      {
+        to: '/catalogos/localizacoes',
+        label: 'Localizações',
+        icon: (
+          <Icon d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        ),
+      },
+      {
+        to: '/catalogos/cores',
+        label: 'Cores',
+        icon: (
+          <Icon d="M7 21a4 4 0 01-4-4 4 4 0 014-4c.73 0 1.41.2 2 .55V7a5 5 0 0110 0v6.55c.59-.35 1.27-.55 2-.55a4 4 0 014 4 4 4 0 01-4 4H7z" />
+        ),
+      },
+      {
+        to: '/catalogos/tamanhos',
+        label: 'Tamanhos',
+        icon: <Icon d="M4 8h16M4 16h16M8 4v16m8-16v16" />,
+      },
+      {
+        to: '/catalogos/status-equipamento',
+        label: 'Status de equipamento',
+        icon: <Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
+      },
+      {
+        to: '/catalogos/estados-conservacao',
+        label: 'Estados de conservação',
+        icon: (
+          <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        ),
+      },
+      {
+        to: '/catalogos/tipos-manutencao',
+        label: 'Tipos de manutenção',
+        icon: (
+          <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426-1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        ),
+      },
+      {
+        to: '/catalogos/tipos-despesas',
+        label: 'Tipos de despesa',
+        icon: (
+          <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 4a1 1 0 110 2 1 1 0 010-2zm-8 0a1 1 0 110 2 1 1 0 010-2z" />
+        ),
+      },
+      {
+        to: '/catalogos/fornecedores',
+        label: 'Fornecedores',
+        icon: (
+          <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        ),
       },
     ],
   },

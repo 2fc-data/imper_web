@@ -59,6 +59,8 @@ export interface MaterialItem {
   obra?: ObraLookupItem | null;
   unidadeId: number | null;
   unidade?: UnidadeMedida;
+  fornecedorId?: number | null;
+  fornecedor?: FornecedorItem | null;
   quantidadeMinima: number | null;
   custoUnitario: number | string | null;
   status: StatusMaterial;
@@ -73,6 +75,7 @@ export interface MaterialInput {
   tipo?: TipoMaterial;
   categoriaId?: number | null;
   unidadeId?: number | null;
+  fornecedorId?: number | null;
   tipoDespesaId?: number | null;
   obraId?: number | null;
   quantidadeMinima?: number | null;

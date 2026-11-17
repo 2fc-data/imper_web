@@ -22,6 +22,7 @@ import {
 
 const CORES: Record<string, string> = {
   usuarios: 'bg-primary/15 text-primary',
+  atendimento: 'bg-success/15 text-success',
   atendimentos: 'bg-success/15 text-success',
   execucao: 'bg-warning/15 text-warning',
   obras: 'bg-warning/15 text-warning',
@@ -31,6 +32,7 @@ const CORES: Record<string, string> = {
   epis: 'bg-destructive/15 text-destructive',
   relatorios: 'bg-success/15 text-success',
   configuracoes: 'bg-muted text-muted-foreground',
+  frota: 'bg-primary/15 text-primary',
 };
 
 function badgeColor(categoria: string) {

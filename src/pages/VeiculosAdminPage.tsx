@@ -1,4 +1,13 @@
-import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Button } from '../components/ui/button';
 import {
   Card,
@@ -9,6 +18,7 @@ import {
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { StorytellingPanel } from '../components/analytics/StorytellingPanel';
 import {
   atualizarVeiculo,
   type AnalisesFrota,
@@ -73,17 +83,100 @@ const emptyForm: VeiculoInput = {
   statusId: 0,
 };
 
-function AnalisesFrota({ analises }: { analises: AnalisesFrota | null }) {
-  if (!analises) return null;
-  const { kmTotalMes, abastecimentosMes, manutencoesPorStatus, veiculosSemKm, mes, ano } = analises;
+const MESES_CURTOS = [
+  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+];
+
+function AnalisesFrota({
+  analises,
+  mesSelecionado,
+  anoSelecionado,
+  onMudarMes,
+}: {
+  analises: AnalisesFrota | null;
+  mesSelecionado: number;
+  anoSelecionado: number;
+  onMudarMes: (mes: number) => void;
+}) {
+  const { kmTotalMes, abastecimentosMes, manutencoesPorStatus, veiculosSemKm, mes, ano } =
+    analises ?? {
+      kmTotalMes: 0,
+      abastecimentosMes: { quantidade: 0, totalLitros: 0, totalValor: 0 },
+      manutencoesPorStatus: [],
+      veiculosSemKm: [],
+      mes: mesSelecionado,
+      ano: anoSelecionado,
+    };
+
+  const storytelling = useMemo(() => {
+    let statusGeral: 'otimo' | 'atencao' | 'critico' | 'estavel' = 'estavel';
+    if (veiculosSemKm.length > 2) statusGeral = 'critico';
+    else if (veiculosSemKm.length > 0) statusGeral = 'atencao';
+    else if (kmTotalMes > 0) statusGeral = 'otimo';
+
+    const cenario = [
+      `A frota percorreu um total de ${kmTotalMes.toLocaleString('pt-BR')} km no mês ${mes}/${ano}.`,
+      `Registrados ${abastecimentosMes.quantidade} abastecimento(s) totalizando ${abastecimentosMes.totalLitros.toFixed(1)} L (${formatarValor(abastecimentosMes.totalValor)}).`,
+      `Controle de manutenções com ${manutencoesPorStatus.reduce((acc, m) => acc + m.quantidade, 0)} ordens registradas no sistema.`,
+    ];
+
+    const diagnostico = [
+      veiculosSemKm.length > 0
+        ? `${veiculosSemKm.length} veículo(s) sem apontamento de KM há mais de 5 dias úteis: ${veiculosSemKm.map((v) => `${v.nome} — ${v.placa}`).join(', ')}.`
+        : 'Todos os veículos da frota possuem registros recentes de odômetro.',
+      abastecimentosMes.quantidade === 0 && kmTotalMes > 0
+        ? 'Quilometragem registrada sem novos abastecimentos apontados no mês.'
+        : 'Fluxo regular de abastecimentos compatível com o deslocamento da frota.',
+    ];
+
+    const recomendacoes = [
+      veiculosSemKm.length > 0
+        ? 'Cobrar dos responsáveis e motoristas o preenchimento diário do odômetro dos veículos parados ou sem registro.'
+        : 'Manter a rotina de preenchimento de odômetro ao final de cada jornada de trabalho.',
+      'Auditar o consumo médio (km/litro) cruzando odômetros com os comprovantes de combustível.',
+      'Verificar o status das ordens de manutenção pendentes para evitar indisponibilidade operacional.',
+    ];
+
+    const resumoExecutivo = `Frota com ${kmTotalMes.toLocaleString('pt-BR')} km percorridos em ${mes}/${ano}, consumo de ${formatarValor(abastecimentosMes.totalValor)} em combustíveis e ${veiculosSemKm.length} veículo(s) necessitando de atenção quanto ao registro de odômetro.`;
+
+    return { statusGeral, resumoExecutivo, cenario, diagnostico, recomendacoes };
+  }, [kmTotalMes, abastecimentosMes, manutencoesPorStatus, veiculosSemKm, mes, ano]);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight">Análises de Frota</h2>
-        <p className="text-sm text-muted-foreground">
-          Visão geral de KM, abastecimentos e manutenções do mês {mes}/{ano}.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Análises de Frota</h2>
+          <p className="text-sm text-muted-foreground">
+            Visão geral de KM, abastecimentos e manutenções do mês {mes}/{ano}.
+          </p>
+        </div>
+
+        {/* Seletor de Mês */}
+        <div className="flex flex-wrap items-center gap-1">
+          {MESES_CURTOS.map((nome, i) => {
+            const m = i + 1;
+            const ativo = m === mesSelecionado;
+            return (
+              <button
+                key={nome}
+                type="button"
+                onClick={() => onMudarMes(m)}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  ativo
+                    ? 'bg-primary text-primary-foreground shadow-2xs'
+                    : 'bg-muted text-muted-foreground hover:bg-muted/70'
+                }`}
+              >
+                {nome}
+              </button>
+            );
+          })}
+          <span className="ml-1 text-xs text-muted-foreground">{anoSelecionado}</span>
+        </div>
       </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">KM total do mês</p>
@@ -96,38 +189,86 @@ function AnalisesFrota({ analises }: { analises: AnalisesFrota | null }) {
             {abastecimentosMes.totalLitros.toFixed(2)} L · {formatarValor(abastecimentosMes.totalValor)}
           </p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm lg:col-span-2">
-          <p className="text-xs font-medium text-muted-foreground">Manutenções por status</p>
-          <div className="mt-2 space-y-1">
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-xs font-medium text-muted-foreground">Custo com Combustível</p>
+          <p className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">
+            {formatarValor(abastecimentosMes.totalValor)}
+          </p>
+          <p className="text-xs text-muted-foreground">Total faturado no mês</p>
+        </div>
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-xs font-medium text-muted-foreground">Veículos sem KM (+5 dias)</p>
+          <p
+            className={`mt-2 text-2xl font-bold ${
+              veiculosSemKm.length > 0 ? 'text-destructive' : 'text-emerald-600'
+            }`}
+          >
+            {veiculosSemKm.length}
+          </p>
+          <p className="text-xs text-muted-foreground">Atenção ao odômetro</p>
+        </div>
+      </div>
+
+      {/* Painel de Storytelling */}
+      <StorytellingPanel
+        statusGeral={storytelling.statusGeral}
+        resumoExecutivo={storytelling.resumoExecutivo}
+        cenario={storytelling.cenario}
+        diagnostico={storytelling.diagnostico}
+        recomendacoes={storytelling.recomendacoes}
+      />
+
+      {/* Gráfico de Manutenções por Status */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
+          <div>
+            <h3 className="font-semibold text-base text-foreground">Manutenções por Status</h3>
+            <p className="text-xs text-muted-foreground">Volume de ordens de serviço por etapa</p>
+          </div>
+          <div className="h-64 w-full">
             {manutencoesPorStatus.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma manutenção registrada.</p>
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                Nenhuma manutenção registrada neste mês.
+              </div>
             ) : (
-              manutencoesPorStatus.map((s) => (
-                <div key={s.status} className="flex justify-between text-sm">
-                  <span>{s.status}</span>
-                  <span className="font-medium">{s.quantidade}</span>
-                </div>
-              ))
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={manutencoesPorStatus} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                  <XAxis dataKey="status" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--color-card, #fff)',
+                      borderRadius: '12px',
+                      border: '1px solid #e2e8f0',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Bar dataKey="quantidade" name="Ordens" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </div>
         </div>
-      </div>
-      <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
-        <h3 className="font-semibold text-base">Veículos sem KM há mais de 5 dias úteis</h3>
-        {veiculosSemKm.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Todos os veículos com registro recente.</p>
-        ) : (
-          <ul className="space-y-1">
-            {veiculosSemKm.map((v) => (
-              <li key={v.id} className="flex justify-between text-sm">
-                <span>{v.nome} — {v.placa}</span>
-                <span className="text-muted-foreground">
-                  Último: {formatarData(v.ultimoRegistro)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+
+        {/* Veículos sem KM */}
+        <div className="rounded-xl border bg-card p-5 shadow-sm space-y-3">
+          <h3 className="font-semibold text-base">Veículos sem KM há mais de 5 dias úteis</h3>
+          {veiculosSemKm.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Todos os veículos com registro recente.</p>
+          ) : (
+            <ul className="space-y-1.5 divide-y divide-border/50 max-h-64 overflow-y-auto">
+              {veiculosSemKm.map((v) => (
+                <li key={v.id} className="pt-1.5 flex justify-between text-sm">
+                  <span className="font-medium">{v.nome} — {v.placa}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {v.ultimoRegistro ? `Último: ${formatarData(v.ultimoRegistro)}` : 'Sem registros'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -137,6 +278,9 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
   const [veiculos, setVeiculos] = useState<VeiculoItem[]>([]);
   const [lookups, setLookups] = useState<VeiculoLookups | null>(null);
   const [analises, setAnalises] = useState<AnalisesFrota | null>(null);
+  const hoje = new Date();
+  const [mesAnalise, setMesAnalise] = useState(hoje.getMonth() + 1);
+  const [anoAnalise] = useState(hoje.getFullYear());
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<number | ''>('');
@@ -153,7 +297,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
       const [lista, lk, an] = await Promise.all([
         listarVeiculos(),
         buscarVeiculoLookups(),
-        buscarAnalisesFrota(),
+        buscarAnalisesFrota({ mes: mesAnalise, ano: anoAnalise }),
       ]);
       setVeiculos(lista);
       setLookups(lk);
@@ -161,7 +305,17 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar veículos');
     }
-  }, []);
+  }, [mesAnalise, anoAnalise]);
+
+  const handleMudarMesAnalise = async (m: number) => {
+    setMesAnalise(m);
+    try {
+      const an = await buscarAnalisesFrota({ mes: m, ano: anoAnalise });
+      setAnalises(an);
+    } catch {
+      // silencioso
+    }
+  };
 
   useEffect(() => {
     carregar();
@@ -265,7 +419,9 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
   const formulario = (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">{editando ? 'Editar veículo' : 'Novo veículo'}</CardTitle>
+        <CardTitle className="text-base">
+          {editando ? `Editar veículo — ${editando.nome} — ${editando.placa}` : 'Novo veículo'}
+        </CardTitle>
         <CardDescription>
           {editando ? 'Atualize as informações e salve as alterações.' : 'Cadastre um veículo da frota.'}
         </CardDescription>
@@ -285,9 +441,12 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
               <Label htmlFor="fabricanteId">Fabricante</Label>
               <select id="fabricanteId" value={form.fabricanteId || ''} onChange={(e) => setForm({ ...form, fabricanteId: e.target.value ? Number(e.target.value) : undefined })} className={selectClasses}>
                 <option value="">Sem fabricante</option>
-                {(lookups?.marcas ?? []).filter((m) => m.ativo).map((m) => (
-                  <option key={m.id} value={m.id}>{m.nome}</option>
-                ))}
+                {[...(lookups?.marcas ?? [])]
+                  .filter((m) => m.ativo)
+                  .sort((a, b) => a.nome.localeCompare(b.nome))
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
               </select>
             </div>
             <div className="space-y-1.5">
@@ -368,7 +527,14 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
         <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}
 
-      {view === 'analises' && <AnalisesFrota analises={analises} />}
+      {view === 'analises' && (
+        <AnalisesFrota
+          analises={analises}
+          mesSelecionado={mesAnalise}
+          anoSelecionado={anoAnalise}
+          onMudarMes={handleMudarMesAnalise}
+        />
+      )}
       {(view === 'novo' || editando) && formulario}
 
       {view === 'lista' && !editando && (
@@ -420,13 +586,13 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <CardTitle className="text-base">{v.nome}</CardTitle>
+                          <CardTitle className="text-base">{v.nome} — {v.placa}</CardTitle>
                           <BadgeAtivo ativo={v.ativo} />
                         </div>
                         <span className="text-xs text-muted-foreground">{v.status?.nome}</span>
                       </div>
                       <CardDescription className="text-sm">
-                        {v.placa}
+                        Placa: {v.placa} · Código: {v.codigo}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">

@@ -187,6 +187,7 @@ export type {
 export {
   listarCatalogos,
   listarRecurso,
+  RECURSOS_CATALOGOS,
   RECURSO_LABEL,
   RECURSO_TIPO_FIXO,
   RECURSO_TIPOS_PERMITIDOS,
@@ -449,6 +450,7 @@ export {
   criarVeiculo,
   atualizarVeiculo,
   excluirVeiculo,
+  listarTodosRegistrosKm,
   listarRegistrosKm,
   registrarKm,
   atualizarRegistroKm,

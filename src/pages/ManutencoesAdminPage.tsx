@@ -18,7 +18,6 @@ import {
   listarEquipamentos,
   listarLookupsEquipamentos,
   listarManutencoes,
-  listarUsuarios,
   type ManutencaoInput,
   type ManutencaoItem,
   type StatusManutencao,
@@ -244,16 +243,15 @@ export default function ManutencoesAdminPage({
   const carregar = useCallback(async () => {
     setError(null);
     try {
-      const [lista, lookups, eqs, usrs] = await Promise.all([
+      const [lista, lookups, eqs] = await Promise.all([
         listarManutencoes(),
         listarLookupsEquipamentos(),
         listarEquipamentos(),
-        listarUsuarios(),
       ]);
       setManutencoes(lista);
       setTipos(lookups.tiposManutencao.filter((t) => t.ativo));
       setEquipamentos(eqs);
-      setUsuarios(usrs.filter((u) => u.ativo));
+      setUsuarios(lookups.responsaveis);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Falha ao carregar manutenções',
