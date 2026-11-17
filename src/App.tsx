@@ -26,7 +26,6 @@ import {
   ServicosSidebar,
   DespesasExtrasSidebar,
   UsuariosSidebar,
-  VocabularioSidebar,
 } from './components/layout/sidebarContent';
 import { homeFor } from './lib/nav';
 
@@ -575,7 +574,11 @@ function VocabularioRoute() {
     <ProtectedLayout
       requiredPermissions={['gerenciar_catalogo']}
       sidebar={
-        <VocabularioSidebar viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
+        <CatalogosSidebar
+          variante="vocabulario"
+          viewAtiva={viewAtiva}
+          onNavegar={setViewAtiva}
+        />
       }
     >
       <VocabularioAdminPage viewAtiva={viewAtiva} onNavegar={setViewAtiva} />
@@ -750,6 +753,10 @@ export default function App() {
           <Route element={<ObrasRoute />} path="/obras" />
           <Route element={<ObraDetalheRoute />} path="/obras/:id" />
           <Route element={<CatalogosRoute />} path="/catalogos" />
+          <Route
+            element={<VocabularioRoute />}
+            path="/catalogos/etapas-de-obra"
+          />
           <Route element={<CatalogosRoute />} path="/catalogos/:recurso" />
           <Route element={<EquipamentosRoute />} path="/equipamentos" />
           <Route element={<ManutencoesRoute />} path="/manutencoes" />
@@ -764,7 +771,10 @@ export default function App() {
           <Route element={<MateriaisRoute />} path="/materiais" />
           <Route element={<DespesasExtrasRoute />} path="/despesas-extras" />
           <Route element={<Navigate to="/despesas-extras" replace />} path="/supermercados" />
-          <Route element={<VocabularioRoute />} path="/etapas-de-obra" />
+          <Route
+            element={<Navigate to="/catalogos/etapas-de-obra" replace />}
+            path="/etapas-de-obra"
+          />
           <Route element={<RetiradaDeItensRoute />} path="/retirada-de-itens" />
           <Route element={<ExecucaoDashboardRoute />} path="/execucao" />
           <Route element={<Navigate to="/portal/dados" replace />} path="/minha-conta" />

@@ -312,7 +312,6 @@ export default function DespesasExtrasAdminPage({
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<MaterialItem | null>(null);
   const [form, setForm] = useState<DespesasExtrasFormData>(emptyForm);
-  const [toggling, setToggling] = useState<number | null>(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(
     null,
   );
@@ -399,25 +398,6 @@ export default function DespesasExtrasAdminPage({
       );
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleToggleStatus(m: MaterialItem) {
-    setToggling(m.id);
-    setError(null);
-    try {
-      const atualizado = await atualizarMaterial(m.id, {
-        status: m.status === 'ATIVO' ? 'INATIVO' : 'ATIVO',
-      });
-      setItens((prev) =>
-        prev.map((x) => (x.id === atualizado.id ? atualizado : x)),
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Falha ao alterar item',
-      );
-    } finally {
-      setToggling(null);
     }
   }
 
@@ -564,19 +544,6 @@ export default function DespesasExtrasAdminPage({
                       onClick={() => comecarEdicao(m)}
                     >
                       Editar
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={toggling === m.id}
-                      onClick={() => handleToggleStatus(m)}
-                    >
-                      {toggling === m.id
-                        ? 'Salvando...'
-                        : m.status === 'ATIVO'
-                          ? 'Desativar'
-                          : 'Ativar'}
                     </Button>
                     {confirmandoExclusao === m.id ? (
                       <div className="flex items-center gap-1">

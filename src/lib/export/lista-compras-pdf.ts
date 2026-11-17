@@ -1,7 +1,10 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { ListaCompraDto } from '../api/listas-compras';
-import { MESES_CURTOS, nomeItem, totalGasto, unidadeItem } from '../lista-compras';
+import {
+  formatarData, fornecedorItem, MESES_CURTOS, nomeItem, totalGasto,
+  unidadeItem, valorTotalItem, valorUnitarioItem,
+} from '../lista-compras';
 
 const ROTULO_STATUS: Record<string, string> = {
   ABERTA: 'Aberta', ENVIADA: 'Enviada', APROVADA: 'Aprovada',
@@ -54,23 +57,30 @@ export function gerarPdfListaCompras(
   }
   const yTabela = yMotivo + 3;
 
-  const corpo = lista.itens.map((item) => [
-    nomeItem(item),
-    fmtQtd(item.quantidade),
-    unidadeItem(item),
-    item.status === 'COMPRADO' ? fmt(item.custoReal) : '—',
-    item.status === 'COMPRADO'
-      ? 'Comprado'
-      : item.status === 'RECUSADO'
-        ? 'Recusado'
-        : 'Pendente',
-  ]);
+  const corpo = lista.itens.map((item) => {
+    const unitario = valorUnitarioItem(item);
+    const total = valorTotalItem(item);
+    return [
+      nomeItem(item),
+      fmtQtd(item.quantidade),
+      unidadeItem(item),
+      fornecedorItem(item)?.nome ?? '—',
+      unitario !== null ? `R$ ${fmt(unitario)}` : '—',
+      total !== null ? `R$ ${fmt(total)}` : '—',
+      formatarData(item.dataCompra),
+      item.status === 'COMPRADO'
+        ? 'Comprado'
+        : item.status === 'RECUSADO'
+          ? 'Recusado'
+          : 'Pendente',
+    ];
+  });
 
   autoTable(doc, {
     startY: yTabela,
-    head: [['Item', 'Qtd', 'Un.', 'Custo real', 'Status']],
+    head: [['Item', 'Qtd', 'Un.', 'Fornecedor', 'Valor unit.', 'Valor total', 'Data', 'Status']],
     body: corpo,
-    styles: { fontSize: 9, cellPadding: 2 },
+    styles: { fontSize: 8, cellPadding: 2 },
     headStyles: { fillColor: [40, 40, 40] },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     margin: { left: 15, right: 15 },

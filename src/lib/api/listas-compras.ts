@@ -9,16 +9,28 @@ export interface OpcaoCatalogo {
   unidade: string | null;
   saldo: number | string | null;
   custoUnitario: number | string | null;
+  fornecedorId?: number | null;
+}
+
+export interface FornecedorResumoDto {
+  id: number;
+  nome: string;
 }
 
 export interface ListaCompraItemDto {
   id: number;
   quantidade: number | string;
+  valorUnitario: number | string | null;
   custoReal: number | string | null;
+  dataCompra: string | null;
+  fornecedorId?: number | null;
+  fornecedor?: FornecedorResumoDto | null;
   status: StatusItemLista;
   material?: {
     id: number; nome: string;
     custoUnitario?: number | string | null;
+    fornecedorId?: number | null;
+    fornecedor?: FornecedorResumoDto | null;
     unidade?: { nome: string } | null;
     saldo?: { saldo: number | string } | null;
   } | null;
@@ -27,10 +39,15 @@ export interface ListaCompraItemDto {
     unidadeMedida?: { nome: string } | null;
     quantidade?: number | string;
     custoUnitario?: number | string | null;
+    fornecedorId?: number | null;
+    fornecedor?: FornecedorResumoDto | null;
   } | null;
   equipamento?: {
     id: number; descricao: string;
     unidadeMedida?: { nome: string } | null;
+    valorAquisicao?: number | string | null;
+    fornecedorId?: number | null;
+    fornecedor?: FornecedorResumoDto | null;
   } | null;
   adicionadoPor?: { id: number; nome: string } | null;
   compradoPor?: { id: number; nome: string } | null;
@@ -63,12 +80,27 @@ export async function obterListaCompras(params: {
   return api.get<ListaCompraDto | null>('/listas-compras', params);
 }
 
+export interface ItemCompraInput {
+  itemId: number;
+  quantidade: number;
+  fornecedorId?: number | null;
+  valorUnitario?: number | null;
+  dataCompra?: string | null;
+}
+
+export interface ComprarItemInput {
+  custoReal?: number;
+  fornecedorId?: number | null;
+  valorUnitario?: number | null;
+  dataCompra?: string | null;
+}
+
 export async function salvarItensListaCompras(
   tipo: TipoListaCompra,
   setor: SetorCompra,
   mes: number,
   ano: number,
-  itens: { itemId: number; quantidade: number }[],
+  itens: ItemCompraInput[],
   tipoDespesaId?: number,
 ): Promise<ListaCompraDto> {
   const query = tipoDespesaId ? `?tipoDespesaId=${tipoDespesaId}` : '';
@@ -105,10 +137,10 @@ export async function reverterItemListaCompras(
 }
 
 export async function comprarItemListaCompras(
-  id: number, itemId: number, custoReal?: number,
+  id: number, itemId: number, input: ComprarItemInput = {},
 ): Promise<ListaCompraDto> {
   return api.post<ListaCompraDto>(
     `/listas-compras/${id}/itens/${itemId}/comprar`,
-    custoReal === undefined ? {} : { custoReal },
+    input,
   );
 }

@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import type { ListaCompraItemDto } from './api/listas-compras.js';
 import {
-  modoDaLista, podeAprovar, podeComprar, podeEditarItens, podeEnviar,
-  progressoCompras, totalEstimado, totalGasto, unidadeItem,
+  dataCompraItem, formatarData, fornecedorItem, modoDaLista, podeAprovar,
+  podeComprar, podeEditarItens, podeEnviar, progressoCompras, totalEstimado,
+  totalGasto, unidadeItem, valorTotalItem, valorUnitarioItem,
 } from './lista-compras.js';
 
 function item(parcial: Partial<ListaCompraItemDto>): ListaCompraItemDto {
-  return { id: 1, quantidade: 1, custoReal: null, status: 'PENDENTE', ...parcial };
+  return {
+    id: 1,
+    quantidade: 1,
+    valorUnitario: null,
+    custoReal: null,
+    dataCompra: null,
+    status: 'PENDENTE',
+    ...parcial,
+  };
 }
 
 describe('modoDaLista', () => {
@@ -81,5 +90,36 @@ describe('unidadeItem', () => {
       id: 1, nome: 'B', unidadeMedida: { nome: 'par' },
     } }))).toBe('par');
     expect(unidadeItem(item({}))).toBe('un.');
+  });
+});
+
+describe('campos de compra', () => {
+  it('prioriza valor unitário planejado e calcula o total', () => {
+    const i = item({
+      quantidade: 3,
+      valorUnitario: 4,
+      material: {
+        id: 1, nome: 'Cabo', unidade: null, saldo: null, custoUnitario: 10,
+      },
+    });
+    expect(valorUnitarioItem(i)).toBe(4);
+    expect(valorTotalItem(i)).toBe(12);
+    expect(totalEstimado([i])).toBe(12);
+  });
+
+  it('usa custoReal quando a compra já foi efetivada', () => {
+    const i = item({ quantidade: 3, valorUnitario: 4, custoReal: 10 });
+    expect(valorTotalItem(i)).toBe(10);
+  });
+
+  it('usa o fornecedor do item e formata a data sem timezone', () => {
+    const i = item({
+      dataCompra: '2026-11-10T00:00:00.000Z',
+      fornecedor: { id: 2, nome: 'ACME' },
+    });
+    expect(fornecedorItem(i)).toEqual({ id: 2, nome: 'ACME' });
+    expect(dataCompraItem(i)).toBe('2026-11-10T00:00:00.000Z');
+    expect(formatarData(i.dataCompra)).toBe('10/11/2026');
+    expect(formatarData(null)).toBe('—');
   });
 });

@@ -737,47 +737,80 @@ export function RbacSidebar({
   );
 }
 
-export function VocabularioSidebar({
-  viewAtiva,
-  onNavegar,
-}: {
-  viewAtiva: 'analises' | 'etapas' | 'termos' | 'sub-servicos';
-  onNavegar: (
-    view: 'analises' | 'etapas' | 'termos' | 'sub-servicos',
-  ) => void;
-}) {
+type CatalogoView = 'lista' | 'novo';
+type VocabularioView = 'analises' | 'etapas' | 'termos' | 'sub-servicos';
+
+type CatalogosSidebarProps =
+  | {
+      variante?: 'catalogo';
+      viewAtiva?: CatalogoView;
+      onNavegar?: (view: CatalogoView) => void;
+    }
+  | {
+      variante: 'vocabulario';
+      viewAtiva: VocabularioView;
+      onNavegar: (view: VocabularioView) => void;
+    };
+
+export function CatalogosSidebar(props: CatalogosSidebarProps) {
+  if (props.variante === 'vocabulario') {
+    const { viewAtiva, onNavegar } = props;
+    return (
+      <>
+        <SidebarButton
+          active={viewAtiva === 'analises'}
+          onClick={() => onNavegar('analises')}
+          icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
+        >
+          Análises
+        </SidebarButton>
+        <SidebarButton
+          active={viewAtiva === 'etapas'}
+          onClick={() => onNavegar('etapas')}
+          icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
+        >
+          Etapas
+        </SidebarButton>
+        <SidebarButton
+          active={viewAtiva === 'termos'}
+          onClick={() => onNavegar('termos')}
+          icon={icone('M11 4H4v16h7v-6h6V10h-6V4z')}
+        >
+          Termos
+        </SidebarButton>
+        <SidebarButton
+          active={viewAtiva === 'sub-servicos'}
+          onClick={() => onNavegar('sub-servicos')}
+          icon={icone('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2')}
+        >
+          Sub-serviços
+        </SidebarButton>
+        <SidebarNote>
+          Vocabulário do orçamento: etapas, termos e sub-serviços.
+        </SidebarNote>
+      </>
+    );
+  }
+
+  const { viewAtiva = 'lista', onNavegar } = props;
   return (
     <>
       <SidebarButton
-        active={viewAtiva === 'analises'}
-        onClick={() => onNavegar('analises')}
-        icon={icone('M3 3v18h18M18 17V9M13 17V5M8 17v-3')}
-      >
-        Análises
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'etapas'}
-        onClick={() => onNavegar('etapas')}
+        active={viewAtiva === 'lista'}
+        onClick={() => onNavegar?.('lista')}
         icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
       >
-        Etapas
+        Listagem
       </SidebarButton>
       <SidebarButton
-        active={viewAtiva === 'termos'}
-        onClick={() => onNavegar('termos')}
-        icon={icone('M11 4H4v16h7v-6h6V10h-6V4z')}
+        active={viewAtiva === 'novo'}
+        onClick={() => onNavegar?.('novo')}
+        icon={icone('M12 4v16m8-8H4')}
       >
-        Termos
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'sub-servicos'}
-        onClick={() => onNavegar('sub-servicos')}
-        icon={icone('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2')}
-      >
-        Sub-serviços
+        Novo Cadastro
       </SidebarButton>
       <SidebarNote>
-        Vocabulário do orçamento: etapas, termos e sub-serviços.
+        Gestão de catálogos para materiais, equipamentos e EPIs.
       </SidebarNote>
     </>
   );
@@ -808,36 +841,6 @@ export function RetiradaDeItensSidebar({
       </SidebarButton>
       <SidebarNote>
         Gerencie retiradas e devoluções de equipamentos, EPIs e materiais.
-      </SidebarNote>
-    </>
-  );
-}
-
-export function CatalogosSidebar({
-  viewAtiva = 'lista',
-  onNavegar,
-}: {
-  viewAtiva?: 'lista' | 'novo';
-  onNavegar?: (view: 'lista' | 'novo') => void;
-} = {}) {
-  return (
-    <>
-      <SidebarButton
-        active={viewAtiva === 'lista'}
-        onClick={() => onNavegar?.('lista')}
-        icon={icone('M4 6h16M4 10h16M4 14h16M4 18h16')}
-      >
-        Listagem
-      </SidebarButton>
-      <SidebarButton
-        active={viewAtiva === 'novo'}
-        onClick={() => onNavegar?.('novo')}
-        icon={icone('M12 4v16m8-8H4')}
-      >
-        Novo Cadastro
-      </SidebarButton>
-      <SidebarNote>
-        Gestão de catálogos para materiais, equipamentos e EPIs.
       </SidebarNote>
     </>
   );

@@ -193,6 +193,14 @@ export default function FrotaKmPage({
     [registros],
   );
 
+  const totalKmMes = useMemo(
+    () =>
+      registrosOrdenados
+        .slice(1)
+        .reduce((acc, r) => acc + Number(r.kmPercorrido || 0), 0),
+    [registrosOrdenados],
+  );
+
   function handleExportarPdf() {
     if (!veiculoSelecionado || registros.length === 0) return;
     gerarPdfKmMensal({
@@ -491,6 +499,17 @@ export default function FrotaKmPage({
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t bg-muted/50 font-semibold">
+                    <td className="px-3 py-2 text-right" colSpan={3}>
+                      Total do mês
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {registrosOrdenados.length < 2 ? '—' : formatarKm(totalKmMes)}
+                    </td>
+                    <td colSpan={3} />
+                  </tr>
+                </tfoot>
               </table>
             </div>
           )}

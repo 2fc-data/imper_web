@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../auth/AuthContext';
 import {
   aprovarListaCompras,
+  catalogos,
   comprarItemListaCompras,
   enviarListaCompras,
   listarEquipamentos,
@@ -20,7 +21,10 @@ import {
 import { gerarPdfListaCompras } from '../../lib/export/lista-compras-pdf';
 import { brl } from '../../lib/format';
 import {
+  dataCompraItem,
   estaComprada,
+  formatarData,
+  fornecedorItem,
   MESES_CURTOS,
   modoDaLista,
   nomeItem,
@@ -34,6 +38,8 @@ import {
   totalEstimado,
   totalGasto,
   unidadeItem,
+  valorTotalItem,
+  valorUnitarioItem,
 } from '../../lib/lista-compras';
 import type { SetorCompra, StatusListaCompra, TipoListaCompra } from '../../schemas';
 import { type TipoDespesa } from '../../lib/api';
@@ -44,7 +50,23 @@ import { Label } from '../ui/label';
 import { StatusBadge } from '../ui/StatusBadge';
 import { selectCompactClasses as selectClasses } from '../ui/form-classes';
 
-type RascunhoItem = { itemId: number; quantidade: number };
+type RascunhoItem = {
+  itemId: number;
+  quantidade: number;
+  fornecedorId: number | null;
+  valorUnitario: number | null;
+  dataCompra: string | null;
+};
+
+type EdicaoCompra = {
+  fornecedorId: string;
+  valorUnitario: string;
+  dataCompra: string;
+};
+
+function hoje(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 const SETORES: { valor: SetorCompra; rotulo: string }[] = [
   { valor: 'LOJA', rotulo: 'Loja' },
@@ -78,45 +100,51 @@ function itensParaRascunho(lista: ListaCompraDto | null): RascunhoItem[] {
     .map((item) => ({
       itemId: idDaEntidade(item),
       quantidade: Number(item.quantidade),
+      fornecedorId: item.fornecedorId ?? fornecedorItem(item)?.id ?? null,
+      valorUnitario: valorUnitarioItem(item),
+      dataCompra: dataCompraItem(item),
     }))
     .filter((r) => r.itemId > 0 && r.quantidade > 0);
 }
 
 async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]> {
+  let itens: any[];
   if (tipo === 'DESPESAS_EXTRAS' || tipo === 'MATERIAL') {
-    const materiais = await listarMateriais({ tipo });
-    return materiais
-      .filter((m) => m.status === 'ATIVO')
-      .map((m) => ({
-        id: m.id,
-        nome: m.nome,
-        unidade: m.unidade?.nome ?? null,
-        saldo: m.saldo?.saldo ?? null,
-        custoUnitario: m.custoUnitario ?? null,
-      }));
+    itens = await listarMateriais({ tipo });
+  } else if (tipo === 'EPI') {
+    itens = await listarEpis({ ativo: true });
+  } else {
+    itens = await listarEquipamentos({ ativo: true });
   }
-  if (tipo === 'EPI') {
-    const epis = await listarEpis({ ativo: true });
-    return epis
-      .filter((e) => e.ativo)
-      .map((e) => ({
+  const filtrados = itens.filter(
+    (item) =>
+      tipo !== 'EPI' ? item.status === 'ATIVO' : item.ativo,
+  );
+  const mapItem = tipo === 'EPI'
+    ? (e: any) => ({
         id: e.id,
         nome: e.nome,
         unidade: e.unidadeMedida?.nome ?? null,
         saldo: e.quantidade,
         custoUnitario: e.custoUnitario ?? null,
-      }));
-  }
-  const equipamentos = await listarEquipamentos({ ativo: true });
-  return equipamentos
-    .filter((e) => e.ativo)
-    .map((e) => ({
-      id: e.id,
-      nome: e.descricao,
-      unidade: e.unidadeMedida?.nome ?? null,
-      saldo: null,
-      custoUnitario: e.valorAquisicao,
-    }));
+        fornecedorId: e.fornecedorId ?? null,
+      })
+    : (m: any) => ({
+        id: m.id,
+        nome: m.nome,
+        unidade: m.unidade?.nome ?? null,
+        saldo: m.saldo?.saldo ?? null,
+        custoUnitario: m.custoUnitario ?? null,
+        fornecedorId: m.fornecedorId ?? null,
+      });
+  const maped = filtrados.map(mapItem);
+  // Remove duplicates by id, keeping first occurrence
+  const seen = new Set<number>();
+  return maped.filter((op) => {
+    if (seen.has(op.id)) return false;
+    seen.add(op.id);
+    return true;
+  });
 }
 
 export function ListaComprasView({
@@ -141,8 +169,16 @@ export function ListaComprasView({
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const [fornecedores, setFornecedores] = useState<
+    { id: number; nome: string }[]
+  >([]);
+  const [compras, setCompras] = useState<Record<number, EdicaoCompra>>({});
+
   const [selItemId, setSelItemId] = useState<number | ''>('');
   const [selQtd, setSelQtd] = useState('1');
+  const [selFornecedorId, setSelFornecedorId] = useState<number | ''>('');
+  const [selValorUnitario, setSelValorUnitario] = useState('');
+  const [selDataCompra, setSelDataCompra] = useState(hoje);
   const [novoItemAberto, setNovoItemAberto] = useState(false);
   const [tipoDespesaId, setTipoDespesaId] = useState<number | ''>('');
   const [tiposDespesas, setTiposDespesas] = useState<TipoDespesa[]>([]);
@@ -156,6 +192,9 @@ export function ListaComprasView({
 
   const [novoItemId, setNovoItemId] = useState<number | ''>('');
   const [novoItemQtd, setNovoItemQtd] = useState('1');
+  const [novoItemFornecedorId, setNovoItemFornecedorId] = useState<number | ''>('');
+  const [novoItemValor, setNovoItemValor] = useState('');
+  const [novoItemData, setNovoItemData] = useState(hoje);
 
   const modo = modoDaLista(lista?.status ?? null);
   const ehMaterial = tipo === 'MATERIAL' || tipo === 'DESPESAS_EXTRAS';
@@ -217,6 +256,26 @@ export function ListaComprasView({
     };
   }, [tipo]);
 
+  useEffect(() => {
+    let cancelado = false;
+    async function carregar() {
+      const doTipo = await catalogos.fornecedoresApi.listar(tipo);
+      let ativos = doTipo.filter((f) => f.ativo);
+      if (ativos.length === 0) {
+        const todos = await catalogos.fornecedoresApi.listar();
+        ativos = todos.filter((f) => f.ativo);
+      }
+      if (cancelado) return;
+      setFornecedores(ativos.map((f) => ({ id: f.id, nome: f.nome })));
+    }
+    carregar().catch((e: unknown) => {
+      if (!cancelado) setErro(mensagemErro(e));
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [tipo]);
+
   const recarregarSilencioso = useCallback(async () => {
     try {
       await carregarLista();
@@ -272,6 +331,21 @@ export function ListaComprasView({
 
   const rotuloSetor = SETORES.find((s) => s.valor === setor)?.rotulo ?? setor;
 
+  function selecionarItemDoCatalogo(valor: number | '') {
+    setSelItemId(valor);
+    const op = opcoes.find((o) => o.id === valor);
+    setSelFornecedorId(op?.fornecedorId ?? '');
+    setSelValorUnitario(op?.custoUnitario != null ? String(op.custoUnitario) : '');
+    setSelDataCompra(hoje());
+  }
+
+  function numero(valor: string): number | null {
+    const limpo = valor.trim().replace(',', '.');
+    if (!limpo) return null;
+    const n = Number(limpo);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
   function adicionarAoRascunho() {
     if (selItemId === '') return;
     const qtd = Number(selQtd);
@@ -279,20 +353,71 @@ export function ListaComprasView({
       setErro('Quantidade inválida.');
       return;
     }
+    const fornecedorId = selFornecedorId === '' ? null : selFornecedorId;
+    const valorUnitario = numero(selValorUnitario);
+    const dataCompra = selDataCompra || null;
     setRascunho((atual) => {
       const existente = atual.find((r) => r.itemId === selItemId);
       if (existente) {
         return atual.map((r) =>
           r.itemId === selItemId
-            ? { ...r, quantidade: r.quantidade + qtd }
+            ? {
+                ...r,
+                quantidade: r.quantidade + qtd,
+                fornecedorId,
+                valorUnitario,
+                dataCompra,
+              }
             : r,
         );
       }
-      return [...atual, { itemId: selItemId, quantidade: qtd }];
+      return [
+        ...atual,
+        { itemId: selItemId, quantidade: qtd, fornecedorId, valorUnitario, dataCompra },
+      ];
     });
     setSelItemId('');
     setSelQtd('1');
+    setSelFornecedorId('');
+    setSelValorUnitario('');
+    setSelDataCompra(hoje());
     setErro(null);
+  }
+
+  function atualizarRascunho(itemId: number, patch: Partial<RascunhoItem>) {
+    setRascunho((atual) =>
+      atual.map((r) => (r.itemId === itemId ? { ...r, ...patch } : r)),
+    );
+  }
+
+  function edicaoCompra(item: ListaCompraItemDto): EdicaoCompra {
+    return (
+      compras[item.id] ?? {
+        fornecedorId: String(
+          item.fornecedorId ?? fornecedorItem(item)?.id ?? '',
+        ),
+        valorUnitario:
+          item.valorUnitario != null
+            ? String(item.valorUnitario)
+            : valorUnitarioItem(item) != null
+              ? String(valorUnitarioItem(item))
+              : '',
+        dataCompra: (item.dataCompra ?? hoje()).slice(0, 10),
+      }
+    );
+  }
+
+  function atualizarCompra(itemId: number, patch: Partial<EdicaoCompra>) {
+    setCompras((atual) => ({
+      ...atual,
+      [itemId]: { ...edicaoCompraById(itemId), ...patch },
+    }));
+  }
+
+  function edicaoCompraById(itemId: number): EdicaoCompra {
+    const item = lista?.itens.find((i) => i.id === itemId);
+    if (!item) return { fornecedorId: '', valorUnitario: '', dataCompra: hoje() };
+    return edicaoCompra(item);
   }
 
   async function salvarRascunho() {
@@ -380,7 +505,14 @@ export function ListaComprasView({
       const atual = existentes.find((r) => r.itemId === novoItemId);
       return [
         ...base,
-        { itemId: novoItemId, quantidade: (atual?.quantidade ?? 0) + qtd },
+        {
+          itemId: novoItemId,
+          quantidade: (atual?.quantidade ?? 0) + qtd,
+          fornecedorId:
+            novoItemFornecedorId === '' ? (atual?.fornecedorId ?? null) : novoItemFornecedorId,
+          valorUnitario: numero(novoItemValor) ?? atual?.valorUnitario ?? null,
+          dataCompra: novoItemData || atual?.dataCompra || null,
+        },
       ];
     })();
     const salvo = await executar(() =>
@@ -397,37 +529,40 @@ export function ListaComprasView({
       setNovoItemAberto(false);
       setNovoItemId('');
       setNovoItemQtd('1');
+      setNovoItemFornecedorId('');
+      setNovoItemValor('');
+      setNovoItemData(hoje());
     }
   }
 
   async function comprar(item: ListaCompraItemDto) {
     if (!lista) return;
     if (!window.confirm(`Confirmar compra de "${nomeItem(item)}"?`)) return;
-    // Determine custo real automatically from unit cost if available
-    const quantidade = Number(item.quantidade);
+    const edicao = edicaoCompra(item);
+    const valorUnitario = numero(edicao.valorUnitario);
+    const dataCompra = edicao.dataCompra || null;
+    const fornecedorId =
+      edicao.fornecedorId === '' ? null : Number(edicao.fornecedorId);
     let custoReal: number | undefined;
-    const rawUnitCost = item.material?.custoUnitario ?? item.epi?.custoUnitario;
-    let unitCost: number | undefined;
-    if (rawUnitCost != null) {
-        const parsed = Number(rawUnitCost);
-        if (Number.isFinite(parsed)) unitCost = parsed;
-    }
-    if (unitCost != null && quantidade > 0) {
-        custoReal = unitCost * quantidade;
-    }
-    // If no unit cost, fallback to prompt
-    if (custoReal === undefined) {
-        const bruto = window.prompt('Custo real (deixe vazio se não souber):');
-        if (bruto !== null && bruto.trim() !== '') {
-            const n = Number(bruto.trim().replace(',', '.'));
-            if (!Number.isFinite(n) || n <= 0) {
-                setErro(`Custo real inválido: "${bruto.trim()}".`);
-                return;
-            }
-            custoReal = n;
+    if (valorUnitario === null) {
+      const bruto = window.prompt('Custo real total (deixe vazio se não souber):');
+      if (bruto !== null && bruto.trim() !== '') {
+        const n = Number(bruto.trim().replace(',', '.'));
+        if (!Number.isFinite(n) || n <= 0) {
+          setErro(`Custo real inválido: "${bruto.trim()}".`);
+          return;
         }
+        custoReal = n;
+      }
     }
-    await executar(() => comprarItemListaCompras(lista.id, item.id, custoReal));
+    await executar(() =>
+      comprarItemListaCompras(lista.id, item.id, {
+        custoReal,
+        valorUnitario: valorUnitario ?? undefined,
+        fornecedorId,
+        dataCompra,
+      }),
+    );
   }
 
   function tabelaItens() {
@@ -436,7 +571,6 @@ export function ListaComprasView({
       return <p className="text-sm text-muted-foreground">Nenhum item na lista.</p>;
     }
     const mostrarDetalhesMaterial = ehMaterial;
-    const mostrarCustoReal = modo === 'compra' || modo === 'historico';
     const mostrarAcoes = modo === 'aprovacao' || modo === 'compra';
     const acaoAprovacao = podeAprovarPerm && podeAprovar(modo);
     const acaoCompra = podeAprovarPerm && podeComprar(modo);
@@ -451,87 +585,141 @@ export function ListaComprasView({
               {mostrarDetalhesMaterial && (
                 <th className="px-3 py-2 text-right">Saldo</th>
               )}
-              {mostrarDetalhesMaterial && (
-                <th className="px-3 py-2 text-right">Custo unit.</th>
-              )}
               <th className="px-3 py-2 text-right">Qtd</th>
-              {mostrarCustoReal && (
-                <th className="px-3 py-2 text-right">Custo real</th>
-              )}
+              <th className="px-3 py-2">Fornecedor</th>
+              <th className="px-3 py-2 text-right">Valor unit.</th>
+              <th className="px-3 py-2 text-right">Valor total</th>
+              <th className="px-3 py-2">Data</th>
               <th className="px-3 py-2">Status</th>
               {mostrarAcoes && <th className="px-3 py-2 text-right">Ações</th>}
             </tr>
           </thead>
           <tbody>
-            {lista.itens.map((item) => (
-              <tr key={item.id} className="border-b last:border-0">
-                <td className="px-3 py-2">
-                  <span className="font-medium">{nomeItem(item)}</span>
-                  {(tipo === 'EPI' || tipo === 'EQUIPAMENTO') && (
-                    <span className="block text-xs text-muted-foreground">
-                      {subtituloItem(item, tipo)}
-                    </span>
+            {lista.itens.map((item) => {
+              const editavel = modo === 'compra' && item.status !== 'COMPRADO';
+              const edicao = edicaoCompra(item);
+              const unitarioExibido = editavel
+                ? numero(edicao.valorUnitario)
+                : valorUnitarioItem(item);
+              const totalExibido = editavel
+                ? unitarioExibido !== null
+                  ? unitarioExibido * Number(item.quantidade)
+                  : valorTotalItem(item)
+                : valorTotalItem(item);
+              return (
+                <tr key={item.id} className="border-b last:border-0">
+                  <td className="px-3 py-2">
+                    <span className="font-medium">{nomeItem(item)}</span>
+                    {(tipo === 'EPI' || tipo === 'EQUIPAMENTO') && (
+                      <span className="block text-xs text-muted-foreground">
+                        {subtituloItem(item, tipo)}
+                      </span>
+                    )}
+                  </td>
+                  {mostrarDetalhesMaterial && (
+                    <td className="px-3 py-2">{unidadeItem(item)}</td>
                   )}
-                </td>
-                {mostrarDetalhesMaterial && (
-                  <td className="px-3 py-2">{unidadeItem(item)}</td>
-                )}
-                {mostrarDetalhesMaterial && (
-                  <td className="px-3 py-2 text-right">
-                    {saldoItem(item) ?? '—'}
-                  </td>
-                )}
-                {mostrarDetalhesMaterial && (
-                  <td className="px-3 py-2 text-right">
-                    {item.material?.custoUnitario != null
-                      ? brl(item.material.custoUnitario)
-                      : '—'}
-                  </td>
-                )}
-                <td className="px-3 py-2 text-right">{fmtQtd(item.quantidade)}</td>
-                {mostrarCustoReal && (
-                  <td className="px-3 py-2 text-right">
-                    {item.custoReal != null ? brl(item.custoReal) : '—'}
-                  </td>
-                )}
-                <td className="px-3 py-2">
-                  <StatusBadge status={item.status} size="sm" />
-                </td>
-                {mostrarAcoes && (
-                  <td className="px-3 py-2 text-right">
-                    {modo === 'aprovacao' && item.status === 'PENDENTE' && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={ocupado || !acaoAprovacao}
-                        onClick={() => recusarItem(item.id)}
-                      >
-                        Recusar item
-                      </Button>
-                    )}
-                    {modo === 'aprovacao' && item.status === 'RECUSADO' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={ocupado || !acaoAprovacao}
-                        onClick={() => reverterItem(item.id)}
-                      >
-                        Reverter
-                      </Button>
-                    )}
-                    {modo === 'compra' && item.status !== 'COMPRADO' && (
-                      <Button
-                        size="sm"
+                  {mostrarDetalhesMaterial && (
+                    <td className="px-3 py-2 text-right">
+                      {saldoItem(item) ?? '—'}
+                    </td>
+                  )}
+                  <td className="px-3 py-2 text-right">{fmtQtd(item.quantidade)}</td>
+                  <td className="px-3 py-2">
+                    {editavel ? (
+                      <select
+                        value={edicao.fornecedorId}
+                        onChange={(e) =>
+                          atualizarCompra(item.id, { fornecedorId: e.target.value })
+                        }
+                        className={selectClasses}
                         disabled={ocupado || !acaoCompra}
-                        onClick={() => comprar(item)}
                       >
-                        Comprar
-                      </Button>
+                        <option value="">—</option>
+                        {fornecedores.map((f) => (
+                          <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      fornecedorItem(item)?.nome ?? '—'
                     )}
                   </td>
-                )}
-              </tr>
-            ))}
+                  <td className="px-3 py-2 text-right">
+                    {editavel ? (
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={edicao.valorUnitario}
+                        onChange={(e) =>
+                          atualizarCompra(item.id, { valorUnitario: e.target.value })
+                        }
+                        className="w-28 text-right"
+                        disabled={ocupado || !acaoCompra}
+                      />
+                    ) : unitarioExibido !== null ? (
+                      brl(unitarioExibido)
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium">
+                    {totalExibido !== null ? brl(totalExibido) : '—'}
+                  </td>
+                  <td className="px-3 py-2">
+                    {editavel ? (
+                      <Input
+                        type="date"
+                        value={edicao.dataCompra}
+                        onChange={(e) =>
+                          atualizarCompra(item.id, { dataCompra: e.target.value })
+                        }
+                        className="w-36"
+                        disabled={ocupado || !acaoCompra}
+                      />
+                    ) : (
+                      formatarData(dataCompraItem(item))
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    <StatusBadge status={item.status} size="sm" />
+                  </td>
+                  {mostrarAcoes && (
+                    <td className="px-3 py-2 text-right">
+                      {modo === 'aprovacao' && item.status === 'PENDENTE' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={ocupado || !acaoAprovacao}
+                          onClick={() => recusarItem(item.id)}
+                        >
+                          Recusar item
+                        </Button>
+                      )}
+                      {modo === 'aprovacao' && item.status === 'RECUSADO' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={ocupado || !acaoAprovacao}
+                          onClick={() => reverterItem(item.id)}
+                        >
+                          Reverter
+                        </Button>
+                      )}
+                      {modo === 'compra' && item.status !== 'COMPRADO' && (
+                        <Button
+                          size="sm"
+                          disabled={ocupado || !acaoCompra}
+                          onClick={() => comprar(item)}
+                        >
+                          Comprar
+                        </Button>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -548,7 +736,7 @@ export function ListaComprasView({
               id="item-catalogo"
               value={selItemId === '' ? '' : String(selItemId)}
               onChange={(e) =>
-                setSelItemId(
+                selecionarItemDoCatalogo(
                   e.target.value === '' ? '' : Number(e.target.value),
                 )
               }
@@ -574,6 +762,44 @@ export function ListaComprasView({
               onChange={(e) => setSelQtd(e.target.value)}
             />
           </div>
+          <div className="min-w-40 space-y-1.5">
+            <Label htmlFor="item-fornecedor">Fornecedor</Label>
+            <select
+              id="item-fornecedor"
+              value={selFornecedorId === '' ? '' : String(selFornecedorId)}
+              onChange={(e) =>
+                setSelFornecedorId(
+                  e.target.value === '' ? '' : Number(e.target.value),
+                )
+              }
+              className={selectClasses}
+            >
+              <option value="">—</option>
+              {fornecedores.map((f) => (
+                <option key={f.id} value={f.id}>{f.nome}</option>
+              ))}
+            </select>
+          </div>
+          <div className="w-32 space-y-1.5">
+            <Label htmlFor="item-valor">Valor unit.</Label>
+            <Input
+              id="item-valor"
+              type="number"
+              min="0"
+              step="any"
+              value={selValorUnitario}
+              onChange={(e) => setSelValorUnitario(e.target.value)}
+            />
+          </div>
+          <div className="w-40 space-y-1.5">
+            <Label htmlFor="item-data">Data</Label>
+            <Input
+              id="item-data"
+              type="date"
+              value={selDataCompra}
+              onChange={(e) => setSelDataCompra(e.target.value)}
+            />
+          </div>
           <Button
             onClick={adicionarAoRascunho}
             disabled={ocupado || !podeCriar || selItemId === ''}
@@ -590,7 +816,11 @@ export function ListaComprasView({
               <thead>
                 <tr className="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <th className="px-3 py-2">Item</th>
+                  <th className="px-3 py-2">Fornecedor</th>
+                  <th className="px-3 py-2 text-right">Valor unit.</th>
                   <th className="px-3 py-2 text-right">Qtd</th>
+                  <th className="px-3 py-2 text-right">Valor total</th>
+                  <th className="px-3 py-2">Data</th>
                   <th className="px-3 py-2 text-right">Ações</th>
                 </tr>
               </thead>
@@ -600,7 +830,73 @@ export function ListaComprasView({
                     <td className="px-3 py-2 font-medium">
                       {nomesRascunho.get(r.itemId) ?? `#${r.itemId}`}
                     </td>
-                    <td className="px-3 py-2 text-right">{fmtQtd(r.quantidade)}</td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={r.fornecedorId === null ? '' : String(r.fornecedorId)}
+                        onChange={(e) =>
+                          atualizarRascunho(r.itemId, {
+                            fornecedorId:
+                              e.target.value === '' ? null : Number(e.target.value),
+                          })
+                        }
+                        className={selectClasses}
+                        disabled={ocupado || !podeCriar}
+                      >
+                        <option value="">—</option>
+                        {fornecedores.map((f) => (
+                          <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={r.valorUnitario === null ? '' : String(r.valorUnitario)}
+                        onChange={(e) =>
+                          atualizarRascunho(r.itemId, {
+                            valorUnitario: numero(e.target.value),
+                          })
+                        }
+                        className="w-28 text-right"
+                        disabled={ocupado || !podeCriar}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Input
+                        type="number"
+                        min="0.001"
+                        step="any"
+                        value={String(r.quantidade)}
+                        onChange={(e) => {
+                          const qtd = Number(e.target.value);
+                          if (Number.isFinite(qtd) && qtd > 0) {
+                            atualizarRascunho(r.itemId, { quantidade: qtd });
+                          }
+                        }}
+                        className="w-20 text-right"
+                        disabled={ocupado || !podeCriar}
+                      />
+                    </td>
+                    <td className="px-3 py-2 text-right font-medium">
+                      {r.valorUnitario !== null
+                        ? brl(r.valorUnitario * r.quantidade)
+                        : '—'}
+                    </td>
+                    <td className="px-3 py-2">
+                      <Input
+                        type="date"
+                        value={r.dataCompra ? r.dataCompra.slice(0, 10) : ''}
+                        onChange={(e) =>
+                          atualizarRascunho(r.itemId, {
+                            dataCompra: e.target.value || null,
+                          })
+                        }
+                        className="w-36"
+                        disabled={ocupado || !podeCriar}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-right">
                       <Button
                         variant="ghost"
@@ -685,11 +981,16 @@ export function ListaComprasView({
               <select
                 id="novo-item-cat"
                 value={novoItemId === '' ? '' : String(novoItemId)}
-                onChange={(e) =>
-                  setNovoItemId(
-                    e.target.value === '' ? '' : Number(e.target.value),
-                  )
-                }
+                onChange={(e) => {
+                  const valor = e.target.value === '' ? '' : Number(e.target.value);
+                  setNovoItemId(valor);
+                  const op = opcoes.find((o) => o.id === valor);
+                  setNovoItemFornecedorId(op?.fornecedorId ?? '');
+                  setNovoItemValor(
+                    op?.custoUnitario != null ? String(op.custoUnitario) : '',
+                  );
+                  setNovoItemData(hoje());
+                }}
                 className={selectClasses}
               >
                 <option value="">Selecione um item...</option>
@@ -710,6 +1011,46 @@ export function ListaComprasView({
                 step="any"
                 value={novoItemQtd}
                 onChange={(e) => setNovoItemQtd(e.target.value)}
+              />
+            </div>
+            <div className="min-w-40 space-y-1.5">
+              <Label htmlFor="novo-item-fornecedor">Fornecedor</Label>
+              <select
+                id="novo-item-fornecedor"
+                value={
+                  novoItemFornecedorId === '' ? '' : String(novoItemFornecedorId)
+                }
+                onChange={(e) =>
+                  setNovoItemFornecedorId(
+                    e.target.value === '' ? '' : Number(e.target.value),
+                  )
+                }
+                className={selectClasses}
+              >
+                <option value="">—</option>
+                {fornecedores.map((f) => (
+                  <option key={f.id} value={f.id}>{f.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div className="w-32 space-y-1.5">
+              <Label htmlFor="novo-item-valor">Valor unit.</Label>
+              <Input
+                id="novo-item-valor"
+                type="number"
+                min="0"
+                step="any"
+                value={novoItemValor}
+                onChange={(e) => setNovoItemValor(e.target.value)}
+              />
+            </div>
+            <div className="w-40 space-y-1.5">
+              <Label htmlFor="novo-item-data">Data</Label>
+              <Input
+                id="novo-item-data"
+                type="date"
+                value={novoItemData}
+                onChange={(e) => setNovoItemData(e.target.value)}
               />
             </div>
             <Button

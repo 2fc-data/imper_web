@@ -339,6 +339,11 @@ export function CatalogoManager({
     e.preventDefault();
     if (!itemEditando || !editNome.trim()) return;
 
+    if (recurso === 'subcategorias' && !editCategoriaPaiId) {
+      setErroEdit('Selecione a categoria pai para a subcategoria');
+      return;
+    }
+
     setSalvandoEdit(true);
     setErroEdit(null);
     try {
@@ -933,7 +938,10 @@ export function CatalogoManager({
                 <Label>Tipo de Insumo</Label>
                 <select
                   value={editTipo}
-                  onChange={(e) => setEditTipo(e.target.value as TipoInsumo)}
+                  onChange={(e) => {
+                    setEditTipo(e.target.value as TipoInsumo);
+                    if (recurso === 'subcategorias') setEditCategoriaPaiId('');
+                  }}
                   className={selectClasses}
                 >
                   {tiposPermitidos.map((t) => (

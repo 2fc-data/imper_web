@@ -55,6 +55,53 @@ function toNum(v: number | string | null | undefined): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
+export function valorUnitarioItem(
+  item: ListaCompraItemDto,
+): number | null {
+  const direto = item.valorUnitario ?? null;
+  if (direto !== null && direto !== undefined) return toNum(direto);
+  const custo =
+    item.material?.custoUnitario ??
+    (item.epi as { custoUnitario?: number | string | null } | undefined)?.custoUnitario ??
+    (item.equipamento as { custoUnitario?: number | string | null } | undefined)?.custoUnitario ??
+    item.equipamento?.valorAquisicao ??
+    null;
+  return custo === null || custo === undefined ? null : toNum(custo);
+}
+
+export function valorTotalItem(item: ListaCompraItemDto): number | null {
+  if (item.custoReal !== null && item.custoReal !== undefined) {
+    return toNum(item.custoReal);
+  }
+  const unitario = valorUnitarioItem(item);
+  if (unitario === null) return null;
+  return unitario * toNum(item.quantidade);
+}
+
+export function fornecedorItem(
+  item: ListaCompraItemDto,
+): { id: number; nome: string } | null {
+  return (
+    item.fornecedor ??
+    item.material?.fornecedor ??
+    item.epi?.fornecedor ??
+    item.equipamento?.fornecedor ??
+    null
+  );
+}
+
+export function dataCompraItem(item: ListaCompraItemDto): string | null {
+  return item.dataCompra ?? null;
+}
+
+export function formatarData(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const dia = iso.slice(0, 10);
+  const [ano, mes, data] = dia.split('-');
+  if (!ano || !mes || !data) return dia;
+  return `${data}/${mes}/${ano}`;
+}
+
 export function totalEstimado(
   itens: ListaCompraItemDto[],
 ): number | null {
@@ -62,13 +109,9 @@ export function totalEstimado(
   let soma = 0;
   for (const item of itens) {
     if (item.status === 'RECUSADO') continue;
-    const custo =
-      item.material?.custoUnitario ??
-      (item.epi as { custoUnitario?: number | string | null } | undefined)?.custoUnitario ??
-      (item.equipamento as { custoUnitario?: number | string | null } | undefined)?.custoUnitario ??
-      null;
-    if (custo === null || custo === undefined) return null;
-    soma += toNum(custo) * toNum(item.quantidade);
+    const custo = valorUnitarioItem(item);
+    if (custo === null) return null;
+    soma += custo * toNum(item.quantidade);
   }
   return soma;
 }
