@@ -150,19 +150,20 @@ export function CascataVocabulario({
   ) => (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value ? Number(e.target.value) : null;
     const nome = nomeOpcao(lista, id);
+    const nomeUpper = nome ? nome.toUpperCase() : null;
     const base: ValorCascata = { ...valor };
     if (dim === 'verbo') {
       base.verboId = id;
-      base.verboNome = nome;
+      base.verboNome = nomeUpper;
     } else if (dim === 'objeto') {
       base.objetoId = id;
-      base.objetoNome = nome;
+      base.objetoNome = nomeUpper;
     } else if (dim === 'local') {
       base.localId = id;
-      base.localNome = nome;
+      base.localNome = nomeUpper;
     } else {
       base.caracteristicaId = id;
-      base.caracteristicaNome = nome;
+      base.caracteristicaNome = nomeUpper;
     }
     onChange(base);
   };
@@ -218,14 +219,14 @@ export function CascataVocabulario({
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>Verbo</span>
             <select
-              className={selectClasses}
+              className={`${selectClasses} uppercase`}
               value={valor.verboId ?? ''}
               onChange={mudarOpcao('verbo', verbos)}
             >
               <option value="">Selecione…</option>
               {verbos.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
+                <option key={o.id} value={o.id} className="uppercase">
+                  {o.nome.toUpperCase()}
                 </option>
               ))}
             </select>
@@ -234,14 +235,14 @@ export function CascataVocabulario({
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>Objeto</span>
             <select
-              className={selectClasses}
+              className={`${selectClasses} uppercase`}
               value={valor.objetoId ?? ''}
               onChange={mudarOpcao('objeto', objetos)}
             >
               <option value="">Selecione…</option>
               {objetos.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
+                <option key={o.id} value={o.id} className="uppercase">
+                  {o.nome.toUpperCase()}
                 </option>
               ))}
             </select>
@@ -250,14 +251,14 @@ export function CascataVocabulario({
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>Local</span>
             <select
-              className={selectClasses}
+              className={`${selectClasses} uppercase`}
               value={valor.localId ?? ''}
               onChange={mudarOpcao('local', locais)}
             >
               <option value="">(qualquer)</option>
               {locais.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
+                <option key={o.id} value={o.id} className="uppercase">
+                  {o.nome.toUpperCase()}
                 </option>
               ))}
             </select>
@@ -266,14 +267,14 @@ export function CascataVocabulario({
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>Característica</span>
             <select
-              className={selectClasses}
+              className={`${selectClasses} uppercase`}
               value={valor.caracteristicaId ?? ''}
               onChange={mudarOpcao('caracteristica', caracteristicas)}
             >
               <option value="">(qualquer)</option>
               {caracteristicas.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.nome}
+                <option key={o.id} value={o.id} className="uppercase">
+                  {o.nome.toUpperCase()}
                 </option>
               ))}
             </select>

@@ -151,6 +151,11 @@ export default function PortalOrcamentoDetalhePage() {
                       className="space-y-1 rounded-md border bg-background p-2.5 text-sm"
                     >
                       <div className="font-medium text-foreground">
+                        {atividade.titulo ? (
+                          <div className="text-xs font-bold uppercase tracking-wide text-foreground">
+                            {atividade.titulo}
+                          </div>
+                        ) : null}
                         {atividade.descricao}
                       </div>
                       {atividade.materiais.length > 0 && (

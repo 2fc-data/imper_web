@@ -16,6 +16,7 @@ export interface EpiLinhaInput {
 }
 
 export interface LinhaInput {
+  titulo?: string | null;
   verboId: number;
   objetoId: number;
   localId?: number | null;
@@ -182,6 +183,7 @@ export interface OrcamentoAtividadeRow {
   ordem: number;
   etapaId: number;
   subServicoId: number;
+  titulo?: string | null;
   descricao: string;
   verboId: number;
   objetoId: number;

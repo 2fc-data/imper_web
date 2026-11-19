@@ -39,6 +39,7 @@ export interface EpiLinhaForm {
 }
 
 export interface LinhaForm {
+  titulo?: string | null;
   verboId: number;
   objetoId: number;
   localId: number | null;
@@ -347,6 +348,7 @@ export function montarInput(state: WizardState): CriarOrcamentoInput {
       etapaId: a.etapaId,
       subServicoId: a.subServicoId,
       linhas: a.linhas.map((l) => ({
+        titulo: l.titulo ? l.titulo.trim().toUpperCase() : null,
         verboId: l.verboId,
         objetoId: l.objetoId,
         localId: l.localId,
@@ -476,6 +478,7 @@ export function estadoDeEdicao(
         ? null
         : resolver.termoNome?.(dim, id) ?? `#${id}`;
     atividade.linhas.push({
+      titulo: row.titulo ?? null,
       verboId: row.verboId,
       objetoId: row.objetoId,
       localId: row.localId,
@@ -562,8 +565,13 @@ export function cascataVazia(): ValorCascata {
 }
 
 /** Nomes capturados no momento da seleção; null em ids nulos. */
-export function linhaDaCascata(c: ValorCascata, descricao: string): LinhaForm {
+export function linhaDaCascata(
+  c: ValorCascata,
+  descricao: string,
+  titulo?: string | null,
+): LinhaForm {
   return {
+    titulo: titulo ? titulo.trim().toUpperCase() : null,
     verboId: c.verboId ?? 0,
     objetoId: c.objetoId ?? 0,
     localId: c.localId,

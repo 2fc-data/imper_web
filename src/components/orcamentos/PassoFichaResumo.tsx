@@ -117,7 +117,11 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
         return {
           etapa: li === 0 ? a.etapaNome : '',
           subServico: li === 0 ? a.subServicoNome : '',
-          descricao: l.descricao || l.objetoNome,
+          descricao: l.titulo
+            ? l.descricao
+              ? `${l.titulo} — ${l.descricao}`
+              : l.titulo
+            : l.descricao || l.objetoNome,
           quantidade: l.quantidade != null ? String(l.quantidade) : '—',
           mo: moValorTotal(l),
           materiais: materiaisValor(
@@ -407,7 +411,14 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
                           </span>
                         ) : null}
                       </td>
-                      <td className="py-1.5 pr-2">{l.descricao || l.objetoNome}</td>
+                      <td className="py-1.5 pr-2">
+                        {l.titulo ? (
+                          <div className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                            {l.titulo}
+                          </div>
+                        ) : null}
+                        <div>{l.descricao || l.objetoNome}</div>
+                      </td>
                       <td className="py-1.5 pr-2 text-right">
                         {l.quantidade ?? '—'}
                       </td>
