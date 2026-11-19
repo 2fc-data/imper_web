@@ -333,6 +333,16 @@ export type {
   ManutencaoItem,
   ManutencaoInput,
 } from './manutencoes.js';
+export {
+  ACAO_PECA_LABEL,
+  ORIGEM_PECA_LABEL,
+} from './pecas-manutencao.js';
+export type {
+  AcaoPecaManutencao,
+  OrigemPecaManutencao,
+  PecaManutencaoInput,
+  PecaManutencaoItem,
+} from './pecas-manutencao.js';
 
 // Materiais
 export {
@@ -359,6 +369,8 @@ export type {
 // Listas de compras
 export {
   obterListaCompras,
+  obterListaComprasPorId,
+  listarRodadasListaCompras,
   salvarItensListaCompras,
   enviarListaCompras,
   aprovarListaCompras,
@@ -371,6 +383,7 @@ export type {
   ListaCompraDto,
   ListaCompraItemDto,
   OpcaoCatalogo,
+  RodadaResumoDto,
 } from './listas-compras.js';
 
 // RBAC

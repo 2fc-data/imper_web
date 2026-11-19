@@ -9,7 +9,9 @@ import {
   CardTitle,
 } from '../components/ui/card';
 import { Input } from '../components/ui/input';
+import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
+import { PecasEditor } from '../components/manutencao/PecasEditor';
 import {
   atualizarManutencao,
   criarManutencao,
@@ -20,14 +22,17 @@ import {
   listarManutencoes,
   type ManutencaoInput,
   type ManutencaoItem,
+  type PecaManutencaoInput,
   type StatusManutencao,
 } from '../lib/api';
 import {
+  diasNaOficina,
   formatarData,
   formatarValor,
   fromLocalDate,
   toLocalDate,
 } from '../lib/datetime';
+import { somarMoeda } from '../lib/format';
 import { cn } from '../lib/utils';
 import {
   selectClasses,
@@ -69,7 +74,9 @@ const vazio: ManutencaoInput = {
   tipoId: 0,
   data: '',
   descricao: '',
-  custo: undefined,
+  pecas: [],
+  custoMaoDeObra: undefined,
+  dataSaida: '',
   responsavelManutencaoId: undefined,
   proximaManutencao: undefined,
 };
@@ -263,6 +270,29 @@ export default function ManutencoesAdminPage({
     carregar();
   }, [carregar]);
 
+  function pecasParaFormulario(m: ManutencaoItem): PecaManutencaoInput[] {
+    if (m.pecas && m.pecas.length > 0) {
+      return m.pecas.map((peca) => ({
+        descricao: peca.descricao,
+        acao: peca.acao,
+        origem: peca.origem,
+        valor: Number(peca.valor),
+      }));
+    }
+    const legado = Number(m.custoPecas ?? 0);
+    if (legado > 0) {
+      return [
+        {
+          descricao: 'Peças registradas anteriormente',
+          acao: 'CONSERTADA',
+          origem: null,
+          valor: legado,
+        },
+      ];
+    }
+    return [];
+  }
+
   function comecarEdicao(m: ManutencaoItem) {
     setEditando(m);
     setForm({
@@ -270,7 +300,9 @@ export default function ManutencoesAdminPage({
       tipoId: m.tipoId,
       data: toLocalDate(m.data),
       descricao: m.descricao,
-      custo: m.custo ?? undefined,
+      pecas: pecasParaFormulario(m),
+      custoMaoDeObra: Number(m.custoMaoDeObra ?? 0),
+      dataSaida: toLocalDate(m.dataSaida),
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
       proximaManutencao: toLocalDate(m.proximaManutencao),
     });
@@ -294,7 +326,9 @@ export default function ManutencoesAdminPage({
           tipoId: form.tipoId,
           data: fromLocalDate(form.data) ?? editando.data,
           descricao: form.descricao,
-          custo: form.custo ?? null,
+          pecas: form.pecas ?? [],
+          custoMaoDeObra: form.custoMaoDeObra ?? 0,
+          dataSaida: form.dataSaida ? fromLocalDate(form.dataSaida) : null,
           responsavelManutencaoId: form.responsavelManutencaoId ?? null,
           proximaManutencao: form.proximaManutencao
             ? (fromLocalDate(form.proximaManutencao) ?? null)
@@ -310,7 +344,9 @@ export default function ManutencoesAdminPage({
           tipoId: form.tipoId,
           data: fromLocalDate(form.data) ?? new Date().toISOString(),
           descricao: form.descricao,
-          custo: form.custo,
+          pecas: form.pecas ?? [],
+          custoMaoDeObra: form.custoMaoDeObra ?? 0,
+          dataSaida: form.dataSaida ? fromLocalDate(form.dataSaida) : null,
           responsavelManutencaoId: form.responsavelManutencaoId,
           proximaManutencao: form.proximaManutencao
             ? fromLocalDate(form.proximaManutencao)
@@ -335,7 +371,14 @@ export default function ManutencoesAdminPage({
   ) {
     setError(null);
     try {
-      const atualizado = await atualizarManutencao(m.id, { status });
+      const dataSaida =
+        status === 'CONCLUIDA' && !m.dataSaida
+          ? toLocalDate(new Date().toISOString())
+          : undefined;
+      const atualizado = await atualizarManutencao(m.id, {
+        status,
+        ...(dataSaida ? { dataSaida } : {}),
+      });
       setManutencoes((prev) =>
         prev.map((x) => (x.id === atualizado.id ? atualizado : x)),
       );
@@ -377,6 +420,21 @@ export default function ManutencoesAdminPage({
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(texto));
   });
+
+  const totalPecas = somarMoeda(...(form.pecas ?? []).map((p) => p.valor));
+  const custoTotal = somarMoeda(totalPecas, form.custoMaoDeObra);
+
+  function tempoOficina(m: ManutencaoItem): string | null {
+    if (m.dataSaida) {
+      const dias = diasNaOficina(m.data, m.dataSaida);
+      if (dias === null) return null;
+      return `${dias} ${dias === 1 ? 'dia' : 'dias'} na oficina`;
+    }
+    if (m.status === 'CONCLUIDA' || m.status === 'CANCELADA') return null;
+    const dias = diasNaOficina(m.data);
+    if (dias === null) return null;
+    return `Em oficina há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+  }
 
   const formulario = editando ? (
     <Card>
@@ -467,23 +525,23 @@ export default function ManutencoesAdminPage({
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="custo">Custo (R$)</Label>
+              <Label htmlFor="dataSaida">Data de saída da oficina</Label>
               <Input
-                id="custo"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                value={form.custo ?? ''}
+                id="dataSaida"
+                type="date"
+                min={form.data || undefined}
+                value={form.dataSaida ?? ''}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    custo:
-                      e.target.value === ''
-                        ? undefined
-                        : Number(e.target.value),
-                  })
+                  setForm({ ...form, dataSaida: e.target.value })
                 }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="custoMaoDeObra">Mão de obra (R$)</Label>
+              <InputMoeda
+                id="custoMaoDeObra"
+                value={form.custoMaoDeObra}
+                onChange={(v) => setForm({ ...form, custoMaoDeObra: v })}
               />
             </div>
             <div className="space-y-1.5">
@@ -498,8 +556,12 @@ export default function ManutencoesAdminPage({
               />
             </div>
           </div>
+          <PecasEditor
+            pecas={form.pecas ?? []}
+            onChange={(pecas) => setForm({ ...form, pecas })}
+          />
           <div className="space-y-1.5">
-            <Label htmlFor="descricao">Descrição</Label>
+            <Label htmlFor="descricao">Descrição dos serviços</Label>
             <textarea
               id="descricao"
               required
@@ -509,6 +571,11 @@ export default function ManutencoesAdminPage({
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span>Peças: <span className="font-medium text-foreground">{formatarValor(totalPecas)}</span></span>
+            <span>Mão de obra: <span className="font-medium text-foreground">{formatarValor(form.custoMaoDeObra ?? 0)}</span></span>
+            <span>Total do serviço: <span className="font-medium text-foreground">{formatarValor(custoTotal)}</span></span>
           </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={saving}>
@@ -616,23 +683,23 @@ export default function ManutencoesAdminPage({
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="custo">Custo (R$)</Label>
+              <Label htmlFor="dataSaida">Data de saída da oficina</Label>
               <Input
-                id="custo"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                value={form.custo ?? ''}
+                id="dataSaida"
+                type="date"
+                min={form.data || undefined}
+                value={form.dataSaida ?? ''}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    custo:
-                      e.target.value === ''
-                        ? undefined
-                        : Number(e.target.value),
-                  })
+                  setForm({ ...form, dataSaida: e.target.value })
                 }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="custoMaoDeObra">Mão de obra (R$)</Label>
+              <InputMoeda
+                id="custoMaoDeObra"
+                value={form.custoMaoDeObra}
+                onChange={(v) => setForm({ ...form, custoMaoDeObra: v })}
               />
             </div>
             <div className="space-y-1.5">
@@ -647,8 +714,12 @@ export default function ManutencoesAdminPage({
               />
             </div>
           </div>
+          <PecasEditor
+            pecas={form.pecas ?? []}
+            onChange={(pecas) => setForm({ ...form, pecas })}
+          />
           <div className="space-y-1.5">
-            <Label htmlFor="descricao">Descrição</Label>
+            <Label htmlFor="descricao">Descrição dos serviços</Label>
             <textarea
               id="descricao"
               required
@@ -658,6 +729,11 @@ export default function ManutencoesAdminPage({
               value={form.descricao}
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span>Peças: <span className="font-medium text-foreground">{formatarValor(totalPecas)}</span></span>
+            <span>Mão de obra: <span className="font-medium text-foreground">{formatarValor(form.custoMaoDeObra ?? 0)}</span></span>
+            <span>Total do serviço: <span className="font-medium text-foreground">{formatarValor(custoTotal)}</span></span>
           </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={saving}>
@@ -781,7 +857,17 @@ export default function ManutencoesAdminPage({
                   {m.responsavelManutencao && (
                     <span>Resp.: {m.responsavelManutencao.nome} · </span>
                   )}
-                  <span>Custo: {formatarValor(m.custo)}</span>
+                  {(m.pecas && m.pecas.length > 0) || Number(m.custoPecas ?? 0) > 0 ? (
+                    <span>
+                      Peças: {formatarValor(m.custoPecas)} · Mão de obra: {formatarValor(m.custoMaoDeObra)} · Total: {formatarValor(m.custo)}
+                    </span>
+                  ) : (
+                    <span>Custo: {formatarValor(m.custo)}</span>
+                  )}
+                  {m.dataSaida && (
+                    <span> · Saída: {formatarData(m.dataSaida)}</span>
+                  )}
+                  {tempoOficina(m) && <span> · {tempoOficina(m)}</span>}
                   {m.proximaManutencao && (
                     <span> · Próx.: {formatarData(m.proximaManutencao)}</span>
                   )}

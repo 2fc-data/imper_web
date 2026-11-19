@@ -8,8 +8,10 @@ import {
   listarEquipamentos,
   listarEpis,
   listarMateriais,
+  listarRodadasListaCompras,
   listarTiposDespesas,
   obterListaCompras,
+  obterListaComprasPorId,
   recusarItemListaCompras,
   recusarListaCompras,
   reverterItemListaCompras,
@@ -17,6 +19,7 @@ import {
   type ListaCompraDto,
   type ListaCompraItemDto,
   type OpcaoCatalogo,
+  type RodadaResumoDto,
 } from '../../lib/api';
 import { gerarPdfListaCompras } from '../../lib/export/lista-compras-pdf';
 import { brl } from '../../lib/format';
@@ -107,6 +110,17 @@ function itensParaRascunho(lista: ListaCompraDto | null): RascunhoItem[] {
     .filter((r) => r.itemId > 0 && r.quantidade > 0);
 }
 
+function normalizarRotulo(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]> {
   let itens: any[];
   if (tipo === 'DESPESAS_EXTRAS' || tipo === 'MATERIAL') {
@@ -116,10 +130,37 @@ async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]>
   } else {
     itens = await listarEquipamentos({ ativo: true });
   }
-  const filtrados = itens.filter(
-    (item) =>
-      tipo !== 'EPI' ? item.status === 'ATIVO' : item.ativo,
-  );
+  const filtrados = itens.filter((item) => {
+    if (tipo === 'EPI' || tipo === 'EQUIPAMENTO') return item.ativo;
+    return item.status === 'ATIVO';
+  });
+
+  if (tipo === 'EQUIPAMENTO') {
+    // Equipamentos têm `descricao` (não `nome`) e vários registros podem
+    // compartilhar a mesma descrição. Exibe o nome uma única vez por descrição.
+    const vistosId = new Set<number>();
+    const vistosNome = new Set<string>();
+    const opcoes: OpcaoCatalogo[] = [];
+    for (const e of filtrados) {
+      if (vistosId.has(e.id)) continue;
+      vistosId.add(e.id);
+      const descricao = String(e.descricao ?? '').trim();
+      if (!descricao) continue;
+      const chave = normalizarRotulo(descricao);
+      if (vistosNome.has(chave)) continue;
+      vistosNome.add(chave);
+      opcoes.push({
+        id: e.id,
+        nome: descricao,
+        unidade: null,
+        saldo: null,
+        custoUnitario: e.valorAquisicao ?? null,
+        fornecedorId: e.fornecedorId ?? null,
+      });
+    }
+    return opcoes;
+  }
+
   const mapItem = tipo === 'EPI'
     ? (e: any) => ({
         id: e.id,
@@ -199,26 +240,43 @@ export function ListaComprasView({
   const modo = modoDaLista(lista?.status ?? null);
   const ehMaterial = tipo === 'MATERIAL' || tipo === 'DESPESAS_EXTRAS';
 
+  const [rodadas, setRodadas] = useState<RodadaResumoDto[]>([]);
+  const chaveRodadas = `${tipo}|${setor}|${mesAtual}|${ano}|${tipoDespesaId}`;
+  const [selecaoRodada, setSelecaoRodada] = useState<{
+    chave: string;
+    id: number;
+  } | null>(null);
+  const rodadaSelecionadaId =
+    selecaoRodada?.chave === chaveRodadas ? selecaoRodada.id : null;
+
   const carregamentoRef = useRef(0);
   const carregarLista = useCallback(async () => {
     if (tipo === 'DESPESAS_EXTRAS' && tipoDespesaId === '') {
       setLista(null);
       setRascunho([]);
+      setRodadas([]);
       return;
     }
     const id = ++carregamentoRef.current;
-    const resposta = await obterListaCompras({
+    const chave = {
       tipo,
       setor,
       mes: mesAtual,
       ano,
       tipoDespesaId: tipoDespesaId === '' ? undefined : tipoDespesaId,
-    });
+    };
+    const [respostaRodadas, respostaLista] = await Promise.all([
+      listarRodadasListaCompras(chave),
+      rodadaSelecionadaId !== null
+        ? obterListaComprasPorId(rodadaSelecionadaId)
+        : obterListaCompras(chave),
+    ]);
     if (id !== carregamentoRef.current) return;
-    const nova = resposta ?? null;
+    setRodadas(respostaRodadas);
+    const nova = respostaLista ?? null;
     setLista(nova);
     setRascunho(itensParaRascunho(nova));
-  }, [tipo, setor, mesAtual, ano, tipoDespesaId]);
+  }, [tipo, setor, mesAtual, ano, tipoDespesaId, rodadaSelecionadaId]);
 
   useEffect(() => {
     let cancelado = false;
@@ -453,6 +511,7 @@ export function ListaComprasView({
       setErro('Selecione um tipo de despesa para criar a lista.');
       return;
     }
+    setSelecaoRodada(null);
     await executar(() =>
       salvarItensListaCompras(
         tipo,
@@ -535,34 +594,45 @@ export function ListaComprasView({
     }
   }
 
-  async function comprar(item: ListaCompraItemDto) {
-    if (!lista) return;
-    if (!window.confirm(`Confirmar compra de "${nomeItem(item)}"?`)) return;
-    const edicao = edicaoCompra(item);
-    const valorUnitario = numero(edicao.valorUnitario);
-    const dataCompra = edicao.dataCompra || null;
-    const fornecedorId =
-      edicao.fornecedorId === '' ? null : Number(edicao.fornecedorId);
-    let custoReal: number | undefined;
-    if (valorUnitario === null) {
-      const bruto = window.prompt('Custo real total (deixe vazio se não souber):');
-      if (bruto !== null && bruto.trim() !== '') {
-        const n = Number(bruto.trim().replace(',', '.'));
-        if (!Number.isFinite(n) || n <= 0) {
-          setErro(`Custo real inválido: "${bruto.trim()}".`);
-          return;
-        }
-        custoReal = n;
-      }
-    }
-    await executar(() =>
-      comprarItemListaCompras(lista.id, item.id, {
-        custoReal,
-        valorUnitario: valorUnitario ?? undefined,
-        fornecedorId,
-        dataCompra,
-      }),
+  function itensPendentesCompra(): ListaCompraItemDto[] {
+    if (!lista) return [];
+    return lista.itens.filter(
+      (item) => item.status !== 'COMPRADO' && item.status !== 'RECUSADO',
     );
+  }
+
+  async function comprarLista() {
+    if (!lista) return;
+    const pendentes = itensPendentesCompra();
+    if (pendentes.length === 0) return;
+    if (
+      !window.confirm(
+        `Confirmar compra de ${pendentes.length} item(ns) da lista?`,
+      )
+    ) {
+      return;
+    }
+    setOcupado(true);
+    setErro(null);
+    try {
+      for (const item of pendentes) {
+        const edicao = edicaoCompra(item);
+        const valorUnitario = numero(edicao.valorUnitario);
+        const dataCompra = edicao.dataCompra || null;
+        const fornecedorId =
+          edicao.fornecedorId === '' ? null : Number(edicao.fornecedorId);
+        await comprarItemListaCompras(lista.id, item.id, {
+          valorUnitario: valorUnitario ?? undefined,
+          fornecedorId,
+          dataCompra,
+        });
+      }
+    } catch (e) {
+      setErro(mensagemErro(e));
+    } finally {
+      await recarregarSilencioso();
+      setOcupado(false);
+    }
   }
 
   function tabelaItens() {
@@ -571,7 +641,7 @@ export function ListaComprasView({
       return <p className="text-sm text-muted-foreground">Nenhum item na lista.</p>;
     }
     const mostrarDetalhesMaterial = ehMaterial;
-    const mostrarAcoes = modo === 'aprovacao' || modo === 'compra';
+    const mostrarAcoes = modo === 'aprovacao';
     const acaoAprovacao = podeAprovarPerm && podeAprovar(modo);
     const acaoCompra = podeAprovarPerm && podeComprar(modo);
 
@@ -706,15 +776,6 @@ export function ListaComprasView({
                           Reverter
                         </Button>
                       )}
-                      {modo === 'compra' && item.status !== 'COMPRADO' && (
-                        <Button
-                          size="sm"
-                          disabled={ocupado || !acaoCompra}
-                          onClick={() => comprar(item)}
-                        >
-                          Comprar
-                        </Button>
-                      )}
                     </td>
                   )}
                 </tr>
@@ -729,8 +790,8 @@ export function ListaComprasView({
   function conteudoEdicao() {
     return (
       <>
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-56 flex-1 space-y-1.5">
+        <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,2.25fr)_5.5rem_minmax(0,1.4fr)_7.5rem_9.5rem_auto]">
+          <div className="col-span-2 space-y-1.5 sm:col-span-3 lg:col-span-1">
             <Label htmlFor="item-catalogo">Item do catálogo</Label>
             <select
               id="item-catalogo"
@@ -751,7 +812,7 @@ export function ListaComprasView({
               ))}
             </select>
           </div>
-          <div className="w-24 space-y-1.5">
+          <div className="space-y-1.5">
             <Label htmlFor="item-qtd">Qtd</Label>
             <Input
               id="item-qtd"
@@ -762,8 +823,8 @@ export function ListaComprasView({
               onChange={(e) => setSelQtd(e.target.value)}
             />
           </div>
-          <div className="min-w-40 space-y-1.5">
-            <Label htmlFor="item-fornecedor">Fornecedor</Label>
+          <div className="space-y-1.5">
+              <Label htmlFor="item-fornecedor">Fornecedor</Label>
             <select
               id="item-fornecedor"
               value={selFornecedorId === '' ? '' : String(selFornecedorId)}
@@ -780,7 +841,7 @@ export function ListaComprasView({
               ))}
             </select>
           </div>
-          <div className="w-32 space-y-1.5">
+          <div className="space-y-1.5">
             <Label htmlFor="item-valor">Valor unit.</Label>
             <Input
               id="item-valor"
@@ -791,8 +852,8 @@ export function ListaComprasView({
               onChange={(e) => setSelValorUnitario(e.target.value)}
             />
           </div>
-          <div className="w-40 space-y-1.5">
-            <Label htmlFor="item-data">Data</Label>
+          <div className="space-y-1.5">
+              <Label htmlFor="item-data">Data</Label>
             <Input
               id="item-data"
               type="date"
@@ -801,6 +862,7 @@ export function ListaComprasView({
             />
           </div>
           <Button
+            className="col-span-2 h-11 self-end sm:col-span-1"
             onClick={adicionarAoRascunho}
             disabled={ocupado || !podeCriar || selItemId === ''}
           >
@@ -809,7 +871,9 @@ export function ListaComprasView({
         </div>
 
         {rascunho.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum item no rascunho.</p>
+          <p className="rounded-lg border bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+            Nenhum item no rascunho.
+          </p>
         ) : (
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
@@ -918,7 +982,7 @@ export function ListaComprasView({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 border-t pt-3 sm:justify-end">
           <Button onClick={salvarRascunho} disabled={ocupado || !podeCriar}>
             Salvar
           </Button>
@@ -975,8 +1039,8 @@ export function ListaComprasView({
             + novo item
           </button>
         ) : (
-          <div className="flex flex-wrap items-end gap-2 rounded-lg border p-3">
-            <div className="min-w-56 flex-1 space-y-1.5">
+          <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,2.25fr)_5.5rem_minmax(0,1.4fr)_7.5rem_9.5rem_auto]">
+            <div className="col-span-2 space-y-1.5 sm:col-span-3 lg:col-span-1">
               <Label htmlFor="novo-item-cat">Item do catálogo</Label>
               <select
                 id="novo-item-cat"
@@ -1002,7 +1066,7 @@ export function ListaComprasView({
                 ))}
               </select>
             </div>
-            <div className="w-24 space-y-1.5">
+            <div className="space-y-1.5">
               <Label htmlFor="novo-item-qtd">Qtd</Label>
               <Input
                 id="novo-item-qtd"
@@ -1013,7 +1077,7 @@ export function ListaComprasView({
                 onChange={(e) => setNovoItemQtd(e.target.value)}
               />
             </div>
-            <div className="min-w-40 space-y-1.5">
+            <div className="space-y-1.5">
               <Label htmlFor="novo-item-fornecedor">Fornecedor</Label>
               <select
                 id="novo-item-fornecedor"
@@ -1033,7 +1097,7 @@ export function ListaComprasView({
                 ))}
               </select>
             </div>
-            <div className="w-32 space-y-1.5">
+            <div className="space-y-1.5">
               <Label htmlFor="novo-item-valor">Valor unit.</Label>
               <Input
                 id="novo-item-valor"
@@ -1044,7 +1108,7 @@ export function ListaComprasView({
                 onChange={(e) => setNovoItemValor(e.target.value)}
               />
             </div>
-            <div className="w-40 space-y-1.5">
+            <div className="space-y-1.5">
               <Label htmlFor="novo-item-data">Data</Label>
               <Input
                 id="novo-item-data"
@@ -1053,17 +1117,48 @@ export function ListaComprasView({
                 onChange={(e) => setNovoItemData(e.target.value)}
               />
             </div>
-            <Button
-              onClick={adicionarItemNaAprovacao}
-              disabled={ocupado || !podeCriar || !podeAprovar(modo) || novoItemId === ''}
-            >
-              Adicionar
-            </Button>
-            <Button variant="ghost" onClick={() => setNovoItemAberto(false)}>
-              Cancelar
-            </Button>
+            <div className="col-span-2 flex items-end gap-2 sm:col-span-1">
+              <Button
+                className="h-11"
+                onClick={adicionarItemNaAprovacao}
+                disabled={ocupado || !podeCriar || !podeAprovar(modo) || novoItemId === ''}
+              >
+                Adicionar
+              </Button>
+              <Button
+                className="h-11"
+                variant="ghost"
+                onClick={() => setNovoItemAberto(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  function conteudoCompra() {
+    const acao = podeAprovarPerm && podeComprar(modo);
+    const pendentes = itensPendentesCompra().length;
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-sm text-muted-foreground">
+            {lista?.itens.length ?? 0} item(ns) · {pendentes} pendente(s)
+          </span>
+          {acao && (
+            <Button
+              onClick={comprarLista}
+              disabled={ocupado || !lista || pendentes === 0}
+            >
+              Comprar
+            </Button>
+          )}
+        </div>
+
+        {tabelaItens()}
       </div>
     );
   }
@@ -1074,6 +1169,13 @@ export function ListaComprasView({
       ? `${titulo} - ${tipoDespesaObj.nome}`
       : titulo;
 
+  const indiceRodada = lista
+    ? rodadas.findIndex((r) => r.id === lista.id)
+    : -1;
+  const numeroRodada = indiceRodada >= 0 ? indiceRodada + 1 : null;
+  const ultimaRodada = rodadas.length > 0 ? rodadas[rodadas.length - 1] : null;
+  const podeNovaCompra = podeCriar && ultimaRodada?.status === 'COMPRADA';
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -1083,13 +1185,16 @@ export function ListaComprasView({
           </h1>
           <p className="text-sm text-muted-foreground">
             {rotuloSetor} · {MESES_CURTOS[mesAtual - 1]}/{ano}
+            {numeroRodada !== null && ` · Compra ${numeroRodada}`}
           </p>
         </div>
         {modo === 'historico' && lista && estaComprada(lista) && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => gerarPdfListaCompras(lista, tituloExibido)}
+            onClick={() =>
+              gerarPdfListaCompras(lista, tituloExibido, numeroRodada ?? undefined)
+            }
           >
             Baixar PDF
           </Button>
@@ -1192,6 +1297,46 @@ export function ListaComprasView({
         </div>
       </div>
 
+      {(rodadas.length > 1 || podeNovaCompra) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3 shadow-sm">
+          {rodadas.length > 1 && (
+            <>
+              <Label htmlFor="rodada-filtro" className="text-sm font-medium">
+                Rodada:
+              </Label>
+              <select
+                id="rodada-filtro"
+                value={lista ? String(lista.id) : ''}
+                onChange={(e) => {
+                  const escolhido = Number(e.target.value);
+                  if (Number.isFinite(escolhido) && escolhido > 0) {
+                    setSelecaoRodada({ chave: chaveRodadas, id: escolhido });
+                  }
+                }}
+                className={selectClasses}
+                disabled={ocupado}
+              >
+                {rodadas.map((r, i) => (
+                  <option key={r.id} value={r.id}>
+                    {`Compra ${i + 1} · ${ROTULOS_STATUS[r.status]} · ${formatarData(r.createdAt)}`}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          {podeNovaCompra && (
+            <Button
+              size="sm"
+              className="ml-auto"
+              onClick={criarListaMes}
+              disabled={ocupado}
+            >
+              Nova compra
+            </Button>
+          )}
+        </div>
+      )}
+
       {carregando ? (
         <p className="py-10 text-center text-sm text-muted-foreground">
           Carregando...
@@ -1220,7 +1365,10 @@ export function ListaComprasView({
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <CardTitle className="text-base">Itens da lista</CardTitle>
+                <CardTitle className="text-base">
+                  Itens da lista
+                  {numeroRodada !== null && ` · Compra ${numeroRodada}`}
+                </CardTitle>
                 <StatusBadge
                   status={lista.status}
                   labelOverride={ROTULOS_STATUS[lista.status]}
@@ -1260,7 +1408,8 @@ export function ListaComprasView({
           <CardContent className="space-y-4">
             {modo === 'edicao' && conteudoEdicao()}
             {modo === 'aprovacao' && conteudoAprovacao()}
-            {(modo === 'compra' || modo === 'historico') && tabelaItens()}
+            {modo === 'compra' && conteudoCompra()}
+            {modo === 'historico' && tabelaItens()}
           </CardContent>
         </Card>
       )}

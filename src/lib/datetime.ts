@@ -15,6 +15,11 @@ export function fromLocalDateTime(value: string): string | undefined {
 const CALENDARIO =
   /^(\d{4}-\d{2}-\d{2})(?:T00:00:00(?:\.000)?(?:Z|[+-]\d{2}:\d{2}))?$/;
 
+export function dataLocalHoje(base: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+}
+
 export function toLocalDate(iso: string | null): string {
   if (!iso) return '';
   const calendario = CALENDARIO.exec(iso);
@@ -45,4 +50,32 @@ export function formatarValor(value: number | string | null): string {
   const n = typeof value === 'string' ? Number(value) : value;
   if (n === null || Number.isNaN(n)) return '—';
   return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+/**
+ * Calcula a quantidade de dias entre a entrada e a saída da oficina.
+ * Sem saída, conta até hoje (ex.: "Em oficina há N dias"). Datas no
+ * formato ISO/date-only são tratadas como calendário (UTC).
+ */
+export function diasNaOficina(
+  entrada: string | null | undefined,
+  saida?: string | null,
+  hoje: Date = new Date(),
+): number | null {
+  const inicio = toLocalDate(entrada ?? null);
+  if (!inicio) return null;
+
+  const fim = saida ? toLocalDate(saida) : '';
+  if (saida && !fim) return null;
+
+  const [anoInicio, mesInicio, diaInicio] = inicio.split('-').map(Number);
+  const inicioMs = Date.UTC(anoInicio, mesInicio - 1, diaInicio);
+  const fimMs = fim
+    ? (() => {
+        const [anoFim, mesFim, diaFim] = fim.split('-').map(Number);
+        return Date.UTC(anoFim, mesFim - 1, diaFim);
+      })()
+    : Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+
+  return Math.max(0, Math.round((fimMs - inicioMs) / 86_400_000));
 }

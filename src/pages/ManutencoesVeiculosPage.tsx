@@ -11,6 +11,7 @@ import {
 import { Input } from '../components/ui/input';
 import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
+import { PecasEditor } from '../components/manutencao/PecasEditor';
 import {
   atualizarManutencaoVeiculo,
   criarManutencaoVeiculo,
@@ -19,8 +20,15 @@ import {
   type ManutencaoVeiculoItem,
   listarManutencoesVeiculos,
   type ManutencoesVeiculosLookups,
+  type PecaManutencaoInput,
 } from '../lib/api';
-import { formatarData, formatarValor, fromLocalDate, toLocalDate } from '../lib/datetime';
+import {
+  diasNaOficina,
+  formatarData,
+  formatarValor,
+  fromLocalDate,
+  toLocalDate,
+} from '../lib/datetime';
 import { cn } from '../lib/utils';
 import { paraNumeroMoeda, somarMoeda } from '../lib/format';
 import {
@@ -55,8 +63,9 @@ const emptyForm: ManutencaoVeiculoInput = {
   data: '',
   descricao: '',
   local: '',
-  custoPecas: undefined,
+  pecas: [],
   custoMaoDeObra: undefined,
+  dataSaida: '',
   proximaManutencao: '',
   status: '',
   responsavelManutencaoId: undefined,
@@ -108,6 +117,29 @@ export default function ManutencoesVeiculosPage({
     }
   }, [viewAtiva]);
 
+  function pecasParaFormulario(m: ManutencaoVeiculoItem): PecaManutencaoInput[] {
+    if (m.pecas && m.pecas.length > 0) {
+      return m.pecas.map((peca) => ({
+        descricao: peca.descricao,
+        acao: peca.acao,
+        origem: peca.origem,
+        valor: paraNumeroMoeda(peca.valor),
+      }));
+    }
+    const legado = paraNumeroMoeda(m.custoPecas) ?? 0;
+    if (legado > 0) {
+      return [
+        {
+          descricao: 'Peças registradas anteriormente',
+          acao: 'CONSERTADA',
+          origem: null,
+          valor: legado,
+        },
+      ];
+    }
+    return [];
+  }
+
   function comecarEdicao(m: ManutencaoVeiculoItem) {
     setEditando(m);
     setForm({
@@ -116,8 +148,9 @@ export default function ManutencoesVeiculosPage({
       data: toLocalDate(m.data),
       descricao: m.descricao,
       local: m.local ?? undefined,
-      custoPecas: paraNumeroMoeda(m.custoPecas) ?? undefined,
+      pecas: pecasParaFormulario(m),
       custoMaoDeObra: paraNumeroMoeda(m.custoMaoDeObra) ?? undefined,
+      dataSaida: toLocalDate(m.dataSaida),
       proximaManutencao: toLocalDate(m.proximaManutencao),
       status: m.status,
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
@@ -145,8 +178,9 @@ export default function ManutencoesVeiculosPage({
         data: fromLocalDate(form.data) ?? new Date().toISOString(),
         descricao: form.descricao,
         local: form.local || undefined,
-        custoPecas: form.custoPecas ?? 0,
+        pecas: form.pecas ?? [],
         custoMaoDeObra: form.custoMaoDeObra ?? 0,
+        dataSaida: form.dataSaida ? fromLocalDate(form.dataSaida) : null,
         proximaManutencao: form.proximaManutencao
           ? fromLocalDate(form.proximaManutencao)
           : undefined,
@@ -172,7 +206,14 @@ export default function ManutencoesVeiculosPage({
   async function handleMudarStatus(m: ManutencaoVeiculoItem, status: string) {
     setError(null);
     try {
-      const atualizado = await atualizarManutencaoVeiculo(m.id, { status });
+      const dataSaida =
+        status === 'CONCLUIDA' && !m.dataSaida
+          ? toLocalDate(new Date().toISOString())
+          : undefined;
+      const atualizado = await atualizarManutencaoVeiculo(m.id, {
+        status,
+        ...(dataSaida ? { dataSaida } : {}),
+      });
       setManutencoes((prev) => prev.map((x) => (x.id === atualizado.id ? atualizado : x)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao atualizar status');
@@ -196,7 +237,20 @@ export default function ManutencoesVeiculosPage({
       .some((v) => String(v).toLowerCase().includes(texto));
   });
 
-  const custoTotalCalculado = somarMoeda(form.custoPecas, form.custoMaoDeObra);
+  const totalPecas = somarMoeda(...(form.pecas ?? []).map((p) => p.valor));
+  const custoTotalCalculado = somarMoeda(totalPecas, form.custoMaoDeObra);
+
+  function tempoOficina(m: ManutencaoVeiculoItem): string | null {
+    if (m.dataSaida) {
+      const dias = diasNaOficina(m.data, m.dataSaida);
+      if (dias === null) return null;
+      return `${dias} ${dias === 1 ? 'dia' : 'dias'} na oficina`;
+    }
+    if (m.status === 'CONCLUIDA' || m.status === 'CANCELADA') return null;
+    const dias = diasNaOficina(m.data);
+    if (dias === null) return null;
+    return `Em oficina há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+  }
 
   const formulario = (
     <Card>
@@ -265,11 +319,13 @@ export default function ManutencoesVeiculosPage({
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="custoPecas">Custo peças (R$)</Label>
-              <InputMoeda
-                id="custoPecas"
-                value={form.custoPecas}
-                onChange={(v) => setForm({ ...form, custoPecas: v })}
+              <Label htmlFor="dataSaida">Data de saída da oficina</Label>
+              <Input
+                id="dataSaida"
+                type="date"
+                min={form.data || undefined}
+                value={form.dataSaida ?? ''}
+                onChange={(e) => setForm({ ...form, dataSaida: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
@@ -318,8 +374,12 @@ export default function ManutencoesVeiculosPage({
               />
             </div>
           </div>
+          <PecasEditor
+            pecas={form.pecas ?? []}
+            onChange={(pecas) => setForm({ ...form, pecas })}
+          />
           <div className="space-y-1.5">
-            <Label htmlFor="descricao">Descrição</Label>
+            <Label htmlFor="descricao">Descrição dos serviços</Label>
             <textarea
               id="descricao"
               required
@@ -330,12 +390,14 @@ export default function ManutencoesVeiculosPage({
               onChange={(e) => setForm({ ...form, descricao: e.target.value })}
             />
           </div>
-          <p className="text-sm text-muted-foreground">
-            Custo total calculado: <span className="font-medium">{formatarValor(custoTotalCalculado)}</span>
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span>Peças: <span className="font-medium text-foreground">{formatarValor(totalPecas)}</span></span>
+            <span>Mão de obra: <span className="font-medium text-foreground">{formatarValor(form.custoMaoDeObra ?? 0)}</span></span>
+            <span>Total do serviço: <span className="font-medium text-foreground">{formatarValor(custoTotalCalculado)}</span></span>
+          </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={saving}>
-              {saving ? 'Salvando...' : editando ? 'Salvar alterações' : 'Cadastrar'}
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
             {editando && (
               <Button type="button" variant="outline" onClick={cancelarEdicao}>Cancelar</Button>
@@ -414,6 +476,12 @@ export default function ManutencoesVeiculosPage({
                     <span>
                       Peças: {formatarValor(m.custoPecas)} · Mão de obra: {formatarValor(m.custoMaoDeObra)} · Total: {formatarValor(m.custoTotal)}
                     </span>
+                    {m.dataSaida && (
+                      <span> · Saída: {formatarData(m.dataSaida)}</span>
+                    )}
+                    {tempoOficina(m) && (
+                      <span> · {tempoOficina(m)}</span>
+                    )}
                     {m.proximaManutencao && (
                       <span> · Próx.: {formatarData(m.proximaManutencao)}</span>
                     )}

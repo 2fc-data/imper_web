@@ -68,7 +68,7 @@ export function StorytellingPanel({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-foreground">
+              <h3 className="text-xl font-bold text-foreground">
                 Diagnóstico Executivo & Storytelling
               </h3>
               <span
@@ -80,7 +80,7 @@ export function StorytellingPanel({
                 {status.rotulo}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Leitura analítica automatizada sobre causas, riscos e oportunidades.
             </p>
           </div>
@@ -88,7 +88,7 @@ export function StorytellingPanel({
       </div>
 
       {/* Frase-Chave de Destaque Executivo */}
-      <div className="mt-3.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs font-medium text-foreground">
+      <div className="mt-3.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-base font-medium text-foreground">
         <span className="font-semibold text-primary">Síntese:</span> {resumoExecutivo}
       </div>
 
@@ -98,11 +98,11 @@ export function StorytellingPanel({
         <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 flex flex-col">
           <div className="flex items-center gap-2 mb-2.5">
             <div className="h-2 w-2 rounded-full bg-sky-500" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-sky-900 dark:text-sky-300">
+            <h4 className="text-base font-bold uppercase tracking-wider text-sky-900 dark:text-sky-300">
               1. Cenário & Fatos
             </h4>
           </div>
-          <ul className="space-y-2 text-xs text-muted-foreground flex-1">
+          <ul className="space-y-2 text-base text-muted-foreground flex-1">
             {cenario.map((item, idx) => (
               <li key={idx} className="flex items-start gap-1.5">
                 <span className="text-sky-500 font-bold leading-none mt-0.5">•</span>
@@ -116,11 +116,11 @@ export function StorytellingPanel({
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex flex-col">
           <div className="flex items-center gap-2 mb-2.5">
             <div className="h-2 w-2 rounded-full bg-amber-500" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+            <h4 className="text-base font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
               2. Diagnóstico & Impacto
             </h4>
           </div>
-          <ul className="space-y-2 text-xs text-muted-foreground flex-1">
+          <ul className="space-y-2 text-base text-muted-foreground flex-1">
             {diagnostico.map((item, idx) => (
               <li key={idx} className="flex items-start gap-1.5">
                 <span className="text-amber-500 font-bold leading-none mt-0.5">•</span>
@@ -134,11 +134,11 @@ export function StorytellingPanel({
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex flex-col">
           <div className="flex items-center gap-2 mb-2.5">
             <div className="h-2 w-2 rounded-full bg-emerald-500" />
-            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">
+            <h4 className="text-base font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300">
               3. Ações Recomendadas
             </h4>
           </div>
-          <ul className="space-y-2 text-xs text-muted-foreground flex-1">
+          <ul className="space-y-2 text-base text-muted-foreground flex-1">
             {recomendacoes.map((item, idx) => (
               <li key={idx} className="flex items-start gap-1.5">
                 <span className="text-emerald-500 font-bold leading-none mt-0.5">✓</span>

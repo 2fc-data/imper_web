@@ -1,5 +1,9 @@
 import { api } from './core.js';
 import type { LookupItem } from './lookups.js';
+import type {
+  PecaManutencaoInput,
+  PecaManutencaoItem,
+} from './pecas-manutencao.js';
 
 export interface VeiculoItem {
   id: number;
@@ -53,6 +57,8 @@ export interface RegistroKmItem {
   kmPercorrido: number;
   odometro: number;
   observacao: string | null;
+  numeroCupon: string | null;
+  numeroSerie: string | null;
   registradoPorId: number | null;
   registradoPor?: { id: number; nome: string } | null;
   colaboradorId: number | null;
@@ -64,6 +70,8 @@ export interface RegistroKmInput {
   data?: string;
   odometro: number;
   observacao?: string;
+  numeroCupon?: string | null;
+  numeroSerie?: string | null;
   colaboradorId?: number;
 }
 
@@ -106,9 +114,11 @@ export interface ManutencaoVeiculoItem {
   custoPecas: number;
   custoMaoDeObra: number;
   custoTotal: number;
+  dataSaida: string | null;
   proximaManutencao: string | null;
   status: string;
   responsavelManutencaoId: number | null;
+  pecas?: PecaManutencaoItem[];
   veiculo?: { id: number; codigo: string; nome: string; placa: string };
   tipo?: LookupItem | null;
   responsavelManutencao?: { id: number; nome: string } | null;
@@ -122,6 +132,8 @@ export interface ManutencaoVeiculoInput {
   local?: string;
   custoPecas?: number;
   custoMaoDeObra?: number;
+  dataSaida?: string | null;
+  pecas?: PecaManutencaoInput[];
   proximaManutencao?: string;
   status?: string;
   responsavelManutencaoId?: number;

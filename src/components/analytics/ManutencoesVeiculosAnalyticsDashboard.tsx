@@ -20,10 +20,13 @@ import {
   AnalyticsFilterBar,
   type FiltrosAnalyticsState,
 } from './AnalyticsFilterBar';
-import { exportarCsv, exportarPdfRelatorio } from './exportReport';
+import { exportarCsvSecoes, exportarPdfRelatorio } from './exportReport';
 import { KpiCard } from './KpiCard';
 import { StorytellingPanel } from './StorytellingPanel';
 import { ChartStorytellingNote } from './ChartStorytellingNote';
+import { analisarPecasEServicos } from './pecasServicosAnalytics';
+import { criarSecoesPecasServicos, detalharPecas } from './pecasServicosSeccoes';
+import { PecasServicosAnalyticsSection } from './PecasServicosAnalyticsSection';
 
 const STATUS_LABEL: Record<string, string> = {
   PENDENTE: 'Pendente',
@@ -148,6 +151,11 @@ export function ManutencoesVeiculosAnalyticsDashboard({
 
   const ticketMedioManutencao = total > 0 ? custoTotal / total : 0;
 
+  const analisePecasServicos = useMemo(
+    () => analisarPecasEServicos(manutencoesFiltradas),
+    [manutencoesFiltradas],
+  );
+
   // Gráfico 1: Custos por Veículo (Barras)
   const dadosCustosPorVeiculo = useMemo(() => {
     const agrupado: Record<string, { rotulo: string; nome: string; placa: string; custo: number }> = {};
@@ -231,7 +239,19 @@ export function ManutencoesVeiculosAnalyticsDashboard({
 
   // Exportações
   const handleExportarCsv = () => {
-    const colunas = ['ID', 'Veículo', 'Tipo', 'Data', 'Status', 'Peças (R$)', 'Mão de Obra (R$)', 'Total (R$)'];
+    const colunas = [
+      'ID',
+      'Veículo',
+      'Tipo',
+      'Data',
+      'Status',
+      'Descrição dos serviços',
+      'Qtd. peças',
+      'Detalhe das peças',
+      'Peças (R$)',
+      'Mão de Obra (R$)',
+      'Total (R$)',
+    ];
     const linhas = manutencoesFiltradas.map((m) => {
       const v = m.veiculo || lookups?.veiculos?.find((x) => x.id === m.veiculoId);
       const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${m.veiculoId}`;
@@ -241,25 +261,40 @@ export function ManutencoesVeiculosAnalyticsDashboard({
         m.tipo?.nome ?? '—',
         parseData(m.data).toLocaleDateString('pt-BR'),
         STATUS_LABEL[m.status] ?? m.status,
+        m.descricao,
+        m.pecas?.length ?? 0,
+        detalharPecas(m.pecas),
         Number(m.custoPecas || 0).toFixed(2),
         Number(m.custoMaoDeObra || 0).toFixed(2),
         (Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0)).toFixed(2),
       ];
     });
-    exportarCsv('relatorio_manutencoes_frota', colunas, linhas);
+    exportarCsvSecoes('relatorio_manutencoes_frota', [
+      { titulo: 'Ordens de Manutenção', colunas, linhas },
+      ...criarSecoesPecasServicos(analisePecasServicos),
+    ]);
   };
 
   const handleExportarPdf = () => {
-    const colunas = ['ID', 'Veículo', 'Tipo', 'Data', 'Status', 'Total'];
+    const colunas = [
+      'Data',
+      'Veículo',
+      'Descrição dos serviços',
+      'Peças detectadas',
+      'Peças (R$)',
+      'M.O. (R$)',
+      'Total (R$)',
+    ];
     const linhas = manutencoesFiltradas.map((m) => {
       const v = m.veiculo || lookups?.veiculos?.find((x) => x.id === m.veiculoId);
       const veicLabel = v ? `${v.nome} — ${v.placa}` : `#${m.veiculoId}`;
       return [
-        m.id,
-        veicLabel,
-        m.tipo?.nome ?? '—',
         parseData(m.data).toLocaleDateString('pt-BR'),
-        STATUS_LABEL[m.status] ?? m.status,
+        veicLabel,
+        m.descricao || '—',
+        detalharPecas(m.pecas, 100),
+        `R$ ${Number(m.custoPecas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        `R$ ${Number(m.custoMaoDeObra || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
         `R$ ${(Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
       ];
     });
@@ -288,6 +323,7 @@ export function ManutencoesVeiculosAnalyticsDashboard({
         diagnostico: storytelling.diagnostico,
         recomendacoes: storytelling.recomendacoes,
       },
+      criarSecoesPecasServicos(analisePecasServicos),
     );
   };
 
@@ -507,6 +543,8 @@ export function ManutencoesVeiculosAnalyticsDashboard({
           />
         </div>
       </div>
+
+      <PecasServicosAnalyticsSection analise={analisePecasServicos} />
     </div>
   );
 }

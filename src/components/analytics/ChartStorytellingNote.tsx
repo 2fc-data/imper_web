@@ -44,7 +44,7 @@ export function ChartStorytellingNote({
   return (
     <div
       className={cn(
-        'mt-4 rounded-xl border p-3.5 text-xs transition-colors',
+        'mt-4 rounded-xl border p-3.5 text-base transition-colors',
         cfg.borda,
         className,
       )}

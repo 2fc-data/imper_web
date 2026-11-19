@@ -1,6 +1,10 @@
 import { api } from './core.js';
 import type { StatusManutencao } from '../../schemas/index.js';
 import type { LookupItem } from './lookups.js';
+import type {
+  PecaManutencaoInput,
+  PecaManutencaoItem,
+} from './pecas-manutencao.js';
 
 export interface ManutencaoItem {
   id: number;
@@ -9,6 +13,9 @@ export interface ManutencaoItem {
   data: string;
   descricao: string;
   custo: number | null;
+  custoPecas: number;
+  custoMaoDeObra: number;
+  dataSaida: string | null;
   status: StatusManutencao;
   responsavelManutencaoId: number;
   proximaManutencao: string | null;
@@ -22,6 +29,7 @@ export interface ManutencaoItem {
   };
   tipo?: LookupItem | null;
   responsavelManutencao?: { id: number; nome: string } | null;
+  pecas?: PecaManutencaoItem[];
 }
 
 export interface ManutencaoInput {
@@ -30,6 +38,9 @@ export interface ManutencaoInput {
   data: string;
   descricao: string;
   custo?: number;
+  custoMaoDeObra?: number;
+  dataSaida?: string | null;
+  pecas?: PecaManutencaoInput[];
   responsavelManutencaoId?: number;
   proximaManutencao?: string;
 }

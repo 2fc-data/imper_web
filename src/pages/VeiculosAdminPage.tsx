@@ -506,7 +506,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
             <textarea id="observacoes" className={textareaClasses} value={form.observacoes ?? ''} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           </div>
           <div className="flex gap-2">
-            <Button type="submit" disabled={saving}>{saving ? 'Salvando...' : editando ? 'Salvar alterações' : 'Cadastrar'}</Button>
+            <Button type="submit" disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
             {editando && (
               <Button type="button" variant="outline" onClick={() => { cancelarEdicao(); onViewChange('lista'); }}>Cancelar</Button>
             )}

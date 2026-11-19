@@ -170,31 +170,11 @@ export default function DashboardPage() {
 
       {podeVerObras && (
         <m.section variants={fadeUp} className="space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">Panorama de obras</h2>
-              <p className="text-sm text-muted-foreground">
-                Indicadores, tendências e obras que exigem atenção.
-              </p>
-            </div>
-            <Link
-              to="/obras?aba=analises"
-              className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              Abrir análises
-              <svg
-                viewBox="0 0 24 24"
-                className="h-3.5 w-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold tracking-tight">Panorama de obras</h2>
+            <p className="text-sm text-muted-foreground">
+              Indicadores, tendências e obras que exigem atenção.
+            </p>
           </div>
           <ObrasAnalyticsDashboard />
         </m.section>

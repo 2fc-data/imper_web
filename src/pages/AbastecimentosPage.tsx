@@ -244,7 +244,7 @@ export default function AbastecimentosPage({
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={saving}>
-              {saving ? 'Salvando...' : editando ? 'Salvar alterações' : 'Cadastrar'}
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
             {editando && (
               <Button type="button" variant="outline" onClick={cancelarEdicao}>Cancelar</Button>

@@ -18,10 +18,13 @@ import {
   AnalyticsFilterBar,
   type FiltrosAnalyticsState,
 } from './AnalyticsFilterBar';
-import { exportarCsv, exportarPdfRelatorio } from './exportReport';
+import { exportarCsvSecoes, exportarPdfRelatorio } from './exportReport';
 import { KpiCard } from './KpiCard';
 import { StorytellingPanel } from './StorytellingPanel';
 import { ChartStorytellingNote } from './ChartStorytellingNote';
+import { analisarPecasEServicos } from './pecasServicosAnalytics';
+import { criarSecoesPecasServicos, detalharPecas } from './pecasServicosSeccoes';
+import { PecasServicosAnalyticsSection } from './PecasServicosAnalyticsSection';
 
 const CORES_PALETA = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -135,6 +138,11 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
     [manutencoesFiltradas],
   );
 
+  const analisePecasServicos = useMemo(
+    () => analisarPecasEServicos(manutencoesFiltradas),
+    [manutencoesFiltradas],
+  );
+
   // Gráfico 1: Evolução Temporal dos Custos (Área)
   const dadosEvolucaoCustos = useMemo(() => {
     const agrupado: Record<string, { data: string; custo: number; ordens: number }> = {};
@@ -228,8 +236,26 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
   }, [custoTotal, totalOrdens, custoMedio, emAberto, topEquipamentosCusto, dadosPorTipo]);
 
   // Exportações
+  const custoDaOrdem = (m: ManutencaoItem) => {
+    const detalhado = Number(m.custoPecas || 0) + Number(m.custoMaoDeObra || 0);
+    return detalhado > 0 ? detalhado : Number(m.custo || 0);
+  };
+
   const handleExportarCsv = () => {
-    const colunas = ['ID', 'Data', 'Equipamento', 'Tipo', 'Status', 'Responsável', 'Custo (R$)'];
+    const colunas = [
+      'ID',
+      'Data',
+      'Equipamento',
+      'Tipo',
+      'Status',
+      'Responsável',
+      'Descrição dos serviços',
+      'Qtd. peças',
+      'Detalhe das peças',
+      'Peças (R$)',
+      'Mão de Obra (R$)',
+      'Total (R$)',
+    ];
     const linhas = manutencoesFiltradas.map((m) => [
       m.id,
       new Date(m.data).toLocaleDateString('pt-BR'),
@@ -237,19 +263,37 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
       m.tipo?.nome ?? '—',
       STATUS_LABEL[m.status] ?? m.status,
       m.responsavelManutencao?.nome ?? '—',
-      (m.custo ?? 0).toFixed(2),
+      m.descricao,
+      m.pecas?.length ?? 0,
+      detalharPecas(m.pecas),
+      Number(m.custoPecas || 0).toFixed(2),
+      Number(m.custoMaoDeObra || 0).toFixed(2),
+      custoDaOrdem(m).toFixed(2),
     ]);
-    exportarCsv('relatorio_manutencoes_equipamentos', colunas, linhas);
+    exportarCsvSecoes('relatorio_manutencoes_equipamentos', [
+      { titulo: 'Ordens de Manutenção', colunas, linhas },
+      ...criarSecoesPecasServicos(analisePecasServicos),
+    ]);
   };
 
   const handleExportarPdf = () => {
-    const colunas = ['Data', 'Equipamento', 'Tipo', 'Status', 'Custo'];
+    const colunas = [
+      'Data',
+      'Equipamento',
+      'Descrição dos serviços',
+      'Peças detectadas',
+      'Peças (R$)',
+      'M.O. (R$)',
+      'Total (R$)',
+    ];
     const linhas = manutencoesFiltradas.map((m) => [
       new Date(m.data).toLocaleDateString('pt-BR'),
       m.equipamento?.descricao ?? `#${m.equipamentoId}`,
-      m.tipo?.nome ?? '—',
-      STATUS_LABEL[m.status] ?? m.status,
-      `R$ ${(m.custo ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      m.descricao || '—',
+      detalharPecas(m.pecas, 100),
+      `R$ ${Number(m.custoPecas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `R$ ${Number(m.custoMaoDeObra || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      `R$ ${custoDaOrdem(m).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ]);
     const kpis = [
       {
@@ -275,6 +319,7 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
         diagnostico: storytelling.diagnostico,
         recomendacoes: storytelling.recomendacoes,
       },
+      criarSecoesPecasServicos(analisePecasServicos),
     );
   };
 
@@ -537,6 +582,8 @@ export function ManutencoesEquipamentosAnalyticsDashboard({
           />
         </div>
       </div>
+
+      <PecasServicosAnalyticsSection analise={analisePecasServicos} />
     </div>
   );
 }

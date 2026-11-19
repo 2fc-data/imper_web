@@ -27,8 +27,10 @@ function fmtQtd(v: number | string): string {
 export function gerarPdfListaCompras(
   lista: ListaCompraDto,
   tituloDominio: string,
+  rodada?: number,
 ): void {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const sufixoRodada = rodada ? ` · Compra ${rodada}` : '';
 
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
@@ -40,7 +42,8 @@ export function gerarPdfListaCompras(
   doc.text(
     `Setor: ${lista.setor === 'LOJA' ? 'Loja' : 'Almoxarifado'} · ` +
       `Período: ${MESES_CURTOS[lista.mes - 1]}/${lista.ano} · ` +
-      `Status: ${ROTULO_STATUS[lista.status] ?? lista.status}`,
+      `Status: ${ROTULO_STATUS[lista.status] ?? lista.status}` +
+      sufixoRodada,
     15,
     23,
   );
@@ -96,6 +99,7 @@ export function gerarPdfListaCompras(
 
   const nomeArquivo =
     `lista-compras-${lista.tipo.toLowerCase()}-${lista.setor.toLowerCase()}-` +
-    `${lista.ano}-${String(lista.mes).padStart(2, '0')}.pdf`;
+    `${lista.ano}-${String(lista.mes).padStart(2, '0')}` +
+    `${rodada ? `-c${rodada}` : ''}.pdf`;
   doc.save(nomeArquivo);
 }

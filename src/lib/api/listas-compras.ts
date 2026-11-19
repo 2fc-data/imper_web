@@ -53,6 +53,13 @@ export interface ListaCompraItemDto {
   compradoPor?: { id: number; nome: string } | null;
 }
 
+export interface RodadaResumoDto {
+  id: number;
+  status: StatusListaCompra;
+  createdAt: string;
+  totalItens: number;
+}
+
 export interface ListaCompraDto {
   id: number;
   tipo: TipoListaCompra;
@@ -67,17 +74,34 @@ export interface ListaCompraDto {
   enviadoEm: string | null;
   aprovadoPor?: { id: number; nome: string } | null;
   aprovadoEm: string | null;
+  createdAt: string;
   itens: ListaCompraItemDto[];
 }
 
-export async function obterListaCompras(params: {
+export interface ListaComprasChave {
   tipo: TipoListaCompra;
   setor: SetorCompra;
   mes: number;
   ano: number;
   tipoDespesaId?: number;
-}): Promise<ListaCompraDto | null> {
-  return api.get<ListaCompraDto | null>('/listas-compras', params);
+}
+
+export async function obterListaCompras(
+  params: ListaComprasChave,
+): Promise<ListaCompraDto | null> {
+  return api.get<ListaCompraDto | null>('/listas-compras', { ...params });
+}
+
+export async function listarRodadasListaCompras(
+  params: ListaComprasChave,
+): Promise<RodadaResumoDto[]> {
+  return api.get<RodadaResumoDto[]>('/listas-compras/rodadas', { ...params });
+}
+
+export async function obterListaComprasPorId(
+  id: number,
+): Promise<ListaCompraDto> {
+  return api.get<ListaCompraDto>(`/listas-compras/${id}`);
 }
 
 export interface ItemCompraInput {
