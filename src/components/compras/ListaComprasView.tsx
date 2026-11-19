@@ -25,7 +25,6 @@ import { gerarPdfListaCompras } from '../../lib/export/lista-compras-pdf';
 import { brl } from '../../lib/format';
 import {
   dataCompraItem,
-  estaComprada,
   formatarData,
   fornecedorItem,
   MESES_CURTOS,
@@ -1188,17 +1187,6 @@ export function ListaComprasView({
             {numeroRodada !== null && ` · Compra ${numeroRodada}`}
           </p>
         </div>
-        {modo === 'historico' && lista && estaComprada(lista) && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              gerarPdfListaCompras(lista, tituloExibido, numeroRodada ?? undefined)
-            }
-          >
-            Baixar PDF
-          </Button>
-        )}
       </header>
 
       {erro && (
@@ -1316,11 +1304,16 @@ export function ListaComprasView({
                 className={selectClasses}
                 disabled={ocupado}
               >
-                {rodadas.map((r, i) => (
-                  <option key={r.id} value={r.id}>
-                    {`Compra ${i + 1} · ${ROTULOS_STATUS[r.status]} · ${formatarData(r.createdAt)}`}
-                  </option>
-                ))}
+                {[...rodadas]
+                  .sort((a, b) => b.id - a.id)
+                  .map((r) => {
+                    const numero = rodadas.findIndex((x) => x.id === r.id) + 1;
+                    return (
+                      <option key={r.id} value={r.id}>
+                        {`Compra ${numero} · ${ROTULOS_STATUS[r.status]} · ${formatarData(r.createdAt)}`}
+                      </option>
+                    );
+                  })}
               </select>
             </>
           )}
@@ -1396,6 +1389,20 @@ export function ListaComprasView({
                     </strong>
                   </span>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={ocupado}
+                  onClick={() =>
+                    void gerarPdfListaCompras(
+                      lista,
+                      tituloExibido,
+                      numeroRodada ?? undefined,
+                    )
+                  }
+                >
+                  Baixar PDF
+                </Button>
               </div>
             </div>
             {lista.status === 'RECUSADA' && lista.motivoRecusa && (

@@ -44,13 +44,13 @@ export function ChartStorytellingNote({
   return (
     <div
       className={cn(
-        'mt-4 rounded-xl border p-3.5 text-base transition-colors',
+        'mt-4 rounded-xl border p-3.5 text-sm transition-colors',
         cfg.borda,
         className,
       )}
     >
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className={cn('rounded px-1.5 py-0.5 text-3xs font-bold uppercase tracking-wider', cfg.tag)}>
+        <span className={cn('rounded px-1.5 py-0.5 text-2xs font-bold uppercase tracking-wider', cfg.tag)}>
           {cfg.rotulo}
         </span>
       </div>
