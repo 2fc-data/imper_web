@@ -41,7 +41,9 @@ export function progressoCompras(itens: ListaCompraItemDto[]): {
   comprados: number; total: number;
 } {
   const total = itens.length;
-  const comprados = itens.filter((i) => i.status === 'COMPRADO').length;
+  const comprados = itens.filter(
+    (i) => i.status === 'COMPRADO' || i.status === 'CONFERIDO',
+  ).length;
   return { comprados, total };
 }
 
@@ -64,7 +66,6 @@ export function valorUnitarioItem(
     item.material?.custoUnitario ??
     (item.epi as { custoUnitario?: number | string | null } | undefined)?.custoUnitario ??
     (item.equipamento as { custoUnitario?: number | string | null } | undefined)?.custoUnitario ??
-    item.equipamento?.valorAquisicao ??
     null;
   return custo === null || custo === undefined ? null : toNum(custo);
 }

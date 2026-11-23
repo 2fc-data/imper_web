@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { listarEpis, type EpiItem } from '../../lib/api';
 import { InputDecimal } from './InputDecimal';
+import { InputMoeda } from '../ui/input-moeda';
 import { inputClasses, labelClasses, type EpiLinhaForm } from './tipos';
 
 interface Props {
@@ -59,6 +60,7 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
         epiId: e.id,
         nome: e.nome,
         codigo: e.codigo,
+        numeroPatrimonio: e.numeroPatrimonio,
         quantidade: 1,
         custoUnitario: custoDe(e),
       },
@@ -125,8 +127,8 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
                     onClick={() => adicionar(e)}
                   >
                     <span>
-                      {e.codigo ? `${e.codigo} · ` : ''}
                       {e.nome}
+                      {e.numeroPatrimonio ? ` — Patr. ${e.numeroPatrimonio}` : ''}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {custoDe(e) == null ? 'preço não cadastrado' : `R$ ${custoDe(e)}`}
@@ -147,8 +149,8 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
               className="grid grid-cols-[1fr_4.5rem_5.5rem_auto_auto] items-end gap-2 rounded-lg border p-2"
             >
               <span className="self-center text-sm">
-                {e.codigo ? `${e.codigo} · ` : ''}
                 {e.nome}
+                {e.numeroPatrimonio ? ` — Patr. ${e.numeroPatrimonio}` : ''}
               </span>
               <label className="flex flex-col gap-0.5">
                 <span className="text-[10px] text-muted-foreground">Qtd</span>
@@ -161,20 +163,11 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
                 <span className="text-[10px] text-muted-foreground">
                   Unit. (R$)
                 </span>
-                <input
-                  className={inputClasses}
-                  type="number"
-                  min={0}
-                  step="any"
-                  placeholder="n/d"
-                  value={e.custoUnitario ?? ''}
+                <InputMoeda
+                  id={`epi-custo-${idx}`}
+                  value={e.custoUnitario ?? undefined}
                   onChange={(ev) =>
-                    atualizar(idx, {
-                      custoUnitario:
-                        ev.target.value === ''
-                          ? null
-                          : Number(ev.target.value),
-                    })
+                    atualizar(idx, { custoUnitario: ev !== undefined ? ev : null })
                   }
                 />
               </label>

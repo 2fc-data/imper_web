@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../ui/button';
+import { SearchInput } from '../ui/search-input';
 
 export type PeriodoOpcao =
   | '7d'
@@ -144,14 +145,13 @@ export function AnalyticsFilterBar({
       {/* Linha secundária de filtros: Data customizada, Status e Categoria */}
       <div className="flex flex-wrap items-center gap-3 pt-1 border-t border-border/50 text-xs">
         <div className="flex items-center gap-1.5 flex-1 min-w-[140px] max-w-xs">
-          <input
-            type="text"
+          <SearchInput
             placeholder="Buscar..."
             value={filtros.busca || ''}
             onChange={(e) =>
               onChange({ ...filtros, busca: e.target.value || undefined })
             }
-            className="w-full rounded-lg border border-input bg-background px-2.5 py-1 text-xs shadow-2xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="h-8 text-xs py-1"
           />
         </div>
 

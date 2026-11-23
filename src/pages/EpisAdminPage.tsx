@@ -4,6 +4,7 @@ import { ItemForm, type ItemFormData } from '../components/ItemForm';
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
+import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -52,7 +53,6 @@ const emptyForm: ItemFormData = {
   nome: '',
   numeroCa: '',
   dataValidade: '',
-  quantidade: 0,
   quantidadeMinima: 0,
 };
 
@@ -77,7 +77,10 @@ export function EpisAnalises({ epis }: EpisAnalisesProps) {
   const total = epis.length;
   const ativos = epis.filter((e) => e.ativo).length;
   const inativos = epis.filter((e) => !e.ativo).length;
-  const estoqueTotal = epis.reduce((acc, e) => acc + e.quantidade, 0);
+  const estoqueTotal = epis.reduce(
+    (acc, e) => acc + (e.quantidadeMinima ?? 0),
+    0,
+  );
   const vencidos = epis.filter((e) => ehVencido(e.dataValidade)).length;
   const vencendo = epis.filter((e) => venceEm30Dias(e.dataValidade)).length;
 
@@ -234,12 +237,13 @@ export default function EpisAdminPage({
       dataValidade: toLocalDateTime(e.dataValidade),
       custoUnitario:
         e.custoUnitario == null ? undefined : Number(e.custoUnitario),
-      quantidade: e.quantidade,
       quantidadeMinima: e.quantidadeMinima ?? 0,
+      totalConferido: e.totalConferido ?? 0,
+      estoqueAtual:
+        e.estoqueAtual ?? ((e.quantidadeMinima ?? 0) + (e.totalConferido ?? 0)),
       marcaId: e.marcaId ?? undefined,
       categoriaId: e.categoriaId ?? undefined,
       subcategoriaId: e.subcategoriaId ?? undefined,
-      localizacaoId: e.localizacaoId ?? undefined,
       fornecedorId: e.fornecedorId ?? undefined,
       unidadeMedidaId: e.unidadeMedidaId ?? undefined,
     });
@@ -266,12 +270,10 @@ export default function EpisAdminPage({
         numeroCa: form.numeroCa || undefined,
         dataValidade: fromLocalDateTime(form.dataValidade ?? ''),
         custoUnitario: form.custoUnitario,
-        quantidade: form.quantidade ?? 0,
         quantidadeMinima: form.quantidadeMinima,
         marcaId: form.marcaId,
         categoriaId: form.categoriaId,
         subcategoriaId: form.subcategoriaId,
-        localizacaoId: form.localizacaoId,
         fornecedorId: form.fornecedorId,
         unidadeMedidaId: form.unidadeMedidaId,
       };
@@ -400,15 +402,11 @@ export default function EpisAdminPage({
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar EPI por código, nome ou CA..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
+        <SearchInput
+          placeholder="Buscar EPI por código, nome ou CA..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select
           value={categoriaFiltro}
           onChange={(e) =>
@@ -452,8 +450,9 @@ export default function EpisAdminPage({
                 </span>
               </div>
               <CardDescription className="text-sm">
-                CA: {e.numeroCa ?? '—'} · Estoque: {e.quantidade}{' '}
-                {e.quantidadeMinima !== null && `(mín. ${e.quantidadeMinima})`}
+                CA: {e.numeroCa ?? '—'}
+                {e.quantidadeMinima !== null && ` · Qtde. Mínima - Estoque: ${e.quantidadeMinima}`}
+                {` · Estoque Atual: ${e.estoqueAtual ?? ((e.quantidadeMinima ?? 0) + (e.totalConferido ?? 0))}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -462,9 +461,6 @@ export default function EpisAdminPage({
                   <FormatoValidade value={e.dataValidade} />
                   {e.marca && typeof e.marca === 'object' && (
                     <span>· Marca: {e.marca.nome}</span>
-                  )}
-                  {e.localizacao && typeof e.localizacao === 'object' && (
-                    <span>· {e.localizacao.nome}</span>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { listarMateriais, type MaterialItem } from '../../lib/api';
 import { InputDecimal } from './InputDecimal';
+import { InputMoeda } from '../ui/input-moeda';
 import { inputClasses, labelClasses, type MaterialLinhaForm } from './tipos';
 
 interface Props {
@@ -149,20 +150,11 @@ export function MateriaisLinhaEditor({ materiais, onChange }: Props) {
                 <span className="text-[10px] text-muted-foreground">
                   Unit. (R$)
                 </span>
-                <input
-                  className={inputClasses}
-                  type="number"
-                  min={0}
-                  step="any"
-                  placeholder="n/d"
-                  value={m.custoUnitario ?? ''}
-                  onChange={(ev) =>
-                    atualizar(idx, {
-                      custoUnitario:
-                        ev.target.value === ''
-                          ? null
-                          : Number(ev.target.value),
-                    })
+                <InputMoeda
+                  id={`mat-custo-${idx}`}
+                  value={m.custoUnitario ?? undefined}
+                  onChange={(v) =>
+                    atualizar(idx, { custoUnitario: v !== undefined ? v : null })
                   }
                 />
               </label>

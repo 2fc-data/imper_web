@@ -1,82 +1,14 @@
-import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { m } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { EASE } from '../../lib/motion';
-
-const imageModules = import.meta.glob('/src/assets/Hero_images/*.webp', {
-  eager: true,
-  import: 'default',
-});
-
-const slideNumber = (path: string) => {
-  const file = path.split('/').pop() ?? '';
-  const match = file.match(/^(\d+)/);
-  return match ? Number(match[1]) : 0;
-};
-
-const heroImages = Object.entries(imageModules)
-  .sort(([a], [b]) => slideNumber(a) - slideNumber(b))
-  .map(([, src]) => src as string);
-
-const SLIDE_INTERVAL = 9000;
-const CROSSFADE = 1.2;
-const KEN_BURNS = SLIDE_INTERVAL / 1000 + CROSSFADE;
+import { HeroBackground } from './HeroBackground';
 
 export function Hero() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const reduceMotion = useReducedMotion() ?? false;
-
-  useEffect(() => {
-    if (heroImages.length < 2) return;
-
-    const advance = () =>
-      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-
-    let interval = window.setInterval(advance, SLIDE_INTERVAL);
-
-    const onVisibilityChange = () => {
-      window.clearInterval(interval);
-      if (!document.hidden) interval = window.setInterval(advance, SLIDE_INTERVAL);
-    };
-
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (heroImages.length < 2) return;
-    const next = heroImages[(currentSlide + 1) % heroImages.length];
-    const preload = new Image();
-    preload.src = next;
-  }, [currentSlide]);
-
   return (
     <section
       id="inicio"
       className="relative isolate flex min-h-[90vh] flex-col overflow-hidden bg-background pt-12"
     >
-      <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-        <AnimatePresence initial={false}>
-          <m.div
-            key={heroImages[currentSlide]}
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImages[currentSlide]})` }}
-            initial={{ opacity: 0, scale: reduceMotion ? 1 : 1.04 }}
-            animate={{ opacity: 1, scale: reduceMotion ? 1 : 1.1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              opacity: { duration: reduceMotion ? 0.2 : CROSSFADE, ease: EASE },
-              scale: { duration: KEN_BURNS, ease: 'linear' },
-            }}
-          />
-        </AnimatePresence>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.42)_0%,rgba(0,0,0,0.16)_55%,transparent_78%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/35 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/40 to-transparent" />
-      </div>
+      <HeroBackground />
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-start justify-center pt-24 pb-16 pr-4 pl-8 text-left sm:pr-6 sm:pl-14 lg:pr-8 lg:pl-24">
         <div className="my-auto w-full">
@@ -125,7 +57,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
-          className="mx-auto mt-12 flex w-fit max-w-full flex-wrap items-center justify-center gap-6 rounded-xl bg-black/25 px-5 py-3 text-md backdrop-blur-sm sm:gap-10"
+          className="mx-auto mt-12 flex w-fit max-w-full flex-wrap items-center justify-center gap-6 rounded-xl bg-black/25 px-5 py-3 text-sm backdrop-blur-sm sm:gap-10 sm:text-base"
         >
           <span className="flex items-center gap-2 text-white">
             <svg

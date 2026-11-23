@@ -22,6 +22,7 @@ import {
 import { cn } from '../../lib/utils';
 import { RecordsFilter } from '../RecordsFilter';
 import { Button } from '../ui/button';
+import { SearchInput } from '../ui/search-input';
 import {
   Card,
   CardContent,
@@ -81,7 +82,6 @@ const APIS: Record<RecursoCatalogo, CrudApi> = {
   subcategorias: catApi.subcategoriasApi as unknown as CrudApi,
   marcas: catApi.marcasApi as unknown as CrudApi,
   fornecedores: catApi.fornecedoresApi as unknown as CrudApi,
-  localizacoes: catApi.localizacoesApi as unknown as CrudApi,
   'unidades-medida': catApi.unidadesMedidaApi as unknown as CrudApi,
   cores: catApi.coresApi as unknown as CrudApi,
   tamanhos: catApi.tamanhosApi as unknown as CrudApi,
@@ -719,15 +719,11 @@ export function CatalogoManager({
         <div className="space-y-4">
           {/* Barra de Filtros e Busca no padrão de outras páginas */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder={`Buscar ${tituloExibido.toLowerCase()} por nome, código ou dados...`}
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+            <SearchInput
+              placeholder={`Buscar ${tituloExibido.toLowerCase()} por nome, código ou dados...`}
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
             <select
               value={filtroStatus}
               onChange={(e) =>

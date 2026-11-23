@@ -1,6 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { ManutencoesEquipamentosAnalyticsDashboard } from '../components/analytics/ManutencoesEquipamentosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
+import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -801,15 +802,11 @@ export default function ManutencoesAdminPage({
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar por descrição, equipamento ou responsável..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
+        <SearchInput
+          placeholder="Buscar por descrição, equipamento ou responsável..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select
           value={filtroStatus}
           onChange={(e) =>

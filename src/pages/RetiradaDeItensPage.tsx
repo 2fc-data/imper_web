@@ -337,11 +337,15 @@ export function RetiradaDeItensPage({
           : tipo === 'equipamentos'
             ? (await listarEquipamentos({ ativo: true })).map((e) => ({
                 id: e.id,
-                label: `${e.codigo} — ${e.descricao}`,
+                label: e.numeroPatrimonio
+                  ? `${e.descricao} — Patr. ${e.numeroPatrimonio}`
+                  : e.descricao,
               }))
             : (await listarEpis({ ativo: true })).map((e) => ({
                 id: e.id,
-                label: `${e.codigo} — ${e.nome}`,
+                label: e.numeroPatrimonio
+                  ? `${e.nome} — Patr. ${e.numeroPatrimonio}`
+                  : e.nome,
               }));
       setOpcoesAdicao((prev) => ({ ...prev, [tipo]: opcoes }));
     } catch (e) {

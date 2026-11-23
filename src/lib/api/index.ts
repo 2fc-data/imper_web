@@ -141,7 +141,6 @@ export {
   listarLookupsEpis,
   categoriasApi,
   marcasApi,
-  localizacoesApi,
   statusEquipamentoApi,
   estadosConservacaoApi,
   tiposManutencaoApi,
@@ -155,7 +154,6 @@ export {
   marcasEpiApi,
   coresEpiApi,
   tamanhosEpiApi,
-  localizacoesEpiApi,
   fornecedoresEpiApi,
   subcategoriasApi,
   fornecedoresApi,
@@ -378,6 +376,8 @@ export {
   recusarItemListaCompras,
   reverterItemListaCompras,
   comprarItemListaCompras,
+  conferirItemListaCompras,
+  desfazerConferenciaItemListaCompras,
 } from './listas-compras.js';
 export type {
   ListaCompraDto,

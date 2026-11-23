@@ -4,6 +4,7 @@ import { ItemForm, type ItemFormData } from '../components/ItemForm';
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
+import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -23,8 +24,6 @@ import {
   obterProximoCodigoEquipamento,
 } from '../lib/api';
 import {
-  formatarData,
-  formatarValor,
   fromLocalDateTime,
   toLocalDateTime,
 } from '../lib/datetime';
@@ -61,10 +60,6 @@ function EquipamentosAnalises({ equipamentos }: EquipamentosAnalisesProps) {
   const ativos = equipamentos.filter((e) => e.ativo).length;
   const inativos = equipamentos.filter((e) => !e.ativo).length;
   const retirados = equipamentos.filter((e) => e.responsavel != null).length;
-  const valorTotal = equipamentos.reduce(
-    (acc, e) => acc + (e.valorAquisicao ?? 0),
-    0,
-  );
 
   const porCategoria = equipamentos.reduce(
     (acc, e) => {
@@ -127,7 +122,7 @@ function EquipamentosAnalises({ equipamentos }: EquipamentosAnalisesProps) {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border bg-card p-4 shadow-sm lg:col-span-1">
           <p className="text-xs font-medium text-muted-foreground">Total</p>
           <p className="mt-2 text-2xl font-bold">{total}</p>
@@ -143,12 +138,6 @@ function EquipamentosAnalises({ equipamentos }: EquipamentosAnalisesProps) {
         <div className="rounded-xl border bg-card p-4 shadow-sm">
           <p className="text-xs font-medium text-warning">Em retirada</p>
           <p className="mt-2 text-2xl font-bold">{retirados}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm lg:col-span-1">
-          <p className="text-xs font-medium text-muted-foreground">
-            Valor total
-          </p>
-          <p className="mt-2 text-2xl font-bold">{formatarValor(valorTotal)}</p>
         </div>
       </div>
 
@@ -174,13 +163,10 @@ const emptyForm: ItemFormData = {
   marcaId: undefined,
   categoriaId: undefined,
   subcategoriaId: undefined,
-  localizacaoId: undefined,
   fornecedorId: undefined,
   unidadeMedidaId: undefined,
   statusId: 0,
   estadoConservacaoId: undefined,
-  dataAquisicao: undefined,
-  valorAquisicao: undefined,
   dataGarantia: undefined,
   observacoes: undefined,
 };
@@ -250,13 +236,10 @@ export default function EquipamentosAdminPage({
       marcaId: e.marcaId ?? undefined,
       categoriaId: e.categoriaId ?? undefined,
       subcategoriaId: e.subcategoriaId ?? undefined,
-      localizacaoId: e.localizacaoId ?? undefined,
       fornecedorId: e.fornecedorId ?? undefined,
       unidadeMedidaId: e.unidadeMedidaId ?? undefined,
       statusId: e.statusId,
       estadoConservacaoId: e.estadoConservacaoId ?? undefined,
-      dataAquisicao: toLocalDateTime(e.dataAquisicao),
-      valorAquisicao: e.valorAquisicao ?? undefined,
       dataGarantia: toLocalDateTime(e.dataGarantia),
       observacoes: e.observacoes ?? undefined,
     });
@@ -284,13 +267,10 @@ export default function EquipamentosAdminPage({
         marcaId: form.marcaId,
         categoriaId: form.categoriaId,
         subcategoriaId: form.subcategoriaId,
-        localizacaoId: form.localizacaoId,
         fornecedorId: form.fornecedorId,
         unidadeMedidaId: form.unidadeMedidaId,
         statusId: form.statusId || 0,
         estadoConservacaoId: form.estadoConservacaoId,
-        dataAquisicao: fromLocalDateTime(form.dataAquisicao ?? ''),
-        valorAquisicao: form.valorAquisicao,
         dataGarantia: fromLocalDateTime(form.dataGarantia ?? ''),
         observacoes: form.observacoes || undefined,
       };
@@ -395,15 +375,11 @@ export default function EquipamentosAdminPage({
       {viewAtiva === 'lista' && !editando && (
         <>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Buscar por código, descrição ou patrimônio..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+            <SearchInput
+              placeholder="Buscar por código, descrição ou patrimônio..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
             <select
               value={categoriaFiltro}
               onChange={(e) =>
@@ -474,20 +450,8 @@ export default function EquipamentosAdminPage({
                               {e.subcategoria && (
                                 <span> / {e.subcategoria.nome}</span>
                               )}
-                              {e.localizacao && (
-                                <span> · {e.localizacao.nome}</span>
-                              )}
                               {e.estadoConservacao && (
                                 <span> · {e.estadoConservacao.nome}</span>
-                              )}
-                              {e.dataAquisicao && (
-                                <span>
-                                  {' '}
-                                  · Aquisição: {formatarData(e.dataAquisicao)}
-                                </span>
-                              )}
-                              {e.valorAquisicao != null && (
-                                <span> · {formatarValor(e.valorAquisicao)}</span>
                               )}
                             </div>
                             <div className="flex flex-wrap items-center gap-2">

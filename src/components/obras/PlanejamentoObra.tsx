@@ -947,7 +947,9 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                                   )
                                   .map((epi) => (
                                     <option key={epi.id} value={epi.id}>
-                                      {epi.nome} {epi.numeroCa ? `(CA ${epi.numeroCa})` : ''}
+                                      {epi.nome}
+                                      {epi.numeroPatrimonio ? ` — Patr. ${epi.numeroPatrimonio}` : ''}
+                                      {epi.numeroCa ? ` (CA ${epi.numeroCa})` : ''}
                                     </option>
                                   ))}
                               </select>
@@ -1160,9 +1162,11 @@ export function PlanejamentoObra({ obraId, onObraAtualizada }: PlanejamentoObraP
                                           )}
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
-                                          <span className="text-[10px] text-primary/90 font-mono font-medium bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-                                            {eq.codigo}
-                                          </span>
+                                          {eq.numeroPatrimonio ? (
+                                            <span className="text-[10px] text-primary/90 font-mono font-medium bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                                              Patr. {eq.numeroPatrimonio}
+                                            </span>
+                                          ) : null}
                                           <span className="text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                                             +
                                           </span>

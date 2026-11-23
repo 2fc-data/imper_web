@@ -42,7 +42,7 @@ const venceEm30Dias = (dataValidade: string | null) => {
 };
 
 const custoDe = (e: EpiItem) => (e.custoUnitario != null ? Number(e.custoUnitario) : 0);
-const valorTotalDe = (e: EpiItem) => e.quantidade * custoDe(e);
+const valorTotalDe = (e: EpiItem) => (e.quantidadeMinima != null ? Number(e.quantidadeMinima) : 0) * custoDe(e);
 
 export function EpisAnalyticsDashboard({
   epis,
@@ -56,7 +56,7 @@ export function EpisAnalyticsDashboard({
   const episNormalized = useMemo(() =>
     epis.map((e) => ({
       ...e,
-      quantidade: Number(e.quantidade),
+      quantidadeMinima: e.quantidadeMinima != null ? Number(e.quantidadeMinima) : 0,
       custoUnitario: e.custoUnitario != null ? Number(e.custoUnitario) : undefined,
     })),
     [epis]
@@ -75,7 +75,7 @@ export function EpisAnalyticsDashboard({
         if (filtros.status === 'VENCIDO' && !ehVencido(e.dataValidade)) return false;
         if (filtros.status === 'VENCENDO' && !venceEm30Dias(e.dataValidade)) return false;
         if (filtros.status === 'VALIDO' && (ehVencido(e.dataValidade) || venceEm30Dias(e.dataValidade))) return false;
-        if (filtros.status === 'ABAIXO_MINIMO' && (e.quantidadeMinima == null || e.quantidade >= e.quantidadeMinima)) return false;
+        if (filtros.status === 'ABAIXO_MINIMO' && (e.quantidadeMinima == null || e.quantidadeMinima <= 0)) return false;
       }
 
       // Busca textual
@@ -96,7 +96,7 @@ export function EpisAnalyticsDashboard({
 
   // KPIs
   const totalEstoqueFisico = useMemo(
-    () => episFiltrados.reduce((acc, e) => acc + Number(e.quantidade), 0),
+    () => episFiltrados.reduce((acc, e) => acc + Number(e.quantidadeMinima ?? 0), 0),
     [episFiltrados],
   );
 
@@ -115,15 +115,15 @@ export function EpisAnalyticsDashboard({
     [episFiltrados],
   );
 
-  // Gráfico 1: Top 8 EPIs por Volume em Estoque
+  // Gráfico 1: Top 8 EPIs por Estoque Mínimo
   const topPorEstoque = useMemo(() => {
     return [...episFiltrados]
-      .sort((a, b) => b.quantidade - a.quantidade)
+      .sort((a, b) => (b.quantidadeMinima ?? 0) - (a.quantidadeMinima ?? 0))
       .slice(0, 8)
       .map((e) => ({
         nome: e.nome.length > 20 ? `${e.nome.slice(0, 18)}...` : e.nome,
         nomeCompleto: e.nome,
-        quantidade: e.quantidade,
+        quantidade: e.quantidadeMinima ?? 0,
         valorTotal: valorTotalDe(e),
       }));
   }, [episFiltrados]);
@@ -133,7 +133,7 @@ export function EpisAnalyticsDashboard({
     const agrupado: Record<string, number> = {};
     episFiltrados.forEach((e) => {
       const cat = e.categoria?.nome || 'Não categorizado';
-      agrupado[cat] = (agrupado[cat] || 0) + e.quantidade;
+      agrupado[cat] = (agrupado[cat] || 0) + (e.quantidadeMinima ?? 0);
     });
     return Object.entries(agrupado)
       .map(([name, value]) => ({ name, value }))
@@ -213,8 +213,7 @@ export function EpisAnalyticsDashboard({
       'Categoria',
       'CA',
       'Validade',
-      'Estoque',
-      'Mínimo',
+      'Qtde. Mínima - Estoque',
       'Custo Unit. (R$)',
       'Valor Total (R$)',
       'Status Validade',
@@ -231,7 +230,6 @@ export function EpisAnalyticsDashboard({
         e.categoria?.nome ?? '—',
         e.numeroCa ?? '—',
         e.dataValidade ? new Date(e.dataValidade).toLocaleDateString('pt-BR') : 'Indeterminada',
-        e.quantidade,
         e.quantidadeMinima ?? '—',
         custoDe(e).toFixed(2),
         valorTotalDe(e).toFixed(2),
@@ -242,18 +240,18 @@ export function EpisAnalyticsDashboard({
   };
 
   const handleExportarPdf = () => {
-    const colunas = ['Código', 'EPI', 'Categoria', 'CA', 'Validade', 'Estoque', 'Valor Total'];
+    const colunas = ['Código', 'EPI', 'Categoria', 'CA', 'Validade', 'Qtde. Mínima - Estoque', 'Valor Total'];
     const linhas = episFiltrados.map((e) => [
       e.codigo,
       e.nome,
       e.categoria?.nome ?? '—',
       e.numeroCa ?? '—',
       e.dataValidade ? new Date(e.dataValidade).toLocaleDateString('pt-BR') : '—',
-      `${e.quantidade} un`,
+      `${e.quantidadeMinima ?? 0} un`,
       `R$ ${valorTotalDe(e).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ]);
     const kpis = [
-      { rotulo: 'Estoque Físico Total', valor: `${totalEstoqueFisico} unidades` },
+      { rotulo: 'Estoque Mínimo Total', valor: `${totalEstoqueFisico} unidades` },
       {
         rotulo: 'Valor Total em Estoque',
         valor: `R$ ${valorTotalEstoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
@@ -309,9 +307,9 @@ export function EpisAnalyticsDashboard({
       {/* Grid de KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          titulo="Estoque Físico Total"
+          titulo="Estoque Mínimo Total"
           valor={totalEstoqueFisico.toLocaleString('pt-BR')}
-          subtitulo="Unidades de EPIs disponíveis"
+          subtitulo="Unidades mínimas de EPIs"
           destaque="default"
           icone={
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -369,10 +367,10 @@ export function EpisAnalyticsDashboard({
         <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
           <div>
             <h3 className="text-base font-semibold text-foreground">
-              Top EPIs com Maior Estoque Físico
+              Top EPIs com Maior Estoque Mínimo
             </h3>
             <p className="text-xs text-muted-foreground">
-              Itens com maior quantidade disponível em almoxarifado
+              Itens com maior quantidade mínima definida
             </p>
           </div>
           <div className="h-72 w-full">

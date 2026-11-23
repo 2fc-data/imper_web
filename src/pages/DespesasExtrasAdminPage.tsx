@@ -3,6 +3,8 @@ import { DespesasExtrasAnalyticsDashboard } from '../components/analytics/Despes
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
+import { SearchInput } from '../components/ui/search-input';
+import { InputMoeda } from '../components/ui/input-moeda';
 import {
   Card,
   CardContent,
@@ -162,6 +164,7 @@ export function DespesasExtrasAnalises({ itens }: DespesasExtrasAnalisesProps) {
 
 interface DespesasExtrasFormProps {
   editando: boolean;
+  totalConferido?: number;
   saving: boolean;
   form: DespesasExtrasFormData;
   setForm: (f: DespesasExtrasFormData) => void;
@@ -172,6 +175,7 @@ interface DespesasExtrasFormProps {
 
 function DespesasExtrasForm({
   editando,
+  totalConferido = 0,
   saving,
   form,
   setForm,
@@ -228,7 +232,7 @@ function DespesasExtrasForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">
-            Estoque mínimo
+            Qtde. Mínima - Estoque
           </label>
           <input
             type="number"
@@ -243,18 +247,24 @@ function DespesasExtrasForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium">
-            Custo unitário
+            Estoque Atual
           </label>
           <input
             type="number"
-            min={0}
-            step="0.01"
+            readOnly
+            disabled
+            value={(Number(form.quantidadeMinima) || 0) + totalConferido}
+            className={`${inputCls} bg-muted cursor-not-allowed font-medium`}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium">
+            Custo unitário
+          </label>
+          <InputMoeda
+            id="custoUnitario"
             value={form.custoUnitario}
-            onChange={(e) =>
-              setForm({ ...form, custoUnitario: e.target.value })
-            }
-            placeholder="0,00"
-            className={inputCls}
+            onChange={(v) => setForm({ ...form, custoUnitario: v !== undefined ? String(v) : '' })}
           />
         </div>
         {editando && (
@@ -459,6 +469,7 @@ export default function DespesasExtrasAdminPage({
 
         <DespesasExtrasForm
           editando={!!editando}
+          totalConferido={editando?.totalConferido ?? 0}
           saving={saving}
           form={form}
           setForm={setForm}
@@ -487,15 +498,11 @@ export default function DespesasExtrasAdminPage({
         </p>
       )}
 
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Buscar item por nome..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        />
-      </div>
+      <SearchInput
+        placeholder="Buscar item por nome..."
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+      />
 
       <div className="flex items-center justify-between gap-4">
         <RecordsFilter
@@ -524,7 +531,8 @@ export default function DespesasExtrasAdminPage({
                 <CardDescription>
                   Unidade: {m.unidade?.nome}
                   {m.quantidadeMinima !== null &&
-                    ` · mín. ${m.quantidadeMinima}`}
+                    ` · Qtde. Mínima - Estoque: ${m.quantidadeMinima}`}
+                  {` · Estoque Atual: ${m.estoqueAtual ?? ((m.quantidadeMinima ?? 0) + (m.totalConferido ?? 0))}`}
                   {m.custoUnitario !== null &&
                     ` · custo ${formatarValor(toNum(m.custoUnitario))}`}
                 </CardDescription>

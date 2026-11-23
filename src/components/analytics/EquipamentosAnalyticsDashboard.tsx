@@ -76,11 +76,6 @@ export function EquipamentosAnalyticsDashboard({
   }, [equipamentos, filtros]);
 
   // KPIs
-  const patrimonioTotal = useMemo(
-    () => equipamentosFiltrados.reduce((acc, e) => acc + (e.valorAquisicao ?? 0), 0),
-    [equipamentosFiltrados],
-  );
-
   const totalEquipamentos = equipamentosFiltrados.length;
 
   const totalRetirados = useMemo(
@@ -92,20 +87,20 @@ export function EquipamentosAnalyticsDashboard({
 
   const taxaAlocacao = totalEquipamentos > 0 ? (totalRetirados / totalEquipamentos) * 100 : 0;
 
-  // Gráfico 1: Patrimônio por Categoria (Barras Horizontais)
+  // Gráfico 1: Equipamentos por Categoria (Barras Horizontais)
   const dadosPorCategoria = useMemo(() => {
     const agrupado: Record<string, number> = {};
     equipamentosFiltrados.forEach((e) => {
       const cat = e.categoria?.nome || 'Geral / Outros';
-      agrupado[cat] = (agrupado[cat] || 0) + (e.valorAquisicao ?? 0);
+      agrupado[cat] = (agrupado[cat] || 0) + 1;
     });
     return Object.entries(agrupado)
-      .map(([nome, valor]) => ({
+      .map(([nome, quantidade]) => ({
         nome: nome.length > 20 ? `${nome.slice(0, 18)}...` : nome,
         nomeCompleto: nome,
-        valor,
+        quantidade,
       }))
-      .sort((a, b) => b.valor - a.valor);
+      .sort((a, b) => b.quantidade - a.quantidade);
   }, [equipamentosFiltrados]);
 
   // Gráfico 2: Status Operacional (Donut)
@@ -135,7 +130,7 @@ export function EquipamentosAnalyticsDashboard({
   const storytelling = useMemo(() => {
     const topCat = dadosPorCategoria[0];
     const topResp = dadosPorResponsavel[0];
-    const percentImobilizadoCat = patrimonioTotal > 0 && topCat ? ((topCat.valor / patrimonioTotal) * 100).toFixed(1) : '0';
+    const percentVolumeCat = totalEquipamentos > 0 && topCat ? ((topCat.quantidade / totalEquipamentos) * 100).toFixed(1) : '0';
 
     let statusGeral: 'otimo' | 'atencao' | 'critico' | 'estavel' = 'estavel';
     if (totalDisponiveis === 0 && totalEquipamentos > 0) statusGeral = 'critico';
@@ -143,9 +138,9 @@ export function EquipamentosAnalyticsDashboard({
     else if (taxaAlocacao > 30) statusGeral = 'otimo';
 
     const cenario = [
-      `Ativo imobilizado totaliza R$ ${patrimonioTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em ${totalEquipamentos} ferramentas e maquinários cadastrados.`,
+      `Inventário operacional conta com ${totalEquipamentos} ferramentas e maquinários cadastrados.`,
       `Taxa de utilização de ${taxaAlocacao.toFixed(1)}% com ${totalRetirados} equipamentos em campo e ${totalDisponiveis} disponíveis na base.`,
-      topCat ? `Categoria '${topCat.nome}' lidera o patrimônio concentrando ${percentImobilizadoCat}% do valor investido.` : 'Patrimônio diluído entre grupos.',
+      topCat ? `Categoria '${topCat.nome}' lidera em volume concentrando ${percentVolumeCat}% dos equipamentos (${topCat.quantidade} unidades).` : 'Volume distribuído entre grupos.',
     ];
 
     const diagnostico = [
@@ -153,7 +148,7 @@ export function EquipamentosAnalyticsDashboard({
         ? `Gargalo crítico: nenhum equipamento de reserva disponível na base para suprir imprevistos ou novas frentes de obra.`
         : taxaAlocacao > 75
         ? `Alta produtividade: parque de equipamentos com ótima taxa de giro e baixa ociosidade.`
-        : `Ociosidade patrimonial: parcela significativa de ferramentas paradas na base gerando custo de oportunidade.`,
+        : `Ociosidade operacional: parcela significativa de ferramentas paradas na base gerando custo de oportunidade.`,
       topResp
         ? `Concentração operacional: o colaborador '${topResp.nome}' detém a guarda de ${topResp.quantidade} equipamentos (${((topResp.quantidade / (totalRetirados || 1)) * 100).toFixed(0)}% do parque em campo).`
         : `Custódia bem distribuída entre os encarregados de obra.`,
@@ -166,18 +161,18 @@ export function EquipamentosAnalyticsDashboard({
         : `Realizar inventário físico cruzando os números de patrimônio com os comprovantes de cautela assinados.`,
       topResp && topResp.quantidade > 3
         ? `Verificar se todos os ${topResp.quantidade} itens em posse de '${topResp.nome}' estão sendo ativamente utilizados na obra designada.`
-        : `Manter plano de manutenção preventiva para os equipamentos de maior custo de aquisição.`,
+        : `Manter plano de manutenção preventiva para os equipamentos e ferramentas essenciais.`,
       `Padronizar a etiquetagem com QR Code / tombamento de patrimônio para acelerar os check-ins e check-outs.`,
     ];
 
     const resumoExecutivo = totalDisponiveis === 0 && totalEquipamentos > 0
       ? `Capacidade operacional esgotada com 100% dos equipamentos alocados. Risco de indisponibilidade para novas ordens de serviço.`
       : taxaAlocacao > 75
-      ? `Alta ocupação (${taxaAlocacao.toFixed(1)}%) com patrimônio de R$ ${patrimonioTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} gerando produtividade contínua nas obras.`
+      ? `Alta ocupação (${taxaAlocacao.toFixed(1)}%) com ${totalRetirados} equipamentos em campo gerando produtividade contínua nas obras.`
       : `Parque de ferramentas com margem disponível na base (${totalDisponiveis} itens prontos para retirada).`;
 
     return { statusGeral, resumoExecutivo, cenario, diagnostico, recomendacoes };
-  }, [patrimonioTotal, totalEquipamentos, totalRetirados, totalDisponiveis, taxaAlocacao, dadosPorCategoria, dadosPorResponsavel]);
+  }, [totalEquipamentos, totalRetirados, totalDisponiveis, taxaAlocacao, dadosPorCategoria, dadosPorResponsavel]);
 
   // Exportações
   const handleExportarCsv = () => {
@@ -188,7 +183,6 @@ export function EquipamentosAnalyticsDashboard({
       'Categoria',
       'Status Operacional',
       'Responsável Atual',
-      'Valor Aquisição (R$)',
     ];
     const linhas = equipamentosFiltrados.map((e) => [
       e.codigo,
@@ -197,28 +191,23 @@ export function EquipamentosAnalyticsDashboard({
       e.categoria?.nome ?? '—',
       e.responsavel ? 'EM OBRA' : 'DISPONÍVEL',
       e.responsavel?.nome ?? 'Na base',
-      (e.valorAquisicao ?? 0).toFixed(2),
     ]);
     exportarCsv('relatorio_equipamentos_patrimonio', colunas, linhas);
   };
 
   const handleExportarPdf = () => {
-    const colunas = ['Código', 'Descrição', 'Categoria', 'Status', 'Responsável', 'Valor'];
+    const colunas = ['Código', 'Descrição', 'Categoria', 'Status', 'Responsável'];
     const linhas = equipamentosFiltrados.map((e) => [
       e.codigo,
       e.descricao,
       e.categoria?.nome ?? '—',
       e.responsavel ? 'Em Obra' : 'Disponível',
       e.responsavel?.nome ?? 'Na base',
-      `R$ ${(e.valorAquisicao ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     ]);
     const kpis = [
-      {
-        rotulo: 'Patrimônio Imobilizado',
-        valor: `R$ ${patrimonioTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      },
       { rotulo: 'Total de Equipamentos', valor: `${totalEquipamentos} unidades` },
       { rotulo: 'Em Obra / Retirados', valor: `${totalRetirados} itens` },
+      { rotulo: 'Disponíveis na Base', valor: `${totalDisponiveis} itens` },
       { rotulo: 'Taxa de Ocupação', valor: `${taxaAlocacao.toFixed(1)}%` },
     ];
     exportarPdfRelatorio(
@@ -240,10 +229,10 @@ export function EquipamentosAnalyticsDashboard({
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-foreground">
-          Painel Executivo de Equipamentos & Patrimônio
+          Painel Executivo de Equipamentos & Alocação
         </h2>
         <p className="text-sm text-muted-foreground">
-          Gestão de ativos imobilizados, rastreamento de ferramentas e taxa de utilização em obras.
+          Gestão operacional de equipamentos, rastreamento de ferramentas e taxa de utilização em obras.
         </p>
       </div>
 
@@ -269,13 +258,13 @@ export function EquipamentosAnalyticsDashboard({
       {/* Grid de KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          titulo="Patrimônio Imobilizado"
-          valor={`R$ ${patrimonioTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-          subtitulo="Valor de aquisição total dos ativos"
+          titulo="Taxa de Ocupação"
+          valor={`${taxaAlocacao.toFixed(1)}%`}
+          subtitulo="Percentual de equipamentos em campo"
           destaque="primary"
           icone={
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           }
         />
@@ -325,20 +314,20 @@ export function EquipamentosAnalyticsDashboard({
 
       {/* Gráficos Recharts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Patrimônio por Categoria */}
+        {/* Distribuição por Categoria */}
         <div className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
           <div>
             <h3 className="text-base font-semibold text-foreground">
-              Patrimônio Imobilizado por Categoria (R$)
+              Distribuição por Categoria (Unidades)
             </h3>
             <p className="text-xs text-muted-foreground">
-              Distribuição de capital investido por grupo de ferramentas
+              Volume de equipamentos catalogados por grupo
             </p>
           </div>
           <div className="h-72 w-full">
             {dadosPorCategoria.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                Sem dados de patrimônio cadastrado
+                Sem equipamentos cadastrados
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -346,7 +335,7 @@ export function EquipamentosAnalyticsDashboard({
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} horizontal={false} />
                   <XAxis
                     type="number"
-                    tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`}
+                    tickFormatter={(v) => `${v}`}
                     stroke="var(--color-muted-foreground, #888)"
                     fontSize={11}
                   />
@@ -359,12 +348,12 @@ export function EquipamentosAnalyticsDashboard({
                   />
                   <Tooltip
                     formatter={(valor: any) => [
-                      `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                      'Patrimônio',
+                      `${valor} un`,
+                      'Quantidade',
                     ]}
                     contentStyle={{ backgroundColor: 'var(--color-card, #fff)', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
-                  <Bar dataKey="valor" radius={[0, 6, 6, 0]}>
+                  <Bar dataKey="quantidade" radius={[0, 6, 6, 0]}>
                     {dadosPorCategoria.map((_, index) => (
                       <Cell key={`cell-eq-${index}`} fill={CORES_PALETA[index % CORES_PALETA.length]} />
                     ))}
@@ -376,11 +365,11 @@ export function EquipamentosAnalyticsDashboard({
           <ChartStorytellingNote
             oQueAconteceu={
               dadosPorCategoria[0]
-                ? `A categoria '${dadosPorCategoria[0].nome}' lidera o capital imobilizado com R$ ${dadosPorCategoria[0].valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`
-                : 'Patrimônio homogêneo sem disparidade por categoria.'
+                ? `A categoria '${dadosPorCategoria[0].nome}' concentra o maior volume com ${dadosPorCategoria[0].quantidade} unidades.`
+                : 'Distribuição uniforme entre categorias.'
             }
-            impacto="Maquinários pesados e ferramentas elétricas exigem cronograma rigoroso de lubrificação e calibragem para preservar o valor contábil."
-            acaoRecomendada="Elaborar plano de seguro patrimonial para as duas categorias com maior valor acumulado."
+            impacto="Categorias com grande volume demandam inventários periódicos frequentes para evitar extravios e perdas."
+            acaoRecomendada="Priorizar conferências preventivas para as categorias com maior número de itens em campo."
             destaque={dadosPorCategoria.length > 0 ? 'info' : 'neutro'}
           />
         </div>

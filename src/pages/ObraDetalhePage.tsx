@@ -10,6 +10,7 @@ import {
 } from '../components/ui/card';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/button';
+import { InputMoeda } from '../components/ui/input-moeda';
 import { api } from '../lib/api';
 import { listarExecucoes, type ExecucaoAtividadeItem } from '../lib/api';
 import { brl } from '../lib/format';
@@ -428,7 +429,7 @@ function ModalCriarAditivo({
   obra, onClose, onSuccess,
 }: { obra: Obra; onClose: () => void; onSuccess: () => void }) {
   const [descricao, setDescricao] = useState('');
-  const [valor, setValor] = useState('');
+  const [valor, setValor] = useState<number | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -439,7 +440,7 @@ function ModalCriarAditivo({
       setErro(null);
       await api.post(`/obras/${obra.id}/aditivos`, {
         descricao,
-        valor: Number(valor),
+        valor: valor ?? 0,
         itens: [{ acrescimo: 'novaEtapa', nome: descricao }],
       });
       onSuccess();
@@ -471,15 +472,11 @@ function ModalCriarAditivo({
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Valor Total (R$) *</label>
-            <input
-              required
-              type="number"
-              step="0.01"
-              min="0"
+            <InputMoeda
+              id="aditivo-valor"
               value={valor}
-              onChange={e => setValor(e.target.value)}
-              placeholder="0,00"
-              className="w-full border border-border/60 rounded-xl px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
+              onChange={(v) => setValor(v)}
+              required
             />
           </div>
           {erro && (

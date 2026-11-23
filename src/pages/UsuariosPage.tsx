@@ -13,6 +13,7 @@ import { CpfCnpjInput } from '../components/ui/cpf-cnpj-input';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { PhoneInput } from '../components/ui/phone-input';
+import { SearchInput } from '../components/ui/search-input';
 import { EmailInput } from '../components/ui/email-input';
 import { MultiSelectPapeis } from '../components/MultiSelectPapeis';
 import {
@@ -1162,11 +1163,11 @@ export default function UsuariosPage({
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+        <SearchInput
           placeholder="Buscar por nome ou e-mail..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          className="sm:max-w-xs"
+          wrapperClassName="sm:max-w-xs"
         />
         <select
           value={filtroLocal}

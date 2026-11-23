@@ -3,6 +3,7 @@ import { MateriaisAnalyticsDashboard } from '../components/analytics/MateriaisAn
 import { RecordsFilter } from '../components/RecordsFilter';
 import { ListaComprasView } from '../components/compras/ListaComprasView';
 import { Button } from '../components/ui/button';
+import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -169,6 +170,7 @@ export function MateriaisAnalises({ materiais }: MateriaisAnalisesProps) {
 
 interface MaterialFormProps {
   editando: boolean;
+  totalConferido?: number;
   saving: boolean;
   form: MaterialFormData;
   setForm: (f: MaterialFormData) => void;
@@ -181,6 +183,7 @@ interface MaterialFormProps {
 
 function MaterialForm({
   editando,
+  totalConferido = 0,
   saving,
   form,
   setForm,
@@ -279,7 +282,7 @@ function MaterialForm({
           </select>
         </div>
         <div>
-          <Label htmlFor="quantidadeMinima">Estoque mínimo</Label>
+          <Label htmlFor="quantidadeMinima">Qtde. Mínima - Estoque</Label>
           <input
             id="quantidadeMinima"
             type="number"
@@ -290,6 +293,17 @@ function MaterialForm({
             }
             placeholder="0"
             className={inputCls}
+          />
+        </div>
+        <div>
+          <Label htmlFor="estoqueAtual">Estoque Atual</Label>
+          <input
+            id="estoqueAtual"
+            type="number"
+            readOnly
+            disabled
+            value={(Number(form.quantidadeMinima) || 0) + totalConferido}
+            className={`${inputCls} bg-muted cursor-not-allowed font-medium`}
           />
         </div>
         <div>
@@ -519,6 +533,7 @@ export default function MateriaisAdminPage({
 
         <MaterialForm
           editando={!!editando}
+          totalConferido={editando?.totalConferido ?? 0}
           saving={saving}
           form={form}
           setForm={setForm}
@@ -548,15 +563,11 @@ export default function MateriaisAdminPage({
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar material por nome..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
+        <SearchInput
+          placeholder="Buscar material por nome..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select
           value={categoriaFiltro}
           onChange={(e) =>
@@ -600,7 +611,8 @@ export default function MateriaisAdminPage({
                 <CardDescription>
                   Unidade: {m.unidade?.nome}
                   {m.quantidadeMinima !== null &&
-                    ` · mín. ${m.quantidadeMinima}`}
+                    ` · Qtde. Mínima - Estoque: ${m.quantidadeMinima}`}
+                  {` · Estoque Atual: ${m.estoqueAtual ?? ((m.quantidadeMinima ?? 0) + (m.totalConferido ?? 0))}`}
                   {m.custoUnitario !== null &&
                     ` · custo ${formatarValor(toNum(m.custoUnitario))}`}
                 </CardDescription>

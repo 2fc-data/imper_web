@@ -3,6 +3,7 @@ import { CascataVocabulario } from './CascataVocabulario';
 import { EpisLinhaEditor } from './EpisLinhaEditor';
 import { MateriaisLinhaEditor } from './MateriaisLinhaEditor';
 import { brl } from '../../lib/format';
+import { InputMoeda } from '../ui/input-moeda';
 import {
   listarTermos,
   type OpcaoCascata,
@@ -568,16 +569,11 @@ export function PassoCobertura({ state, set }: Props) {
                                     <span className="text-[10px] text-muted-foreground">
                                       Valor/hora (R$)
                                     </span>
-                                    <input
-                                      className={inputClasses}
-                                      type="number"
-                                      min={0}
-                                      step="any"
-                                      value={l.moValorHora ?? ''}
-                                      onChange={(e) =>
-                                        editar(aIdx, lIdx, {
-                                          moValorHora: numero(e.target.value),
-                                        })
+                                    <InputMoeda
+                                      id={`mo-valor-hora-${aIdx}-${lIdx}`}
+                                      value={l.moValorHora ?? undefined}
+                                      onChange={(v) =>
+                                        editar(aIdx, lIdx, { moValorHora: v !== undefined ? v : null })
                                       }
                                     />
                                   </label>

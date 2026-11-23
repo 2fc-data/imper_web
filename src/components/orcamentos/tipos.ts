@@ -34,6 +34,7 @@ export interface EpiLinhaForm {
   epiId: number;
   nome: string;
   codigo?: string | null;
+  numeroPatrimonio?: string | null;
   quantidade: number;
   custoUnitario: number | null;
 }
@@ -507,6 +508,7 @@ export function estadoDeEdicao(
         epiId: e.epiId,
         nome: e.epi?.nome ?? `#${e.epiId}`,
         codigo: e.epi?.codigo ?? null,
+        numeroPatrimonio: e.epi?.numeroPatrimonio ?? null,
         quantidade: numero(e.quantidade) ?? 0,
         custoUnitario: numero(e.custoUnitario),
       })),

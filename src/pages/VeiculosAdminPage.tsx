@@ -9,6 +9,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Button } from '../components/ui/button';
+import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -540,15 +541,11 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
       {view === 'lista' && !editando && (
         <>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder="Buscar por código, placa ou nome..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
+            <SearchInput
+              placeholder="Buscar por código, placa ou nome..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
             <select
               value={statusFiltro}
               onChange={(e) => setStatusFiltro(e.target.value ? Number(e.target.value) : '')}

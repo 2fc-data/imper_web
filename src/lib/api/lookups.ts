@@ -68,7 +68,6 @@ export interface EquipamentoLookups {
   subcategorias: SubcategoriaItem[];
   marcas: LookupItem[];
   fornecedores: FornecedorItem[];
-  localizacoes: LookupItem[];
   statuses: LookupItem[];
   estadosConservacao: LookupItem[];
   tiposManutencao: LookupItem[];
@@ -85,7 +84,6 @@ export interface EpiLookups {
   subcategorias: SubcategoriaItem[];
   marcas: LookupItem[];
   fornecedores: FornecedorItem[];
-  localizacoes: LookupItem[];
   cores: LookupItem[];
   tamanhos: LookupItem[];
   colaboradores: { id: number; nome: string }[];
@@ -101,7 +99,6 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
     subcategorias,
     marcas,
     fornecedores,
-    localizacoes,
     cores,
     tamanhos,
     colaboradores,
@@ -111,7 +108,6 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
     api.get<SubcategoriaItem[]>('/epis/lookups/subcategorias'),
     api.get<LookupItem[]>('/epis/lookups/marcas'),
     api.get<FornecedorItem[]>('/epis/lookups/fornecedores'),
-    api.get<LookupItem[]>('/epis/lookups/localizacoes'),
     api.get<LookupItem[]>('/epis/lookups/cores'),
     api.get<LookupItem[]>('/epis/lookups/tamanhos'),
     api.get<{ id: number; nome: string }[]>('/epis/lookups/colaboradores'),
@@ -122,7 +118,6 @@ export async function listarLookupsEpis(): Promise<EpiLookups> {
     subcategorias,
     marcas,
     fornecedores,
-    localizacoes,
     cores,
     tamanhos,
     colaboradores,
@@ -151,9 +146,6 @@ export const categoriasApi = criarLookupApi<LookupItem>(
 );
 export const marcasApi = criarLookupApi<LookupItem>(
   '/equipamentos/lookups/marcas',
-);
-export const localizacoesApi = criarLookupApi<LookupItem>(
-  '/equipamentos/lookups/localizacoes',
 );
 export const statusEquipamentoApi = criarLookupApi<LookupItem>(
   '/equipamentos/lookups/status',
@@ -198,10 +190,6 @@ export const coresEpiApi = criarLookupApi<LookupItem>('/epis/lookups/cores');
 
 export const tamanhosEpiApi = criarLookupApi<LookupItem>(
   '/epis/lookups/tamanhos',
-);
-
-export const localizacoesEpiApi = criarLookupApi<LookupItem>(
-  '/epis/lookups/localizacoes',
 );
 
 export const fornecedoresEpiApi = criarLookupApi<FornecedorItem>(
