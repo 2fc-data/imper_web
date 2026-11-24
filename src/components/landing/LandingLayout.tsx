@@ -6,7 +6,7 @@ import logoImper_footer from '../../assets/logo_imper_footer.webp';
 import footerBg from '../../assets/Footer_images/footer_bg.webp';
 import { cn } from '../../lib/utils';
 import { ThemeToggle } from '../../theme/ThemeToggle';
-import { HeroBackground, HeroSlideshowProvider } from './HeroBackground';
+import { HeroSlideshowProvider } from './HeroBackground';
 import {
   FacebookIconButton,
   InstagramIconButton,
@@ -33,6 +33,7 @@ const SECTION_BY_ROUTE: Record<string, string> = {
 function LandingShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
 
@@ -40,6 +41,7 @@ function LandingShell({ children }: { children: ReactNode }) {
     const handleScroll = () => {
       const y = window.scrollY;
       const delta = y - lastScrollY.current;
+      setIsScrolled(y > 20);
       if (menuOpen || y < 80) {
         setHeaderHidden(false);
       } else if (delta > 6) {
@@ -112,10 +114,14 @@ function LandingShell({ children }: { children: ReactNode }) {
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: headerHidden ? '-100%' : 0, opacity: headerHidden ? 0 : 1 }}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className="sticky top-0 z-50 isolate"
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 isolate transition-all duration-300',
+          isScrolled
+            ? 'bg-black/90 shadow-2xl backdrop-blur-md border-b border-white/10'
+            : 'bg-transparent',
+        )}
       >
-        <HeroBackground variant="header" />
-        <div className="relative z-10 mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-4 py-2 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-4 py-2.5 sm:px-6 lg:px-8">
           <Link
             to="/"
             aria-label="Imperpoços - Página inicial"
@@ -128,7 +134,7 @@ function LandingShell({ children }: { children: ReactNode }) {
             />
           </Link>
           <nav className="hidden lg:block">
-            <ul className="flex items-center gap-x-1">
+            <ul className="flex items-center gap-x-1 rounded-full border border-white/10 bg-black/55 px-3 py-1.5 shadow-lg backdrop-blur-md">
               {NAV_LINKS.map((link) => (
                 <li key={link.to}>
                   <NavLink
@@ -136,10 +142,10 @@ function LandingShell({ children }: { children: ReactNode }) {
                     end={link.to === '/'}
                     className={({ isActive }) =>
                       cn(
-                        'rounded-lg px-3 py-2 text-sm font-medium text-white/85 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+                        'rounded-full px-3.5 py-1.5 text-sm font-medium text-white/85 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
                         isActive &&
                         !isHashLink(link.to) &&
-                        'bg-white/15 font-semibold text-white',
+                        'bg-white/20 font-semibold text-white shadow-xs',
                       )
                     }
                   >
@@ -149,11 +155,11 @@ function LandingShell({ children }: { children: ReactNode }) {
               ))}
             </ul>
           </nav>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <ThemeToggle className="h-11 w-11 border-white/25 text-white hover:bg-white/20 hover:text-white" />
-            <WhatsAppIconButton className="h-11 w-11 text-white hover:bg-white/20 hover:text-white" />
-            <InstagramIconButton className="hidden h-11 w-11 text-white hover:bg-white/20 hover:text-white sm:inline-flex" />
-            <FacebookIconButton className="hidden h-11 w-11 text-white hover:bg-white/20 hover:text-white sm:inline-flex" />
+          <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 backdrop-blur-md sm:gap-2">
+            <ThemeToggle className="h-10 w-10 border-white/20 text-white hover:bg-white/20 hover:text-white" />
+            <WhatsAppIconButton className="h-10 w-10 text-white hover:bg-white/20 hover:text-white" />
+            <InstagramIconButton className="hidden h-10 w-10 text-white hover:bg-white/20 hover:text-white sm:inline-flex" />
+            <FacebookIconButton className="hidden h-10 w-10 text-white hover:bg-white/20 hover:text-white sm:inline-flex" />
             <Link
               to="/login"
               aria-label="Fazer login"
@@ -218,7 +224,7 @@ function LandingShell({ children }: { children: ReactNode }) {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => setMenuOpen(false)}
-                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
               />
 
               <m.nav
@@ -227,7 +233,7 @@ function LandingShell({ children }: { children: ReactNode }) {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '-100%', opacity: 0 }}
                 transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-                className="absolute top-full left-0 right-0 z-50 border-b border-white/10 bg-black/85 shadow-2xl backdrop-blur-xl lg:hidden"
+                className="absolute top-full left-0 right-0 z-50 border-b border-white/10 bg-black/95 shadow-2xl backdrop-blur-xl lg:hidden"
               >
                 <ul className="mx-auto flex w-full max-w-[1400px] flex-col gap-y-1 px-4 py-5 sm:px-6">
                   {NAV_LINKS.map((link) => (

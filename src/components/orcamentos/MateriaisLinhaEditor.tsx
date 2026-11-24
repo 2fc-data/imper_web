@@ -133,7 +133,11 @@ export function MateriaisLinhaEditor({ materiais, onChange }: Props) {
 
       {materiais.length > 0 ? (
         <ul className="flex flex-col gap-2">
-          {materiais.map((m, idx) => (
+          {materiais
+            .map((m, idx) => ({ m, idx }))
+            // exibição: último material adicionado no topo (ordem salva preservada)
+            .sort((x, y) => y.idx - x.idx)
+            .map(({ m, idx }) => (
             <li
               key={m.materialId}
               className="grid grid-cols-[1fr_auto_5.5rem_auto_auto] items-end gap-2 rounded-lg border p-2"

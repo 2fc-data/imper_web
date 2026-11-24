@@ -6,11 +6,11 @@ export function Hero() {
   return (
     <section
       id="inicio"
-      className="relative isolate flex min-h-[90vh] flex-col overflow-hidden bg-background pt-12"
+      className="relative isolate flex min-h-screen flex-col overflow-hidden bg-background"
     >
       <HeroBackground />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-start justify-center pt-24 pb-16 pr-4 pl-8 text-left sm:pr-6 sm:pl-14 lg:pr-8 lg:pl-24">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-start justify-center pt-28 pb-16 pr-4 pl-8 text-left sm:pt-32 sm:pr-6 sm:pl-14 lg:pt-36 lg:pr-8 lg:pl-24">
         <div className="my-auto w-full">
         <m.div
           initial={{ opacity: 0, y: 20 }}

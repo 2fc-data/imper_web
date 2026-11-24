@@ -141,12 +141,7 @@ export function PassoCobertura({ state, set }: Props) {
   const adicionar = () => {
     if (!podeAdicionar) return;
     // abre o acordeão da atividade recém-adicionada
-    const idx = state.atividades.findIndex(
-      (a) =>
-        a.etapaId === cascata.etapaId &&
-        a.subServicoId === cascata.subServicoId,
-    );
-    const chaveNova = String(idx === -1 ? state.atividades.length : idx);
+    const chaveNova = `${cascata.etapaId}:${cascata.subServicoId}`;
     set((s) =>
       adicionarLinha(
         s,
@@ -262,7 +257,7 @@ export function PassoCobertura({ state, set }: Props) {
               // ordena por inserção descendente: a última adicionada fica no topo
               .sort((x, y) => y.aIdx - x.aIdx)
               .map(({ a, aIdx }) => {
-                const chaveAtividade = String(aIdx);
+                const chaveAtividade = `${a.etapaId}:${a.subServicoId}`;
                 const atividadeAberta = abertas.has(chaveAtividade);
                 const subtotalAtividade = a.linhas.reduce(
                   (acc, l) => acc + subtotalLinha(l),
@@ -270,7 +265,7 @@ export function PassoCobertura({ state, set }: Props) {
                 );
                 return (
                   <div
-                    key={`${a.etapaId}:${a.subServicoId}`}
+                    key={chaveAtividade}
                     className={cardClasses}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -285,10 +280,9 @@ export function PassoCobertura({ state, set }: Props) {
                         <span className="flex items-center gap-2 whitespace-nowrap">
                           <span className="text-xs text-muted-foreground">
                             {a.linhas.length}{' '}
-                            {a.linhas.length === 1 ? 'linha' : 'linhas'} ·{' '}
-                            {brl(subtotalAtividade)}
+                            {a.linhas.length === 1 ? 'linha' : 'linhas'}
                           </span>
-                          <span className="text-2xl leading-none text-muted-foreground">
+                          <span className="text-4xl leading-none text-muted-foreground">
                             {atividadeAberta ? '▾' : '▸'}
                           </span>
                         </span>
@@ -303,8 +297,13 @@ export function PassoCobertura({ state, set }: Props) {
                     </div>
 
                     {atividadeAberta ? (
+                      <>
                       <ul className="mt-3 flex flex-col gap-3">
-                        {a.linhas.map((l, lIdx) => {
+                        {a.linhas
+                          .map((l, lIdx) => ({ l, lIdx }))
+                          // exibição: última linha adicionada no topo (ordem salva preservada)
+                          .sort((x, y) => y.lIdx - x.lIdx)
+                          .map(({ l, lIdx }) => {
                           const linhaKey = `${aIdx}:${lIdx}`;
                           const emEdicao = editandoKey === linhaKey;
                           return (
@@ -608,6 +607,15 @@ export function PassoCobertura({ state, set }: Props) {
                           );
                         })}
                       </ul>
+                      <div className="mt-3 flex justify-end border-t pt-2 text-xs">
+                        <span className="text-muted-foreground">
+                          Subtotal da atividade:{' '}
+                          <span className="font-semibold text-foreground">
+                            {brl(subtotalAtividade)}
+                          </span>
+                        </span>
+                      </div>
+                      </>
                     ) : null}
                   </div>
                 );

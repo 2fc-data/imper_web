@@ -37,6 +37,7 @@ export interface EquipamentoItem {
   unidadeMedida?: UnidadeMedida | null;
   dataGarantia: string | null;
   observacoes: string | null;
+  custoUnitario?: number | string | null;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -58,6 +59,7 @@ export interface EquipamentoInput {
   unidadeMedidaId?: number;
   dataGarantia?: string;
   observacoes?: string;
+  custoUnitario?: number | null;
 }
 
 export async function listarEquipamentos(params?: {

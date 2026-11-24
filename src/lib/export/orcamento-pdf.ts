@@ -146,7 +146,7 @@ export async function gerarPdfOrcamento(input: OrcamentoPdfInput): Promise<void>
     startY: y,
     margin: { left: 15, right: 15 },
     head: [[
-      'Etapa › Sub-serviço',
+      'Etapa › Serviço',
       'Descrição',
       'Qtd.',
       'MO',

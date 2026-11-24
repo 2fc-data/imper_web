@@ -56,6 +56,7 @@ export function ItemForm({
   onCancel,
 }: ItemFormProps) {
   const isEpi = tipo === 'EPI';
+  const isEquipamento = tipo === 'EQUIPAMENTO';
 
   const subcategorias = useMemo(
     () => (lookups?.subcategorias ?? []).filter((s) => s.ativo),
@@ -248,7 +249,7 @@ export function ItemForm({
               </>
             )}
 
-            {/* Estoque e Custos (EPI) */}
+            {/* Estoque e Custos (EPI e Equipamento) */}
             {isEpi && (
               <>
                 <div className="space-y-1.5">
@@ -280,15 +281,18 @@ export function ItemForm({
                     className="bg-muted cursor-not-allowed font-medium"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="custoUnitario">Custo Unitário (R$)</Label>
-                  <InputMoeda
-                    id="custoUnitario"
-                    value={form.custoUnitario}
-                    onChange={(v) => setForm({ ...form, custoUnitario: v })}
-                  />
-                </div>
               </>
+            )}
+
+            {(isEpi || isEquipamento) && (
+              <div className="space-y-1.5">
+                <Label htmlFor="custoUnitario">Custo Unitário (R$)</Label>
+                <InputMoeda
+                  id="custoUnitario"
+                  value={form.custoUnitario}
+                  onChange={(v) => setForm({ ...form, custoUnitario: v })}
+                />
+              </div>
             )}
 
             {/* Classificação: Marca, Categoria e Subcategoria */}

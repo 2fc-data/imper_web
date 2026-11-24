@@ -27,6 +27,7 @@ import {
   fromLocalDateTime,
   toLocalDateTime,
 } from '../lib/datetime';
+import { brl } from '../lib/format';
 import { cn } from '../lib/utils';
 
 function BadgeAtivoEquipamento({ ativo }: { ativo: boolean }) {
@@ -240,6 +241,8 @@ export default function EquipamentosAdminPage({
       unidadeMedidaId: e.unidadeMedidaId ?? undefined,
       statusId: e.statusId,
       estadoConservacaoId: e.estadoConservacaoId ?? undefined,
+      custoUnitario:
+        e.custoUnitario == null ? undefined : Number(e.custoUnitario),
       dataGarantia: toLocalDateTime(e.dataGarantia),
       observacoes: e.observacoes ?? undefined,
     });
@@ -271,6 +274,7 @@ export default function EquipamentosAdminPage({
         unidadeMedidaId: form.unidadeMedidaId,
         statusId: form.statusId || 0,
         estadoConservacaoId: form.estadoConservacaoId,
+        custoUnitario: form.custoUnitario ?? null,
         dataGarantia: fromLocalDateTime(form.dataGarantia ?? ''),
         observacoes: form.observacoes || undefined,
       };
@@ -440,6 +444,8 @@ export default function EquipamentosAdminPage({
                           </div>
                           <CardDescription className="text-sm">
                             Patrimônio: {e.numeroPatrimonio || '—'}
+                            {e.custoUnitario != null &&
+                              ` · Custo: ${brl(e.custoUnitario)}`}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>

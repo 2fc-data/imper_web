@@ -378,7 +378,7 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
           <table className="w-full min-w-[560px] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-neutral-400 text-neutral-600">
-                <th className="py-1 pr-2 font-semibold">Etapa › Sub-serviço</th>
+                <th className="py-1 pr-2 font-semibold">Etapa › Serviço</th>
                 <th className="py-1 pr-2 font-semibold">Descrição</th>
                 <th className="py-1 pr-2 text-right font-semibold">Qtd.</th>
                 <th className="py-1 pr-2 text-right font-semibold">MO</th>

@@ -143,7 +143,11 @@ export function EpisLinhaEditor({ epis, onChange }: Props) {
 
       {epis.length > 0 ? (
         <ul className="flex flex-col gap-2">
-          {epis.map((e, idx) => (
+          {epis
+            .map((e, idx) => ({ e, idx }))
+            // exibição: último EPI adicionado no topo (ordem salva preservada)
+            .sort((x, y) => y.idx - x.idx)
+            .map(({ e, idx }) => (
             <li
               key={e.epiId}
               className="grid grid-cols-[1fr_4.5rem_5.5rem_auto_auto] items-end gap-2 rounded-lg border p-2"
