@@ -3,7 +3,6 @@ import { useAuth } from '../../auth/AuthContext';
 import {
   aprovarListaCompras,
   catalogos,
-  comprarItemListaCompras,
   enviarListaCompras,
   listarEquipamentos,
   listarEpis,
@@ -15,6 +14,9 @@ import {
   recusarItemListaCompras,
   recusarListaCompras,
   reverterItemListaCompras,
+  comprarItemListaCompras,
+  conferirItemListaCompras,
+  desfazerConferenciaItemListaCompras,
   salvarItensListaCompras,
   type ListaCompraDto,
   type ListaCompraItemDto,
@@ -48,6 +50,7 @@ import { type TipoDespesa } from '../../lib/api';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
+import { InputMoeda } from '../ui/input-moeda';
 import { Label } from '../ui/label';
 import { StatusBadge } from '../ui/StatusBadge';
 import { selectCompactClasses as selectClasses } from '../ui/form-classes';
@@ -153,7 +156,7 @@ async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]>
         nome: descricao,
         unidade: null,
         saldo: null,
-        custoUnitario: e.valorAquisicao ?? null,
+        custoUnitario: null,
         fornecedorId: e.fornecedorId ?? null,
       });
     }
@@ -168,6 +171,7 @@ async function carregarCatalogo(tipo: TipoListaCompra): Promise<OpcaoCatalogo[]>
         saldo: e.quantidade,
         custoUnitario: e.custoUnitario ?? null,
         fornecedorId: e.fornecedorId ?? null,
+        numeroPatrimonio: e.numeroPatrimonio ?? null,
       })
     : (m: any) => ({
         id: m.id,
@@ -550,6 +554,16 @@ export function ListaComprasView({
     await executar(() => reverterItemListaCompras(lista.id, itemId));
   }
 
+  async function conferirItem(itemId: number) {
+    if (!lista) return;
+    await executar(() => conferirItemListaCompras(lista.id, itemId));
+  }
+
+  async function desfazerConferenciaItem(itemId: number) {
+    if (!lista) return;
+    await executar(() => desfazerConferenciaItemListaCompras(lista.id, itemId));
+  }
+
   async function adicionarItemNaAprovacao() {
     if (!lista || novoItemId === '') return;
     const qtd = Number(novoItemQtd);
@@ -596,7 +610,10 @@ export function ListaComprasView({
   function itensPendentesCompra(): ListaCompraItemDto[] {
     if (!lista) return [];
     return lista.itens.filter(
-      (item) => item.status !== 'COMPRADO' && item.status !== 'RECUSADO',
+      (item) =>
+        item.status !== 'COMPRADO' &&
+        item.status !== 'CONFERIDO' &&
+        item.status !== 'RECUSADO',
     );
   }
 
@@ -640,7 +657,9 @@ export function ListaComprasView({
       return <p className="text-sm text-muted-foreground">Nenhum item na lista.</p>;
     }
     const mostrarDetalhesMaterial = ehMaterial;
-    const mostrarAcoes = modo === 'aprovacao';
+    const mostrarAcoes =
+      modo === 'aprovacao' ||
+      lista.itens.some((i) => i.status === 'COMPRADO' || i.status === 'CONFERIDO');
     const acaoAprovacao = podeAprovarPerm && podeAprovar(modo);
     const acaoCompra = podeAprovarPerm && podeComprar(modo);
 
@@ -665,7 +684,10 @@ export function ListaComprasView({
           </thead>
           <tbody>
             {lista.itens.map((item) => {
-              const editavel = modo === 'compra' && item.status !== 'COMPRADO';
+              const editavel =
+                modo === 'compra' &&
+                item.status !== 'COMPRADO' &&
+                item.status !== 'CONFERIDO';
               const edicao = edicaoCompra(item);
               const unitarioExibido = editavel
                 ? numero(edicao.valorUnitario)
@@ -715,15 +737,12 @@ export function ListaComprasView({
                   </td>
                   <td className="px-3 py-2 text-right">
                     {editavel ? (
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
+                      <InputMoeda
+                        id={`compra-valor-${item.id}`}
                         value={edicao.valorUnitario}
-                        onChange={(e) =>
-                          atualizarCompra(item.id, { valorUnitario: e.target.value })
+                        onChange={(v) =>
+                          atualizarCompra(item.id, { valorUnitario: v !== undefined ? String(v) : '' })
                         }
-                        className="w-28 text-right"
                         disabled={ocupado || !acaoCompra}
                       />
                     ) : unitarioExibido !== null ? (
@@ -775,6 +794,28 @@ export function ListaComprasView({
                           Reverter
                         </Button>
                       )}
+                      {item.status === 'COMPRADO' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={ocupado}
+                          className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                          onClick={() => conferirItem(item.id)}
+                        >
+                          Conferir
+                        </Button>
+                      )}
+                      {item.status === 'CONFERIDO' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={ocupado}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => desfazerConferenciaItem(item.id)}
+                        >
+                          Desfazer
+                        </Button>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -806,6 +847,7 @@ export function ListaComprasView({
               {opcoes.map((op) => (
                 <option key={op.id} value={op.id}>
                   {op.nome}
+                  {op.numeroPatrimonio ? ` — Patr. ${op.numeroPatrimonio}` : ''}
                   {op.unidade ? ` (${op.unidade})` : ''}
                 </option>
               ))}
@@ -842,13 +884,10 @@ export function ListaComprasView({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="item-valor">Valor unit.</Label>
-            <Input
+            <InputMoeda
               id="item-valor"
-              type="number"
-              min="0"
-              step="any"
               value={selValorUnitario}
-              onChange={(e) => setSelValorUnitario(e.target.value)}
+              onChange={(v) => setSelValorUnitario(v !== undefined ? String(v) : '')}
             />
           </div>
           <div className="space-y-1.5">
@@ -912,17 +951,14 @@ export function ListaComprasView({
                       </select>
                     </td>
                     <td className="px-3 py-2 text-right">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={r.valorUnitario === null ? '' : String(r.valorUnitario)}
-                        onChange={(e) =>
+                      <InputMoeda
+                        id={`rascunho-valor-${r.itemId}`}
+                        value={r.valorUnitario ?? undefined}
+                        onChange={(v) =>
                           atualizarRascunho(r.itemId, {
-                            valorUnitario: numero(e.target.value),
+                            valorUnitario: v !== undefined ? v : null,
                           })
                         }
-                        className="w-28 text-right"
                         disabled={ocupado || !podeCriar}
                       />
                     </td>
@@ -1060,6 +1096,7 @@ export function ListaComprasView({
                 {opcoes.map((op) => (
                   <option key={op.id} value={op.id}>
                     {op.nome}
+                    {op.numeroPatrimonio ? ` — Patr. ${op.numeroPatrimonio}` : ''}
                     {op.unidade ? ` (${op.unidade})` : ''}
                   </option>
                 ))}
@@ -1098,13 +1135,10 @@ export function ListaComprasView({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="novo-item-valor">Valor unit.</Label>
-              <Input
+              <InputMoeda
                 id="novo-item-valor"
-                type="number"
-                min="0"
-                step="any"
                 value={novoItemValor}
-                onChange={(e) => setNovoItemValor(e.target.value)}
+                onChange={(v) => setNovoItemValor(v !== undefined ? String(v) : '')}
               />
             </div>
             <div className="space-y-1.5">

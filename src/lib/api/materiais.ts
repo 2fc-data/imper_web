@@ -68,6 +68,8 @@ export interface MaterialItem {
   updatedAt: string;
   saldo?: MaterialSaldo | null;
   movimentos?: MaterialMovimentoItem[];
+  totalConferido?: number;
+  estoqueAtual?: number;
 }
 
 export interface MaterialInput {
@@ -90,7 +92,6 @@ export interface MaterialLookups {
   unidadesMedida: UnidadeMedida[];
   tiposDespesas?: TipoDespesa[];
   obras?: ObraLookupItem[];
-  localizacoes?: LookupItem[];
   fornecedores?: FornecedorItem[];
   statuses?: LookupItem[];
   estadosConservacao?: LookupItem[];

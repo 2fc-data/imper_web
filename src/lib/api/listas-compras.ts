@@ -10,6 +10,7 @@ export interface OpcaoCatalogo {
   saldo: number | string | null;
   custoUnitario: number | string | null;
   fornecedorId?: number | null;
+  numeroPatrimonio?: string | null;
 }
 
 export interface FornecedorResumoDto {
@@ -45,7 +46,6 @@ export interface ListaCompraItemDto {
   equipamento?: {
     id: number; descricao: string;
     unidadeMedida?: { nome: string } | null;
-    valorAquisicao?: number | string | null;
     fornecedorId?: number | null;
     fornecedor?: FornecedorResumoDto | null;
   } | null;
@@ -166,5 +166,23 @@ export async function comprarItemListaCompras(
   return api.post<ListaCompraDto>(
     `/listas-compras/${id}/itens/${itemId}/comprar`,
     input,
+  );
+}
+
+export async function conferirItemListaCompras(
+  id: number,
+  itemId: number,
+): Promise<ListaCompraDto> {
+  return api.post<ListaCompraDto>(
+    `/listas-compras/${id}/itens/${itemId}/conferir`,
+  );
+}
+
+export async function desfazerConferenciaItemListaCompras(
+  id: number,
+  itemId: number,
+): Promise<ListaCompraDto> {
+  return api.post<ListaCompraDto>(
+    `/listas-compras/${id}/itens/${itemId}/desfazer-conferencia`,
   );
 }

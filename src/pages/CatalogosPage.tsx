@@ -32,11 +32,6 @@ const CATALOGOS_CONFIG: {
     descricao: 'Unidades de medida utilizadas no sistema (un, kg, m, cx, etc.).',
   },
   {
-    recurso: 'localizacoes',
-    label: 'Localizações',
-    descricao: 'Locais de armazenamento físico de equipamentos, ferramentas e EPIs.',
-  },
-  {
     recurso: 'cores',
     label: 'Cores',
     descricao: 'Cores disponíveis para identificação de materiais, equipamentos e EPIs.',

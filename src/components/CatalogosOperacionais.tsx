@@ -54,7 +54,6 @@ const APIS: Record<RecursoCatalogo, CrudApi> = {
   subcategorias: catApi.subcategoriasApi as unknown as CrudApi,
   marcas: catApi.marcasApi as unknown as CrudApi,
   fornecedores: catApi.fornecedoresApi as unknown as CrudApi,
-  localizacoes: catApi.localizacoesApi as unknown as CrudApi,
   'unidades-medida': catApi.unidadesMedidaApi as unknown as CrudApi,
   cores: catApi.coresApi as unknown as CrudApi,
   tamanhos: catApi.tamanhosApi as unknown as CrudApi,
@@ -796,19 +795,6 @@ export default function CatalogosOperacionais({
                 titulo="Unidades de Medida"
                 descricao="Unidades usadas em materiais, serviços e orçamentos."
                 itens={payload.unidadesMedida}
-                aoSalvar={relerLookups}
-              />
-            ),
-          },
-          {
-            titulo: 'Localizações',
-            descricao: 'Onde os itens ficam instalados.',
-            conteudo: (
-              <CardCatalogo
-                recurso="localizacoes"
-                titulo="Localizações"
-                descricao="Onde os itens ficam instalados."
-                itens={payload.localizacoes}
                 aoSalvar={relerLookups}
               />
             ),

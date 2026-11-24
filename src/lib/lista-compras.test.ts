@@ -42,10 +42,11 @@ describe('progressoCompras / estaComprada', () => {
   it('conta comprados', () => {
     const itens = [
       item({ status: 'COMPRADO' }),
+      item({ status: 'CONFERIDO' }),
       item({ status: 'PENDENTE' }),
       item({ status: 'RECUSADO' }),
     ];
-    expect(progressoCompras(itens)).toEqual({ comprados: 1, total: 3 });
+    expect(progressoCompras(itens)).toEqual({ comprados: 2, total: 4 });
   });
 });
 

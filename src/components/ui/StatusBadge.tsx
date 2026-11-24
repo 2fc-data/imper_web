@@ -51,6 +51,7 @@ const MAPA_ROTULOS: Record<string, string> = {
   ABERTA: 'Aberta',
   COMPRADA: 'Comprada',
   COMPRADO: 'Comprado',
+  CONFERIDO: 'Conferido',
 };
 
 const MAPA_ESTILOS: Record<string, string> = {
@@ -82,6 +83,7 @@ const MAPA_ESTILOS: Record<string, string> = {
   ABERTA: 'bg-muted/80 text-muted-foreground border-border/60',
   COMPRADA: 'bg-success/10 text-success dark:bg-success/20 border-success/30 ring-1 ring-success/20',
   COMPRADO: 'bg-success/10 text-success dark:bg-success/20 border-success/30 ring-1 ring-success/20',
+  CONFERIDO: 'bg-primary/10 text-primary dark:bg-primary/20 border-primary/30 ring-1 ring-primary/20',
 };
 
 const STATUS_COM_PULSO = ['NOVO', 'EM_ANDAMENTO', 'AGENDADA', 'AGENDADO', 'AGUARDANDO_APROVACAO'];

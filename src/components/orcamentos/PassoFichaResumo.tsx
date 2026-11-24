@@ -117,7 +117,11 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
         return {
           etapa: li === 0 ? a.etapaNome : '',
           subServico: li === 0 ? a.subServicoNome : '',
-          descricao: l.descricao || l.objetoNome,
+          descricao: l.titulo
+            ? l.descricao
+              ? `${l.titulo} — ${l.descricao}`
+              : l.titulo
+            : l.descricao || l.objetoNome,
           quantidade: l.quantidade != null ? String(l.quantidade) : '—',
           mo: moValorTotal(l),
           materiais: materiaisValor(
@@ -374,7 +378,7 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
           <table className="w-full min-w-[560px] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-neutral-400 text-neutral-600">
-                <th className="py-1 pr-2 font-semibold">Etapa › Sub-serviço</th>
+                <th className="py-1 pr-2 font-semibold">Etapa › Serviço</th>
                 <th className="py-1 pr-2 font-semibold">Descrição</th>
                 <th className="py-1 pr-2 text-right font-semibold">Qtd.</th>
                 <th className="py-1 pr-2 text-right font-semibold">MO</th>
@@ -407,7 +411,14 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
                           </span>
                         ) : null}
                       </td>
-                      <td className="py-1.5 pr-2">{l.descricao || l.objetoNome}</td>
+                      <td className="py-1.5 pr-2">
+                        {l.titulo ? (
+                          <div className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                            {l.titulo}
+                          </div>
+                        ) : null}
+                        <div>{l.descricao || l.objetoNome}</div>
+                      </td>
                       <td className="py-1.5 pr-2 text-right">
                         {l.quantidade ?? '—'}
                       </td>

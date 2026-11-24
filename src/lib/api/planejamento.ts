@@ -20,6 +20,7 @@ export interface EpiOption {
   nome: string;
   codigo: string;
   numeroCa: string | null;
+  numeroPatrimonio: string | null;
 }
 
 export interface EquipamentoOption {
@@ -27,6 +28,7 @@ export interface EquipamentoOption {
   descricao: string;
   codigo: string;
   modelo: string | null;
+  numeroPatrimonio: string | null;
 }
 
 export interface MaterialOption {

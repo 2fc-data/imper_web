@@ -26,8 +26,6 @@ export interface EquipamentoItem {
   categoria?: LookupItem | null;
   subcategoriaId: number | null;
   subcategoria?: SubcategoriaItem | null;
-  localizacaoId: number | null;
-  localizacao?: LookupItem | null;
   fornecedorId: number | null;
   statusId: number;
   status?: LookupItem;
@@ -37,10 +35,9 @@ export interface EquipamentoItem {
   responsavel?: { id: number; nome: string } | null;
   unidadeMedidaId: number | null;
   unidadeMedida?: UnidadeMedida | null;
-  dataAquisicao: string | null;
-  valorAquisicao: number | null;
   dataGarantia: string | null;
   observacoes: string | null;
+  custoUnitario?: number | string | null;
   ativo: boolean;
   createdAt: string;
   updatedAt: string;
@@ -56,15 +53,13 @@ export interface EquipamentoInput {
   marcaId?: number;
   categoriaId?: number;
   subcategoriaId?: number;
-  localizacaoId?: number;
   fornecedorId?: number;
   statusId: number;
   estadoConservacaoId?: number;
   unidadeMedidaId?: number;
-  dataAquisicao?: string;
-  valorAquisicao?: number;
   dataGarantia?: string;
   observacoes?: string;
+  custoUnitario?: number | null;
 }
 
 export async function listarEquipamentos(params?: {

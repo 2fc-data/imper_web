@@ -130,6 +130,7 @@ export function GestorItensVocabulario({
           valor={cascata}
           onChange={setCascata}
           modo="completa"
+          usarServicosMarketing={false}
         />
 
         {/* Campos extras para Visita (Medições) */}

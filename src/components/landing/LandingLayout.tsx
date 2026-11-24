@@ -6,6 +6,7 @@ import logoImper_footer from '../../assets/logo_imper_footer.webp';
 import footerBg from '../../assets/Footer_images/footer_bg.webp';
 import { cn } from '../../lib/utils';
 import { ThemeToggle } from '../../theme/ThemeToggle';
+import { HeroSlideshowProvider } from './HeroBackground';
 import {
   FacebookIconButton,
   InstagramIconButton,
@@ -17,8 +18,10 @@ const NAV_LINKS = [
   { to: '/servicos', label: 'Especialidades' },
   { to: '/como-trabalhamos', label: 'Como trabalhamos' },
   { to: '/#contato', label: 'Canais de Atendimento' },
-  { to: '/contato', label: 'Envie sua mensagem' },  
+  { to: '/contato', label: 'Envie sua mensagem' },
 ];
+
+const isHashLink = (to: string) => to.includes('#');
 
 const SECTION_BY_ROUTE: Record<string, string> = {
   '/': 'inicio',
@@ -27,9 +30,10 @@ const SECTION_BY_ROUTE: Record<string, string> = {
   '/contato': 'contato',
 };
 
-export function LandingLayout({ children }: { children: ReactNode }) {
+function LandingShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const lastScrollY = useRef(0);
 
@@ -37,6 +41,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
     const handleScroll = () => {
       const y = window.scrollY;
       const delta = y - lastScrollY.current;
+      setIsScrolled(y > 20);
       if (menuOpen || y < 80) {
         setHeaderHidden(false);
       } else if (delta > 6) {
@@ -109,22 +114,27 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: headerHidden ? '-100%' : 0, opacity: headerHidden ? 0 : 1 }}
         transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md"
+        className={cn(
+          'fixed top-0 left-0 right-0 z-50 isolate transition-all duration-300',
+          isScrolled
+            ? 'bg-black/90 shadow-2xl backdrop-blur-md border-b border-white/10'
+            : 'bg-transparent',
+        )}
       >
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-9 py-2 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto flex w-full max-w-[1400px] items-center justify-between gap-x-4 px-4 py-2.5 sm:px-6 lg:px-8">
           <Link
             to="/"
             aria-label="Imperpoços - Página inicial"
-            className="rounded px-1.5 py-0.3 transition-opacity hover:opacity-80"
+            className="rounded-xl bg-white/95 p-1.5 shadow-sm ring-1 ring-black/5 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
           >
             <img
               src={logoImper}
               alt="Imperpoços"
-              className="h-18 w-auto object-contain"
+              className="h-12 w-auto object-contain sm:h-14 lg:h-16"
             />
           </Link>
           <nav className="hidden lg:block">
-            <ul className="flex items-center gap-x-1">
+            <ul className="flex items-center gap-x-1 rounded-full border border-white/10 bg-black/55 px-3 py-1.5 shadow-lg backdrop-blur-md">
               {NAV_LINKS.map((link) => (
                 <li key={link.to}>
                   <NavLink
@@ -132,8 +142,10 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                     end={link.to === '/'}
                     className={({ isActive }) =>
                       cn(
-                        'rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:text-primary',
-                        isActive && 'text-primary',
+                        'rounded-full px-3.5 py-1.5 text-sm font-medium text-white/85 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70',
+                        isActive &&
+                        !isHashLink(link.to) &&
+                        'bg-white/20 font-semibold text-white shadow-xs',
                       )
                     }
                   >
@@ -143,15 +155,15 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               ))}
             </ul>
           </nav>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <WhatsAppIconButton />
-            <InstagramIconButton />
-            <FacebookIconButton />
+          <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 backdrop-blur-md sm:gap-2">
+            <ThemeToggle className="h-10 w-10 border-white/20 text-white hover:bg-white/20 hover:text-white" />
+            <WhatsAppIconButton className="h-10 w-10 text-white hover:bg-white/20 hover:text-white" />
+            <InstagramIconButton className="hidden h-10 w-10 text-white hover:bg-white/20 hover:text-white sm:inline-flex" />
+            <FacebookIconButton className="hidden h-10 w-10 text-white hover:bg-white/20 hover:text-white sm:inline-flex" />
             <Link
               to="/login"
               aria-label="Fazer login"
-              className="hidden h-8 w-8 items-center justify-center rounded-lg bg-transparent text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground lg:inline-flex"
+              className="hidden h-10 w-10 items-center justify-center rounded-lg bg-transparent text-white/85 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 lg:inline-flex"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -173,7 +185,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
               aria-label="Abrir menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((open) => !open)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-primary/10 hover:text-foreground lg:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 lg:hidden"
             >
               {menuOpen ? (
                 <svg
@@ -212,7 +224,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 onClick={() => setMenuOpen(false)}
-                className="fixed inset-0 z-40 bg-background/60 backdrop-blur-xs lg:hidden"
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
               />
 
               <m.nav
@@ -221,7 +233,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: '-100%', opacity: 0 }}
                 transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-                className="absolute top-full left-0 right-0 z-50 border-b border-border/80 bg-background/95 backdrop-blur-md shadow-2xl lg:hidden"
+                className="absolute top-full left-0 right-0 z-50 border-b border-white/10 bg-black/95 shadow-2xl backdrop-blur-xl lg:hidden"
               >
                 <ul className="mx-auto flex w-full max-w-[1400px] flex-col gap-y-1 px-4 py-5 sm:px-6">
                   {NAV_LINKS.map((link) => (
@@ -232,9 +244,10 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                         onClick={() => setMenuOpen(false)}
                         className={({ isActive }) =>
                           cn(
-                            'block rounded-md px-4 py-3 text-base font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-primary/10',
+                            'block rounded-md px-4 py-3 text-base font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white',
                             isActive &&
-                              'text-foreground font-semibold bg-primary/10',
+                            !isHashLink(link.to) &&
+                            'bg-white/15 font-semibold text-white',
                           )
                         }
                       >
@@ -242,7 +255,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                       </NavLink>
                     </li>
                   ))}
-                  <li className="pt-3 border-t border-border/60 flex flex-col gap-2.5 mt-2">
+                  <li className="pt-3 border-t border-white/15 flex flex-col gap-2.5 mt-2">
                     <Link
                       to="/contato"
                       onClick={() => setMenuOpen(false)}
@@ -253,10 +266,14 @@ export function LandingLayout({ children }: { children: ReactNode }) {
                     <Link
                       to="/login"
                       onClick={() => setMenuOpen(false)}
-                      className="block text-center rounded-md border border-border px-4 py-3 text-sm font-medium text-primary transition-colors hover:text-foreground"
+                      className="block text-center rounded-md border border-white/30 px-4 py-3 text-sm font-medium text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                     >
                       Office
                     </Link>
+                  </li>
+                  <li className="flex items-center justify-center gap-3 pt-2">
+                    <InstagramIconButton className="h-11 w-11 text-white hover:bg-white/20 hover:text-white" />
+                    <FacebookIconButton className="h-11 w-11 text-white hover:bg-white/20 hover:text-white" />
                   </li>
                 </ul>
               </m.nav>
@@ -388,5 +405,13 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         </div>
       </footer>
     </div>
+  );
+}
+
+export function LandingLayout({ children }: { children: ReactNode }) {
+  return (
+    <HeroSlideshowProvider>
+      <LandingShell>{children}</LandingShell>
+    </HeroSlideshowProvider>
   );
 }

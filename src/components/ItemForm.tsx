@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { InputMoeda } from './ui/input-moeda';
 import { selectClasses, textareaClasses } from './ui/form-classes';
 import type { PatrimoniosDisponiveis } from '../lib/api/equipamentos';
 import { obterPatrimoniosDisponiveis } from '../lib/api/equipamentos';
@@ -20,16 +21,15 @@ export interface ItemFormData {
   custoUnitario?: number;
   quantidade?: number;
   quantidadeMinima?: number;
+  totalConferido?: number;
+  estoqueAtual?: number;
   marcaId?: number;
   categoriaId?: number;
   subcategoriaId?: number;
-  localizacaoId?: number;
   fornecedorId?: number;
   unidadeMedidaId?: number;
   statusId?: number;
   estadoConservacaoId?: number;
-  dataAquisicao?: string;
-  valorAquisicao?: number;
   dataGarantia?: string;
   observacoes?: string;
 }
@@ -56,6 +56,7 @@ export function ItemForm({
   onCancel,
 }: ItemFormProps) {
   const isEpi = tipo === 'EPI';
+  const isEquipamento = tipo === 'EQUIPAMENTO';
 
   const subcategorias = useMemo(
     () => (lookups?.subcategorias ?? []).filter((s) => s.ativo),
@@ -248,29 +249,11 @@ export function ItemForm({
               </>
             )}
 
-            {/* Estoque e Custos (EPI) */}
+            {/* Estoque e Custos (EPI e Equipamento) */}
             {isEpi && (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="quantidade" required>
-                    Quantidade
-                  </Label>
-                  <Input
-                    id="quantidade"
-                    type="number"
-                    required
-                    min={0}
-                    step="0.001"
-                    placeholder="0"
-                    value={form.quantidade ?? ''}
-                    onChange={(e) => setForm({
-                      ...form,
-                      quantidade: e.target.value === '' ? undefined : Number(e.target.value),
-                    })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="quantidadeMinima">Qtde. Mínima</Label>
+                  <Label htmlFor="quantidadeMinima">Qtde. Mínima - Estoque</Label>
                   <Input
                     id="quantidadeMinima"
                     type="number"
@@ -285,21 +268,31 @@ export function ItemForm({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="custoUnitario">Custo Unitário (R$)</Label>
+                  <Label htmlFor="estoqueAtual">Estoque Atual</Label>
                   <Input
-                    id="custoUnitario"
+                    id="estoqueAtual"
                     type="number"
-                    min={0}
-                    step="any"
-                    placeholder="0,00"
-                    value={form.custoUnitario ?? ''}
-                    onChange={(e) => setForm({
-                      ...form,
-                      custoUnitario: e.target.value === '' ? undefined : Number(e.target.value),
-                    })}
+                    readOnly
+                    disabled
+                    value={
+                      (Number(form.quantidadeMinima) || 0) +
+                      (form.totalConferido ?? 0)
+                    }
+                    className="bg-muted cursor-not-allowed font-medium"
                   />
                 </div>
               </>
+            )}
+
+            {(isEpi || isEquipamento) && (
+              <div className="space-y-1.5">
+                <Label htmlFor="custoUnitario">Custo Unitário (R$)</Label>
+                <InputMoeda
+                  id="custoUnitario"
+                  value={form.custoUnitario}
+                  onChange={(v) => setForm({ ...form, custoUnitario: v })}
+                />
+              </div>
             )}
 
             {/* Classificação: Marca, Categoria e Subcategoria */}
@@ -362,27 +355,7 @@ export function ItemForm({
               </select>
             </div>
 
-            {/* Operacional: Localização, Fornecedor e Unidade de Medida */}
-            <div className="space-y-1.5">
-              <Label htmlFor="localizacaoId">Localização</Label>
-              <select
-                id="localizacaoId"
-                value={form.localizacaoId ?? ''}
-                onChange={(e) => setForm({
-                  ...form,
-                  localizacaoId: e.target.value ? Number(e.target.value) : undefined,
-                })}
-                className={selectClasses}
-              >
-                <option value="">Sem localização</option>
-                {[...(lookups?.localizacoes ?? [])]
-                  .sort((a, b) => a.nome.localeCompare(b.nome))
-                  .map((l) => (
-                    <option key={l.id} value={l.id}>{l.nome}</option>
-                  ))}
-              </select>
-            </div>
-
+            {/* Operacional: Fornecedor e Unidade de Medida */}
             <div className="space-y-1.5">
               <Label htmlFor="fornecedorId">Fornecedor</Label>
               <select
@@ -423,33 +396,7 @@ export function ItemForm({
               </select>
             </div>
 
-            {/* Dados Financeiros / Garantia */}
-            <div className="space-y-1.5">
-              <Label htmlFor="dataAquisicao">Data de Aquisição</Label>
-              <Input
-                id="dataAquisicao"
-                type="datetime-local"
-                value={form.dataAquisicao ?? ''}
-                onChange={(e) => setForm({ ...form, dataAquisicao: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="valorAquisicao">Valor de Aquisição (R$)</Label>
-              <Input
-                id="valorAquisicao"
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="0,00"
-                value={form.valorAquisicao ?? ''}
-                onChange={(e) => setForm({
-                  ...form,
-                  valorAquisicao: e.target.value === '' ? undefined : Number(e.target.value),
-                })}
-              />
-            </div>
-
+            {/* Garantia */}
             <div className="space-y-1.5">
               <Label htmlFor="dataGarantia">Fim da Garantia</Label>
               <Input

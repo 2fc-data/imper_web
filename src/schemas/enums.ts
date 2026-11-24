@@ -74,4 +74,4 @@ export type StatusListaCompra =
   | 'APROVADA'
   | 'RECUSADA'
   | 'COMPRADA';
-export type StatusItemLista = 'PENDENTE' | 'RECUSADO' | 'COMPRADO';
+export type StatusItemLista = 'PENDENTE' | 'RECUSADO' | 'COMPRADO' | 'CONFERIDO';

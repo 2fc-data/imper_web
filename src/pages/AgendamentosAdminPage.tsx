@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { SearchInput } from '../components/ui/search-input';
 import {
   type AgendamentoItem,
   type AtendimentoItem,
@@ -327,15 +328,11 @@ export function AgendamentoList({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar por cliente, endereço ou observações..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </div>
+        <SearchInput
+          placeholder="Buscar por cliente, endereço ou observações..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select
           value={statusFiltro}
           onChange={(e) => onStatusFiltroChange(e.target.value)}

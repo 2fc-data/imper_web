@@ -337,11 +337,15 @@ export function RetiradaDeItensPage({
           : tipo === 'equipamentos'
             ? (await listarEquipamentos({ ativo: true })).map((e) => ({
                 id: e.id,
-                label: `${e.codigo} — ${e.descricao}`,
+                label: e.numeroPatrimonio
+                  ? `${e.descricao} — Patr. ${e.numeroPatrimonio}`
+                  : e.descricao,
               }))
             : (await listarEpis({ ativo: true })).map((e) => ({
                 id: e.id,
-                label: `${e.codigo} — ${e.nome}`,
+                label: e.numeroPatrimonio
+                  ? `${e.nome} — Patr. ${e.numeroPatrimonio}`
+                  : e.nome,
               }));
       setOpcoesAdicao((prev) => ({ ...prev, [tipo]: opcoes }));
     } catch (e) {
@@ -495,81 +499,86 @@ export function RetiradaDeItensPage({
   );
 
   return (
-    <div className="flex h-full">
-      <aside className="w-64 shrink-0 border-r p-4 space-y-4">
-        <h2 className="text-lg font-semibold">Retirada de Itens</h2>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Obra</label>
-          <select
-            value={filtroObra}
-            onChange={(e) => {
-              setFiltroObra(e.target.value);
-              setFiltroColaborador('');
-            }}
-            className={selectClasses}
-          >
-            <option value="">Selecione uma obra...</option>
-            {obras.map((o) => {
-              const endereco = formatarEnderecoObra(o.endereco);
-              return (
-                <option key={o.id} value={o.id}>
-                  {o.codigo}
-                  {o.user?.nome ? ` — ${o.user.nome}` : ''}
-                  {endereco ? ` — ${endereco}` : ''}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Colaborador</label>
-          <select
-            value={filtroColaborador}
-            onChange={(e) => setFiltroColaborador(e.target.value)}
-            className={selectClasses}
-            disabled={!filtroObra}
-          >
-            <option value="">Todos</option>
-            {opcoesColaborador.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-3 pt-4 border-t">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Resumo
-          </h3>
-          <div className="grid grid-cols-1 gap-2">
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-2xl font-bold">
-                {colaboradoresComRetirada.length}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Colaboradores
-              </div>
+    <div className="flex flex-col h-full overflow-auto p-4 sm:p-6 space-y-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Retirada de Itens</CardTitle>
+          <CardDescription>
+            Selecione a obra e o colaborador para gerenciar as retiradas e conferências.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Obra</label>
+              <select
+                value={filtroObra}
+                onChange={(e) => {
+                  setFiltroObra(e.target.value);
+                  setFiltroColaborador('');
+                }}
+                className={selectClasses}
+              >
+                <option value="">Selecione uma obra...</option>
+                {obras.map((o) => {
+                  const endereco = formatarEnderecoObra(o.endereco);
+                  return (
+                    <option key={o.id} value={o.id}>
+                      {o.codigo}
+                      {o.user?.nome ? ` — ${o.user.nome}` : ''}
+                      {endereco ? ` — ${endereco}` : ''}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-2xl font-bold">{registros.length}</div>
-              <div className="text-xs text-muted-foreground">
-                Itens Retirados
-              </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Colaborador</label>
+              <select
+                value={filtroColaborador}
+                onChange={(e) => setFiltroColaborador(e.target.value)}
+                className={selectClasses}
+                disabled={!filtroObra}
+              >
+                <option value="">Todos</option>
+                {opcoesColaborador.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-2xl font-bold">{totalPendentes}</div>
-              <div className="text-xs text-muted-foreground">
-                Aguardando Retirada
+          </div>
+
+          <div className="pt-2 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-lg bg-muted p-3">
+                <div className="text-2xl font-bold">
+                  {colaboradoresComRetirada.length}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Colaboradores
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted p-3">
+                <div className="text-2xl font-bold">{registros.length}</div>
+                <div className="text-xs text-muted-foreground">
+                  Itens Retirados
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted p-3">
+                <div className="text-2xl font-bold">{totalPendentes}</div>
+                <div className="text-xs text-muted-foreground">
+                  Aguardando Retirada
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </CardContent>
+      </Card>
 
-      <main className="flex-1 overflow-auto p-4 space-y-6">
+      <main className="space-y-6">
         {erro && retiradaPendente === null && adicionarEm === null && (
           <div className="flex items-start justify-between gap-3 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
             <span>{erro}</span>

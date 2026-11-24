@@ -20,7 +20,6 @@ export const RECURSOS_CATALOGOS = [
   'subcategorias',
   'marcas',
   'fornecedores',
-  'localizacoes',
   'unidades-medida',
   'cores',
   'tamanhos',
@@ -71,7 +70,6 @@ export interface CatalogosPayload {
   subcategorias: SubcategoriaItem[];
   marcas: CatalogoItem[];
   fornecedores: FornecedorItem[];
-  localizacoes: CatalogoItem[];
   unidadesMedida: UnidadeMedidaItem[];
   cores: CorItem[];
   tamanhos: CatalogoItem[];
@@ -129,7 +127,6 @@ export const categoriasApi = criarCatalogoApi<CatalogoItem>('categorias');
 export const subcategoriasApi = criarCatalogoApi<SubcategoriaItem>('subcategorias');
 export const marcasApi = criarCatalogoApi<CatalogoItem>('marcas');
 export const fornecedoresApi = criarCatalogoApi<FornecedorItem>('fornecedores');
-export const localizacoesApi = criarCatalogoApi<CatalogoItem>('localizacoes');
 export const unidadesMedidaApi = criarCatalogoApi<UnidadeMedidaItem>('unidades-medida');
 export const coresApi = criarCatalogoApi<CorItem>('cores');
 export const tamanhosApi = criarCatalogoApi<CatalogoItem>('tamanhos');
@@ -143,7 +140,6 @@ export const RECURSO_LABEL: Record<RecursoCatalogo, string> = {
   subcategorias: 'Subcategoria',
   marcas: 'Marca',
   fornecedores: 'Fornecedor',
-  localizacoes: 'Localização',
   'unidades-medida': 'Unidade de medida',
   cores: 'Cor',
   tamanhos: 'Tamanho',
@@ -165,7 +161,6 @@ export const RECURSO_TIPOS_PERMITIDOS: Record<RecursoCatalogo, TipoInsumo[]> = {
   subcategorias: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
   marcas: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS', 'VEICULO'],
   fornecedores: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
-  localizacoes: ['EQUIPAMENTO', 'EPI'],
   'unidades-medida': ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
   cores: ['EQUIPAMENTO', 'EPI', 'MATERIAL', 'DESPESAS_EXTRAS'],
   tamanhos: ['EPI'],

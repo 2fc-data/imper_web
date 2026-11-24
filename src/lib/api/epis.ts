@@ -22,7 +22,6 @@ export interface EpiItem {
   numeroCa: string | null;
   numeroPatrimonio: string | null;
   dataValidade: string | null;
-  quantidade: number;
   quantidadeMinima: number | null;
   ativo: boolean;
   marcaId: number | null;
@@ -31,8 +30,6 @@ export interface EpiItem {
   categoria?: LookupItem | null;
   subcategoriaId: number | null;
   subcategoria?: SubcategoriaItem | null;
-  localizacaoId: number | null;
-  localizacao?: LookupItem | null;
   fornecedorId: number | null;
   fornecedor?: FornecedorItem | null;
   unidadeMedidaId: number | null;
@@ -40,6 +37,8 @@ export interface EpiItem {
   createdAt: string;
   updatedAt: string;
   entregas?: EntregaEpiItem[];
+  totalConferido?: number;
+  estoqueAtual?: number;
 }
 
 export interface EpiInput {
@@ -49,12 +48,10 @@ export interface EpiInput {
   numeroCa?: string;
   numeroPatrimonio?: string;
   dataValidade?: string;
-  quantidade?: number;
   quantidadeMinima?: number;
   marcaId?: number;
   categoriaId?: number;
   subcategoriaId?: number;
-  localizacaoId?: number;
   fornecedorId?: number;
   unidadeMedidaId?: number;
 }
