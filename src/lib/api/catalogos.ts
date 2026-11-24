@@ -101,6 +101,7 @@ interface CatalogoApi<T extends CatalogoItem> {
     tipoInsumo?: TipoInsumo,
   ) => Promise<T>;
   desativar: (id: number) => Promise<T>;
+  remover: (id: number) => Promise<T>;
 }
 
 function criarCatalogoApi<T extends CatalogoItem>(recurso: RecursoCatalogo): CatalogoApi<T> {
@@ -120,6 +121,7 @@ function criarCatalogoApi<T extends CatalogoItem>(recurso: RecursoCatalogo): Cat
     },
 
     desativar: (id) => api.del<T>(`/catalogos/${recurso}/${id}`),
+    remover: (id) => api.del<T>(`/catalogos/${recurso}/${id}`),
   };
 }
 

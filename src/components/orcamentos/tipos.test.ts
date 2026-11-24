@@ -150,7 +150,7 @@ describe('transições de atividade/linha', () => {
     expect(chaveAtividade(atividade({ subServicoId: 8 }))).toBe('5:8');
   });
 
-  it('adicionarLinha cria atividade e mescla pela chave', () => {
+  it('adicionarLinha cria atividade e mescla pela chave em ordem descendente', () => {
     let s = estadoInicialWizard();
     s = adicionarLinha(s, atividade(), linha());
     expect(s.atividades).toHaveLength(1);
@@ -159,10 +159,14 @@ describe('transições de atividade/linha', () => {
     s = adicionarLinha(s, atividade(), linha({ descricao: 'Segunda linha' }));
     expect(s.atividades).toHaveLength(1);
     expect(s.atividades[0].linhas).toHaveLength(2);
-    expect(s.atividades[0].linhas[1].descricao).toBe('Segunda linha');
+    // Mais recente fica no topo (índice 0)
+    expect(s.atividades[0].linhas[0].descricao).toBe('Segunda linha');
 
     s = adicionarLinha(s, atividade({ subServicoId: 8 }), linha());
     expect(s.atividades).toHaveLength(2);
+    // Nova atividade fica no topo (índice 0)
+    expect(s.atividades[0].subServicoId).toBe(8);
+    expect(s.atividades[1].subServicoId).toBe(7);
   });
 
   it('atualizarLinha aplica patch apenas no índice certo', () => {
@@ -172,10 +176,11 @@ describe('transições de atividade/linha', () => {
       linha({ descricao: 'A' }),
     );
     s = adicionarLinha(s, atividade(), linha({ descricao: 'B' }));
-    s = atualizarLinha(s, 0, 1, { descricao: 'B editada', moPessoas: 3 });
-    expect(s.atividades[0].linhas[0].descricao).toBe('A');
-    expect(s.atividades[0].linhas[1].descricao).toBe('B editada');
-    expect(s.atividades[0].linhas[1].moPessoas).toBe(3);
+    // 'B' foi adicionado depois de 'A', então está no índice 0
+    s = atualizarLinha(s, 0, 0, { descricao: 'B editada', moPessoas: 3 });
+    expect(s.atividades[0].linhas[0].descricao).toBe('B editada');
+    expect(s.atividades[0].linhas[0].moPessoas).toBe(3);
+    expect(s.atividades[0].linhas[1].descricao).toBe('A');
   });
 
   it('removerLinha remove a atividade quando fica sem linhas', () => {
@@ -193,9 +198,10 @@ describe('transições de atividade/linha', () => {
   it('removerAtividade remove por índice', () => {
     let s = adicionarLinha(estadoInicialWizard(), atividade(), linha());
     s = adicionarLinha(s, atividade({ subServicoId: 8 }), linha());
+    // subServicoId: 8 está no índice 0 e 7 está no índice 1
     s = removerAtividade(s, 0);
     expect(s.atividades).toHaveLength(1);
-    expect(s.atividades[0].subServicoId).toBe(8);
+    expect(s.atividades[0].subServicoId).toBe(7);
   });
 });
 

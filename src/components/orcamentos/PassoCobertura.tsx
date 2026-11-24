@@ -52,12 +52,43 @@ interface Props {
  * opções ativas, sem filtragem cruzada nem bloqueio).
  */
 export function PassoCobertura({ state, set }: Props) {
-  const [cascata, setCascata] = useState<ValorCascata>(cascataVazia);
+  const [cascata, setCascata] = useState<ValorCascata>(() => ({
+    ...cascataVazia(),
+    subServicoId: state.servicoMarketingId ?? null,
+  }));
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const [editandoKey, setEditandoKey] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<LinhaForm>>({});
+  const [errosValidacao, setErrosValidacao] = useState<{
+    etapa?: string;
+    subServico?: string;
+    verbo?: string;
+    objeto?: string;
+  }>({});
+
+  // Preenche como padrão o serviço selecionado no Passo 1 caso ainda não tenha atividades adicionadas com outro serviço
+  useEffect(() => {
+    if (state.servicoMarketingId == null) return;
+    setCascata((prev) => {
+      if (
+        state.atividades.length > 0 &&
+        prev.subServicoId != null &&
+        prev.subServicoId !== state.servicoMarketingId
+      ) {
+        return prev;
+      }
+      if (prev.subServicoId === state.servicoMarketingId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        subServicoId: state.servicoMarketingId,
+        subServicoNome: null,
+      };
+    });
+  }, [state.servicoMarketingId, state.atividades.length]);
 
   // Listas de termos para os selects de edição inline
   const [verbos, setVerbos] = useState<OpcaoCascata[]>([]);
@@ -88,12 +119,6 @@ export function PassoCobertura({ state, set }: Props) {
   }, []);
 
   const temSelecao = cascata.etapaId != null && cascata.subServicoId != null;
-
-  const podeAdicionar =
-    cascata.etapaId != null &&
-    cascata.subServicoId != null &&
-    cascata.verboId != null &&
-    cascata.objetoId != null;
 
   const totais = totaisDoEstado(state);
 
@@ -139,7 +164,32 @@ export function PassoCobertura({ state, set }: Props) {
     id == null ? null : (lista.find((o) => o.id === id)?.nome ?? null);
 
   const adicionar = () => {
-    if (!podeAdicionar) return;
+    const novosErros: {
+      etapa?: string;
+      subServico?: string;
+      verbo?: string;
+      objeto?: string;
+    } = {};
+
+    if (cascata.etapaId == null) {
+      novosErros.etapa = 'Selecione a etapa';
+    }
+    if (cascata.subServicoId == null) {
+      novosErros.subServico = 'Selecione o serviço';
+    }
+    if (cascata.verboId == null) {
+      novosErros.verbo = 'Selecione a ação';
+    }
+    if (cascata.objetoId == null) {
+      novosErros.objeto = 'Selecione o objeto';
+    }
+
+    if (Object.keys(novosErros).length > 0) {
+      setErrosValidacao(novosErros);
+      return;
+    }
+
+    setErrosValidacao({});
     // abre o acordeão da atividade recém-adicionada
     const chaveNova = `${cascata.etapaId}:${cascata.subServicoId}`;
     set((s) =>
@@ -156,7 +206,7 @@ export function PassoCobertura({ state, set }: Props) {
       ),
     );
     setAbertas((prev) => new Set(prev).add(chaveNova));
-    // mantém etapa/sub-serviço; limpa seleção de termos, título e descrição
+    // mantém etapa/sub-serviço e título; limpa seleção de termos e descrição
     setCascata((c) => ({
       ...c,
       verboId: null,
@@ -168,7 +218,6 @@ export function PassoCobertura({ state, set }: Props) {
       caracteristicaId: null,
       caracteristicaNome: null,
     }));
-    setTitulo('');
     setDescricao('');
   };
 
@@ -180,9 +229,36 @@ export function PassoCobertura({ state, set }: Props) {
         </h3>
         <CascataVocabulario
           valor={cascata}
-          onChange={setCascata}
+          onChange={(novo) => {
+            setErrosValidacao((prev) => {
+              const next = { ...prev };
+              if (novo.etapaId != null) delete next.etapa;
+              if (novo.subServicoId != null) delete next.subServico;
+              return next;
+            });
+            if (
+              novo.etapaId !== cascata.etapaId ||
+              novo.subServicoId !== cascata.subServicoId
+            ) {
+              setTitulo('');
+            }
+            setCascata(novo);
+          }}
           modo="reduzida"
+          erros={errosValidacao}
         />
+        <div className="mt-3">
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Título (opcional)</span>
+            <input
+              className={`${inputClasses} uppercase`}
+              type="text"
+              placeholder="Ex.: IMPERMEABILIZAÇÃO DE LAJE"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value.toUpperCase())}
+            />
+          </label>
+        </div>
       </div>
 
       <div className={cardClasses}>
@@ -195,24 +271,26 @@ export function PassoCobertura({ state, set }: Props) {
             </span>
           ) : (
             <span className="text-xs text-muted-foreground">
-              Os campos abaixo são independentes: escolha verbo e objeto para
+              Os campos abaixo são independentes: escolha ação e objeto para
               adicionar a linha
             </span>
           )}
         </div>
-        <div className="mb-3">
-          <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Título (opcional)</span>
-            <input
-              className={`${inputClasses} uppercase`}
-              type="text"
-              placeholder="Ex.: IMPERMEABILIZAÇÃO DE LAJE"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value.toUpperCase())}
-            />
-          </label>
-        </div>
-        <div className="mb-3">
+        <CascataVocabulario
+          valor={cascata}
+          onChange={(novo) => {
+            setErrosValidacao((prev) => {
+              const next = { ...prev };
+              if (novo.verboId != null) delete next.verbo;
+              if (novo.objetoId != null) delete next.objeto;
+              return next;
+            });
+            setCascata(novo);
+          }}
+          modo="termos"
+          erros={errosValidacao}
+        />
+        <div className="mt-3">
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>Descrição</span>
             <textarea
@@ -224,17 +302,16 @@ export function PassoCobertura({ state, set }: Props) {
             />
           </label>
         </div>
-        <CascataVocabulario
-          valor={cascata}
-          onChange={setCascata}
-          modo="termos"
-        />
 
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-3">
+          {Object.keys(errosValidacao).length > 0 ? (
+            <span className="text-xs font-medium text-destructive">
+              Preencha os campos obrigatórios destacados em vermelho.
+            </span>
+          ) : null}
           <button
             type="button"
             className={btnPrimarioClasses}
-            disabled={!podeAdicionar}
             onClick={adicionar}
           >
             Adicionar atividade
@@ -252,59 +329,51 @@ export function PassoCobertura({ state, set }: Props) {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {state.atividades
-              .map((a, aIdx) => ({ a, aIdx }))
-              // ordena por inserção descendente: a última adicionada fica no topo
-              .sort((x, y) => y.aIdx - x.aIdx)
-              .map(({ a, aIdx }) => {
-                const chaveAtividade = `${a.etapaId}:${a.subServicoId}`;
-                const atividadeAberta = abertas.has(chaveAtividade);
-                const subtotalAtividade = a.linhas.reduce(
-                  (acc, l) => acc + subtotalLinha(l),
-                  0,
-                );
-                return (
-                  <div
-                    key={chaveAtividade}
-                    className={cardClasses}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <button
-                        type="button"
-                        className="flex flex-1 items-center justify-between gap-2 text-left text-sm"
-                        onClick={() => alternar(chaveAtividade)}
-                      >
-                        <span className="font-medium">
-                          {rotuloAtividade(a)}
+            {state.atividades.map((a, aIdx) => {
+              const chaveAtividade = `${a.etapaId}:${a.subServicoId}`;
+              const atividadeAberta = abertas.has(chaveAtividade);
+              const subtotalAtividade = a.linhas.reduce(
+                (acc, l) => acc + subtotalLinha(l),
+                0,
+              );
+              return (
+                <div
+                  key={chaveAtividade}
+                  className={cardClasses}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      className="flex flex-1 items-center justify-between gap-2 text-left text-sm"
+                      onClick={() => alternar(chaveAtividade)}
+                    >
+                      <span className="font-medium">
+                        {rotuloAtividade(a)}
+                      </span>
+                      <span className="flex items-center gap-2 whitespace-nowrap">
+                        <span className="text-xs text-muted-foreground">
+                          {a.linhas.length}{' '}
+                          {a.linhas.length === 1 ? 'linha' : 'linhas'}
                         </span>
-                        <span className="flex items-center gap-2 whitespace-nowrap">
-                          <span className="text-xs text-muted-foreground">
-                            {a.linhas.length}{' '}
-                            {a.linhas.length === 1 ? 'linha' : 'linhas'}
-                          </span>
-                          <span className="text-4xl leading-none text-muted-foreground">
-                            {atividadeAberta ? '▾' : '▸'}
-                          </span>
+                        <span className="text-4xl leading-none text-muted-foreground">
+                          {atividadeAberta ? '▾' : '▸'}
                         </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="text-xs text-destructive hover:underline"
-                        onClick={() => set((s) => removerAtividade(s, aIdx))}
-                      >
-                        remover atividade
-                      </button>
-                    </div>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs text-destructive hover:underline"
+                      onClick={() => set((s) => removerAtividade(s, aIdx))}
+                    >
+                      remover atividade
+                    </button>
+                  </div>
 
-                    {atividadeAberta ? (
-                      <>
-                      <ul className="mt-3 flex flex-col gap-3">
-                        {a.linhas
-                          .map((l, lIdx) => ({ l, lIdx }))
-                          // exibição: última linha adicionada no topo (ordem salva preservada)
-                          .sort((x, y) => y.lIdx - x.lIdx)
-                          .map(({ l, lIdx }) => {
-                          const linhaKey = `${aIdx}:${lIdx}`;
+                  {atividadeAberta ? (
+                    <>
+                    <ul className="mt-3 flex flex-col gap-3">
+                      {a.linhas.map((l, lIdx) => {
+                        const linhaKey = `${aIdx}:${lIdx}`;
                           const emEdicao = editandoKey === linhaKey;
                           return (
                           <li
@@ -325,9 +394,29 @@ export function PassoCobertura({ state, set }: Props) {
                                     }
                                   />
                                 </label>
-                                <div className="grid gap-2 sm:grid-cols-2">
+                                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                                   <label className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-muted-foreground">Verbo *</span>
+                                    <span className="text-[10px] text-muted-foreground">Local</span>
+                                    <select
+                                      className={`${selectClasses} uppercase`}
+                                      value={editForm.localId ?? ''}
+                                      onChange={(e) => {
+                                        const id = e.target.value ? Number(e.target.value) : null;
+                                        setEditForm((f) => ({
+                                          ...f,
+                                          localId: id,
+                                          localNome: nomeDeOpcao(locais, id)?.toUpperCase() ?? null,
+                                        }));
+                                      }}
+                                    >
+                                      <option value="">SELECIONE...</option>
+                                      {locais.map((lc) => (
+                                        <option key={lc.id} value={lc.id} className="uppercase">{lc.nome.toUpperCase()}</option>
+                                      ))}
+                                    </select>
+                                  </label>
+                                  <label className="flex flex-col gap-1">
+                                    <span className="text-[10px] text-muted-foreground">Ação *</span>
                                     <select
                                       className={`${selectClasses} uppercase`}
                                       value={editForm.verboId ?? ''}
@@ -367,26 +456,6 @@ export function PassoCobertura({ state, set }: Props) {
                                     </select>
                                   </label>
                                   <label className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-muted-foreground">Local</span>
-                                    <select
-                                      className={`${selectClasses} uppercase`}
-                                      value={editForm.localId ?? ''}
-                                      onChange={(e) => {
-                                        const id = e.target.value ? Number(e.target.value) : null;
-                                        setEditForm((f) => ({
-                                          ...f,
-                                          localId: id,
-                                          localNome: nomeDeOpcao(locais, id)?.toUpperCase() ?? null,
-                                        }));
-                                      }}
-                                    >
-                                      <option value="">Nenhum</option>
-                                      {locais.map((lc) => (
-                                        <option key={lc.id} value={lc.id} className="uppercase">{lc.nome.toUpperCase()}</option>
-                                      ))}
-                                    </select>
-                                  </label>
-                                  <label className="flex flex-col gap-1">
                                     <span className="text-[10px] text-muted-foreground">Característica</span>
                                     <select
                                       className={`${selectClasses} uppercase`}
@@ -400,7 +469,7 @@ export function PassoCobertura({ state, set }: Props) {
                                         }));
                                       }}
                                     >
-                                      <option value="">Nenhuma</option>
+                                      <option value="">SELECIONE...</option>
                                       {caracteristicas.map((c) => (
                                         <option key={c.id} value={c.id} className="uppercase">{c.nome.toUpperCase()}</option>
                                       ))}
@@ -445,8 +514,8 @@ export function PassoCobertura({ state, set }: Props) {
                                   </span>
                                 ) : null}
                                 <span className="text-sm">
+                                  {l.localNome ? `${l.localNome} ` : ''}
                                   {l.verboNome} {l.objetoNome}
-                                  {l.localNome ? ` ${l.localNome}` : ''}
                                   {l.caracteristicaNome
                                     ? ` — ${l.caracteristicaNome}`
                                     : ''}

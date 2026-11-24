@@ -196,13 +196,19 @@ export function adicionarLinha(
   if (idx === -1) {
     return {
       ...state,
-      atividades: [...state.atividades, { ...atividade, linhas: [linha] }],
+      atividades: [{ ...atividade, linhas: [linha] }, ...state.atividades],
     };
   }
-  const atividades = state.atividades.map((a, i) =>
-    i === idx ? { ...a, linhas: [...a.linhas, linha] } : a,
-  );
-  return { ...state, atividades };
+  const atividadeExistente = state.atividades[idx];
+  const atividadeAtualizada: AtividadeForm = {
+    ...atividadeExistente,
+    linhas: [linha, ...atividadeExistente.linhas],
+  };
+  const outrasAtividades = state.atividades.filter((_, i) => i !== idx);
+  return {
+    ...state,
+    atividades: [atividadeAtualizada, ...outrasAtividades],
+  };
 }
 
 export function atualizarLinha(

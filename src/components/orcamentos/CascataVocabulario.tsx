@@ -26,6 +26,12 @@ interface Props {
   modo?: 'reduzida' | 'completa' | 'termos';
   /** Se true, usa `servicos_marketing` (título) no select em vez de `sub_servicos`. Padrão: true no wizard de orçamento. */
   usarServicosMarketing?: boolean;
+  erros?: {
+    etapa?: string;
+    subServico?: string;
+    verbo?: string;
+    objeto?: string;
+  };
 }
 
 /**
@@ -38,6 +44,7 @@ export function CascataVocabulario({
   onChange,
   modo = 'completa',
   usarServicosMarketing = true,
+  erros,
 }: Props) {
   const soEtapasSubs = modo === 'reduzida';
   const soTermos = modo === 'termos';
@@ -99,12 +106,33 @@ export function CascataVocabulario({
         if (!vivo) return;
         const ativos = r.filter((s) => s.ativo);
         setServicosMarketing(ativos);
+        if (valor.subServicoId != null) {
+          const encontrado = ativos.find((s) => s.id === valor.subServicoId);
+          if (encontrado && valor.subServicoNome !== encontrado.titulo) {
+            onChange({
+              ...valor,
+              subServicoNome: encontrado.titulo,
+            });
+          }
+        }
       })
       .catch(() => {});
     return () => {
       vivo = false;
     };
   }, [soTermos, usarServicosMarketing]);
+
+  // Sincroniza subServicoNome quando subServicoId for definido externamente (ex.: pré-preenchido pelo Passo 1)
+  useEffect(() => {
+    if (!usarServicosMarketing || valor.subServicoId == null) return;
+    const encontrado = servicosMarketing.find((s) => s.id === valor.subServicoId);
+    if (encontrado && valor.subServicoNome !== encontrado.titulo) {
+      onChange({
+        ...valor,
+        subServicoNome: encontrado.titulo,
+      });
+    }
+  }, [usarServicosMarketing, valor.subServicoId, valor.subServicoNome, servicosMarketing]);
 
   // sub-serviços: filtrados pela etapa quando selecionada; sem etapa, todos
   // os ativos (com prefixo de etapa no label para desambiguar)
@@ -200,15 +228,17 @@ export function CascataVocabulario({
       className={
         soEtapasSubs
           ? 'grid gap-3 sm:grid-cols-2'
-          : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3'
+          : soTermos
+            ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-4'
+            : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3'
       }
     >
       {soTermos ? null : (
         <>
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Etapa</span>
+            <span className={labelClasses}>Etapa *</span>
             <select
-              className={selectClasses}
+              className={`${selectClasses} ${erros?.etapa ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.etapaId ?? ''}
               onChange={mudarEtapa}
             >
@@ -219,14 +249,17 @@ export function CascataVocabulario({
                 </option>
               ))}
             </select>
+            {erros?.etapa ? (
+              <span className="text-[11px] text-destructive">{erros.etapa}</span>
+            ) : null}
           </label>
 
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>
-              {usarServicosMarketing ? 'Serviço' : 'Sub-serviço'}
+              {usarServicosMarketing ? 'Serviço' : 'Sub-serviço'} *
             </span>
             <select
-              className={selectClasses}
+              className={`${selectClasses} ${erros?.subServico ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.subServicoId ?? ''}
               onChange={mudarSub}
             >
@@ -249,6 +282,9 @@ export function CascataVocabulario({
                     </option>
                   ))}
             </select>
+            {erros?.subServico ? (
+              <span className="text-[11px] text-destructive">{erros.subServico}</span>
+            ) : null}
           </label>
         </>
       )}
@@ -256,9 +292,25 @@ export function CascataVocabulario({
       {soEtapasSubs ? null : (
         <>
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Verbo</span>
+            <span className={labelClasses}>Local</span>
             <select
               className={`${selectClasses} uppercase`}
+              value={valor.localId ?? ''}
+              onChange={mudarOpcao('local', locais)}
+            >
+              <option value="">SELECIONE...</option>
+              {locais.map((o) => (
+                <option key={o.id} value={o.id} className="uppercase">
+                  {o.nome.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className={labelClasses}>Ação *</span>
+            <select
+              className={`${selectClasses} uppercase ${erros?.verbo ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.verboId ?? ''}
               onChange={mudarOpcao('verbo', verbos)}
             >
@@ -269,12 +321,15 @@ export function CascataVocabulario({
                 </option>
               ))}
             </select>
+            {erros?.verbo ? (
+              <span className="text-[11px] text-destructive">{erros.verbo}</span>
+            ) : null}
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Objeto</span>
+            <span className={labelClasses}>Objeto *</span>
             <select
-              className={`${selectClasses} uppercase`}
+              className={`${selectClasses} uppercase ${erros?.objeto ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.objetoId ?? ''}
               onChange={mudarOpcao('objeto', objetos)}
             >
@@ -285,22 +340,9 @@ export function CascataVocabulario({
                 </option>
               ))}
             </select>
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Local</span>
-            <select
-              className={`${selectClasses} uppercase`}
-              value={valor.localId ?? ''}
-              onChange={mudarOpcao('local', locais)}
-            >
-              <option value="">(qualquer)</option>
-              {locais.map((o) => (
-                <option key={o.id} value={o.id} className="uppercase">
-                  {o.nome.toUpperCase()}
-                </option>
-              ))}
-            </select>
+            {erros?.objeto ? (
+              <span className="text-[11px] text-destructive">{erros.objeto}</span>
+            ) : null}
           </label>
 
           <label className="flex flex-col gap-1">
@@ -310,7 +352,7 @@ export function CascataVocabulario({
               value={valor.caracteristicaId ?? ''}
               onChange={mudarOpcao('caracteristica', caracteristicas)}
             >
-              <option value="">(qualquer)</option>
+              <option value="">SELECIONE...</option>
               {caracteristicas.map((o) => (
                 <option key={o.id} value={o.id} className="uppercase">
                   {o.nome.toUpperCase()}
