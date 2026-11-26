@@ -258,8 +258,8 @@ function DespesasExtrasForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">
-            Custo unitário
+          <label htmlFor="custoUnitario" className="mb-1 block text-sm font-medium">
+            Custo unitário (R$)
           </label>
           <InputMoeda
             id="custoUnitario"

@@ -53,8 +53,6 @@ export default function FrotaKmPage({
     data: dataLocalHoje(),
     odometro: 0,
     observacao: '',
-    numeroCupon: '',
-    numeroSerie: '',
   });
   const hoje = new Date();
   const [mesAtual, setMesAtual] = useState(hoje.getMonth() + 1);
@@ -64,8 +62,6 @@ export default function FrotaKmPage({
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [editandoData, setEditandoData] = useState('');
   const [editandoOdometro, setEditandoOdometro] = useState('');
-  const [editandoNumeroCupon, setEditandoNumeroCupon] = useState('');
-  const [editandoNumeroSerie, setEditandoNumeroSerie] = useState('');
   const [editandoColaboradorId, setEditandoColaboradorId] = useState<number | ''>('');
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
@@ -150,8 +146,6 @@ export default function FrotaKmPage({
         data: form.data,
         odometro: form.odometro,
         observacao: form.observacao || undefined,
-        numeroCupon: form.numeroCupon?.trim() || undefined,
-        numeroSerie: form.numeroSerie?.trim() || undefined,
         colaboradorId: form.colaboradorId || undefined,
       });
       await carregarRegistros(veiculoId, mesAtual, anoAtual);
@@ -159,8 +153,6 @@ export default function FrotaKmPage({
         data: dataLocalHoje(),
         odometro: 0,
         observacao: '',
-        numeroCupon: '',
-        numeroSerie: '',
         colaboradorId: undefined,
       });
       const veiculo = await listarVeiculos();
@@ -189,8 +181,6 @@ export default function FrotaKmPage({
       await atualizarRegistroKm(id, {
         data: editandoData,
         odometro,
-        numeroCupon: editandoNumeroCupon.trim() || null,
-        numeroSerie: editandoNumeroSerie.trim() || null,
         ...(editandoColaboradorId !== '' && { colaboradorId: editandoColaboradorId }),
       });
       if (veiculoId !== '') {
@@ -210,8 +200,6 @@ export default function FrotaKmPage({
     setEditandoId(r.id);
     setEditandoData(toLocalDate(r.data));
     setEditandoOdometro(formatarKm(r.odometro));
-    setEditandoNumeroCupon(r.numeroCupon ?? '');
-    setEditandoNumeroSerie(r.numeroSerie ?? '');
     setEditandoColaboradorId(r.colaboradorId ?? '');
   }
 
@@ -307,7 +295,7 @@ export default function FrotaKmPage({
                 <CardDescription>Informe a leitura do odômetro ao final do dia.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form key={veiculoSelecionado.id} onSubmit={handleSubmit} className="space-y-3">
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="data">Data</Label>
@@ -327,29 +315,26 @@ export default function FrotaKmPage({
                         required
                         placeholder={formatarKm(veiculoSelecionado.odometroAtual)}
                         value={form.odometro ? formatarKm(form.odometro) : ''}
-                        onChange={(e) => setForm({ ...form, odometro: parseKm(e.target.value) ?? 0 })}
+                        onChange={(e) => {
+                          const texto = e.target.value;
+                          const n = parseKm(texto);
+                          const atual = Number(veiculoSelecionado.odometroAtual);
+                          setForm({ ...form, odometro: n ?? 0 });
+                          const el = e.currentTarget;
+                          if (!texto.trim()) el.setCustomValidity('');
+                          else if (n === undefined) el.setCustomValidity('Valor de odômetro inválido');
+                          else if (n <= atual) {
+                            el.setCustomValidity(
+                              `Odômetro deve ser maior que o valor atual (${formatarKm(atual)} km)`,
+                            );
+                          } else el.setCustomValidity('');
+                        }}
                       />
                       {form.odometro > 0 && form.odometro > Number(veiculoSelecionado.odometroAtual) && (
                         <p className="text-xs text-muted-foreground">
                           KM rodados: {formatarKm(form.odometro - Number(veiculoSelecionado.odometroAtual))}
                         </p>
                       )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="numeroCupon">Nr Cupon</Label>
-                      <Input
-                        id="numeroCupon"
-                        value={form.numeroCupon ?? ''}
-                        onChange={(e) => setForm({ ...form, numeroCupon: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="numeroSerie">Nr Série</Label>
-                      <Input
-                        id="numeroSerie"
-                        value={form.numeroSerie ?? ''}
-                        onChange={(e) => setForm({ ...form, numeroSerie: e.target.value })}
-                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="colaboradorId">Colaborador</Label>
@@ -382,10 +367,7 @@ export default function FrotaKmPage({
                     </div>
                   </div>
                   <div>
-                    <Button
-                      type="submit"
-                      disabled={saving || !form.odometro || form.odometro <= Number(veiculoSelecionado.odometroAtual)}
-                    >
+                    <Button type="submit" disabled={saving}>
                       {saving ? 'Salvando...' : 'Salvar'}
                     </Button>
                   </div>
@@ -452,8 +434,6 @@ export default function FrotaKmPage({
                     <th className="px-3 py-2 text-right">KM Atual</th>
                     <th className="px-3 py-2 text-right">KM do Dia</th>
                     <th className="px-3 py-2">Colaborador</th>
-                    <th className="px-3 py-2">Nr Cupon</th>
-                    <th className="px-3 py-2">Nr Série</th>
                     <th className="px-3 py-2">Observação</th>
                     <th className="px-3 py-2 text-right">Ações</th>
                   </tr>
@@ -474,6 +454,8 @@ export default function FrotaKmPage({
                             <Input
                               type="date"
                               className="h-8 w-36"
+                              form={`editar-km-${r.id}`}
+                              required
                               value={editandoData}
                               onChange={(e) => setEditandoData(e.target.value)}
                             />
@@ -488,8 +470,18 @@ export default function FrotaKmPage({
                               <Input
                                 inputMode="numeric"
                                 className="h-8 w-28 text-right"
+                                form={`editar-km-${r.id}`}
+                                required
                                 value={editandoOdometro}
-                                onChange={(e) => setEditandoOdometro(e.target.value)}
+                                onChange={(e) => {
+                                  const texto = e.target.value;
+                                  setEditandoOdometro(texto);
+                                  const el = e.currentTarget;
+                                  if (!texto.trim()) el.setCustomValidity('');
+                                  else if (parseKm(texto) === undefined) {
+                                    el.setCustomValidity('Valor de odômetro inválido');
+                                  } else el.setCustomValidity('');
+                                }}
                               />
                             </div>
                           ) : (
@@ -523,28 +515,6 @@ export default function FrotaKmPage({
                             <span className="text-muted-foreground">{r.colaborador?.nome ?? '—'}</span>
                           )}
                         </td>
-                        <td className="px-3 py-2">
-                          {emEdicao ? (
-                            <Input
-                              className="h-8 w-28"
-                              value={editandoNumeroCupon}
-                              onChange={(e) => setEditandoNumeroCupon(e.target.value)}
-                            />
-                          ) : (
-                            <span className="text-muted-foreground">{r.numeroCupon ?? '—'}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">
-                          {emEdicao ? (
-                            <Input
-                              className="h-8 w-32"
-                              value={editandoNumeroSerie}
-                              onChange={(e) => setEditandoNumeroSerie(e.target.value)}
-                            />
-                          ) : (
-                            <span className="text-muted-foreground">{r.numeroSerie ?? '—'}</span>
-                          )}
-                        </td>
                         <td className="px-3 py-2 text-muted-foreground">
                           {emEdicao ? (
                             <span className="text-xs">
@@ -556,12 +526,18 @@ export default function FrotaKmPage({
                         </td>
                         <td className="px-3 py-2 text-right">
                           {emEdicao ? (
-                            <div className="flex justify-end gap-1">
+                            <form
+                              id={`editar-km-${r.id}`}
+                              className="flex justify-end gap-1"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                void handleSalvarEdicao(r.id);
+                              }}
+                            >
                               <Button
-                                type="button"
+                                type="submit"
                                 size="sm"
                                 disabled={salvandoEdicao}
-                                onClick={() => handleSalvarEdicao(r.id)}
                               >
                                 {salvandoEdicao ? '...' : 'Salvar'}
                               </Button>
@@ -573,7 +549,7 @@ export default function FrotaKmPage({
                               >
                                 Cancelar
                               </Button>
-                            </div>
+                            </form>
                           ) : (
                             <Button
                               type="button"

@@ -35,8 +35,8 @@ export function PecasEditor({
 
   const adicionar = () => {
     onChange([
-      ...pecas,
       { descricao: '', acao: 'TROCADA', origem: null, valor: undefined },
+      ...pecas,
     ]);
   };
 
@@ -63,14 +63,25 @@ export function PecasEditor({
             key={indice}
             className="grid gap-2 rounded-lg border border-input p-3 sm:grid-cols-[minmax(0,1fr)_150px_160px_150px_auto] sm:items-center"
           >
-            <Input
-              aria-label={`Descrição da peça ${indice + 1}`}
-              placeholder="Descrição da peça"
-              value={peca.descricao}
-              onChange={(e) =>
-                atualizar(indice, { descricao: e.target.value })
-              }
-            />
+            <div className="relative">
+              <Input
+                aria-label={`Descrição da peça ${indice + 1}`}
+                placeholder="Descrição da peça"
+                className="pr-6"
+                required
+                value={peca.descricao}
+                onChange={(e) =>
+                  atualizar(indice, { descricao: e.target.value })
+                }
+              />
+              <span
+                aria-hidden="true"
+                title="Campo obrigatório"
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 font-bold text-destructive/80"
+              >
+                *
+              </span>
+            </div>
 
             <select
               aria-label={`Ação da peça ${indice + 1}`}

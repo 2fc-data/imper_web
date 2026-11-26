@@ -830,11 +830,18 @@ export function ListaComprasView({
   function conteudoEdicao() {
     return (
       <>
-        <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,2.25fr)_5.5rem_minmax(0,1.4fr)_7.5rem_9.5rem_auto]">
+        <form
+          className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,2.25fr)_5.5rem_minmax(0,1.4fr)_7.5rem_9.5rem_auto]"
+          onSubmit={(e) => {
+            e.preventDefault();
+            adicionarAoRascunho();
+          }}
+        >
           <div className="col-span-2 space-y-1.5 sm:col-span-3 lg:col-span-1">
             <Label htmlFor="item-catalogo">Item do catálogo</Label>
             <select
               id="item-catalogo"
+              required
               value={selItemId === '' ? '' : String(selItemId)}
               onChange={(e) =>
                 selecionarItemDoCatalogo(
@@ -858,6 +865,7 @@ export function ListaComprasView({
             <Input
               id="item-qtd"
               type="number"
+              required
               min="0.001"
               step="any"
               value={selQtd}
@@ -895,18 +903,19 @@ export function ListaComprasView({
             <Input
               id="item-data"
               type="date"
+              required
               value={selDataCompra}
               onChange={(e) => setSelDataCompra(e.target.value)}
             />
           </div>
           <Button
+            type="submit"
             className="col-span-2 h-11 self-end sm:col-span-1"
-            onClick={adicionarAoRascunho}
-            disabled={ocupado || !podeCriar || selItemId === ''}
+            disabled={ocupado || !podeCriar}
           >
             Adicionar
           </Button>
-        </div>
+        </form>
 
         {rascunho.length === 0 ? (
           <p className="rounded-lg border bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
@@ -1074,11 +1083,18 @@ export function ListaComprasView({
             + novo item
           </button>
         ) : (
-          <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,2.25fr)_5.5rem_minmax(0,1.4fr)_7.5rem_9.5rem_auto]">
+          <form
+            className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 sm:grid-cols-3 lg:grid-cols-[minmax(0,2.25fr)_5.5rem_minmax(0,1.4fr)_7.5rem_9.5rem_auto]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void adicionarItemNaAprovacao();
+            }}
+          >
             <div className="col-span-2 space-y-1.5 sm:col-span-3 lg:col-span-1">
               <Label htmlFor="novo-item-cat">Item do catálogo</Label>
               <select
                 id="novo-item-cat"
+                required
                 value={novoItemId === '' ? '' : String(novoItemId)}
                 onChange={(e) => {
                   const valor = e.target.value === '' ? '' : Number(e.target.value);
@@ -1107,6 +1123,7 @@ export function ListaComprasView({
               <Input
                 id="novo-item-qtd"
                 type="number"
+                required
                 min="0.001"
                 step="any"
                 value={novoItemQtd}
@@ -1146,19 +1163,21 @@ export function ListaComprasView({
               <Input
                 id="novo-item-data"
                 type="date"
+                required
                 value={novoItemData}
                 onChange={(e) => setNovoItemData(e.target.value)}
               />
             </div>
             <div className="col-span-2 flex items-end gap-2 sm:col-span-1">
               <Button
+                type="submit"
                 className="h-11"
-                onClick={adicionarItemNaAprovacao}
-                disabled={ocupado || !podeCriar || !podeAprovar(modo) || novoItemId === ''}
+                disabled={ocupado || !podeCriar || !podeAprovar(modo)}
               >
                 Adicionar
               </Button>
               <Button
+                type="button"
                 className="h-11"
                 variant="ghost"
                 onClick={() => setNovoItemAberto(false)}
@@ -1166,7 +1185,7 @@ export function ListaComprasView({
                 Cancelar
               </Button>
             </div>
-          </div>
+          </form>
         ))}
       </div>
     );

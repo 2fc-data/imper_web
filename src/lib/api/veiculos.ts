@@ -57,8 +57,6 @@ export interface RegistroKmItem {
   kmPercorrido: number;
   odometro: number;
   observacao: string | null;
-  numeroCupon: string | null;
-  numeroSerie: string | null;
   registradoPorId: number | null;
   registradoPor?: { id: number; nome: string } | null;
   colaboradorId: number | null;
@@ -70,8 +68,6 @@ export interface RegistroKmInput {
   data?: string;
   odometro: number;
   observacao?: string;
-  numeroCupon?: string | null;
-  numeroSerie?: string | null;
   colaboradorId?: number;
 }
 
@@ -85,6 +81,8 @@ export interface AbastecimentoItem {
   precoLitro: number;
   kmDesdeUltimo: number | null;
   kmPorLitro: number | null;
+  numeroCupon: string | null;
+  numeroSerie: string | null;
   fornecedorId: number | null;
   fornecedor?: LookupItem | null;
   registradoPorId: number | null;
@@ -102,6 +100,8 @@ export interface AbastecimentoInput {
   valorTotal: number;
   fornecedorId?: number;
   motoristaId: number;
+  numeroCupon?: string | null;
+  numeroSerie?: string | null;
 }
 
 export interface ManutencaoVeiculoItem {

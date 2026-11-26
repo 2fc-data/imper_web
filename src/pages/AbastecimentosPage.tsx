@@ -22,17 +22,22 @@ import {
   listarVeiculos,
   type VeiculoItem,
 } from '../lib/api';
-import { formatarData, formatarValor } from '../lib/datetime';
+import { dataLocalHoje, formatarData, formatarValor, toLocalDate } from '../lib/datetime';
 import { formatarKm, parseKm } from '../lib/km';
 import { selectClasses } from '../components/ui/form-classes';
 
-const emptyForm: AbastecimentoInput = {
-  veiculoId: 0,
-  litros: 0,
-  valorTotal: 0,
-  odometro: undefined,
-  motoristaId: 0,
-};
+function formVazio(): AbastecimentoInput {
+  return {
+    veiculoId: 0,
+    data: dataLocalHoje(),
+    litros: 0,
+    valorTotal: 0,
+    odometro: undefined,
+    motoristaId: 0,
+    numeroCupon: '',
+    numeroSerie: '',
+  };
+}
 
 export default function AbastecimentosPage({
   viewAtiva: propViewAtiva,
@@ -53,7 +58,7 @@ export default function AbastecimentosPage({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<AbastecimentoItem | null>(null);
-  const [form, setForm] = useState<AbastecimentoInput>(emptyForm);
+  const [form, setForm] = useState<AbastecimentoInput>(formVazio);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(null);
   const [excluindo, setExcluindo] = useState<number | null>(null);
 
@@ -89,10 +94,13 @@ export default function AbastecimentosPage({
     setEditando(a);
     setForm({
       veiculoId: a.veiculoId,
+      data: toLocalDate(a.data),
       litros: a.litros,
       valorTotal: a.valorTotal,
       odometro: a.odometro,
       motoristaId: a.motoristaId || 0,
+      numeroCupon: a.numeroCupon ?? '',
+      numeroSerie: a.numeroSerie ?? '',
     });
     setError(null);
     setMostrarForm(true);
@@ -100,7 +108,7 @@ export default function AbastecimentosPage({
 
   function cancelarEdicao() {
     setEditando(null);
-    setForm(emptyForm);
+    setForm(formVazio());
     setError(null);
     setMostrarForm(false);
     if (viewAtiva === 'novo') setViewAtiva('lista');
@@ -113,10 +121,13 @@ export default function AbastecimentosPage({
     try {
       const payload: AbastecimentoInput = {
         veiculoId: form.veiculoId || 0,
+        data: form.data,
         litros: form.litros,
         valorTotal: form.valorTotal,
         odometro: form.odometro,
         motoristaId: form.motoristaId || 0,
+        numeroCupon: form.numeroCupon?.trim() || null,
+        numeroSerie: form.numeroSerie?.trim() || null,
       };
       if (editando) {
         const atualizado = await atualizarAbastecimento(editando.id, payload);
@@ -188,6 +199,16 @@ export default function AbastecimentosPage({
               </select>
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="data">Data</Label>
+              <Input
+                id="data"
+                type="date"
+                required
+                value={form.data ?? ''}
+                onChange={(e) => setForm({ ...form, data: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="motoristaId">Motorista</Label>
               <select
                 id="motoristaId"
@@ -234,6 +255,26 @@ export default function AbastecimentosPage({
                 required
                 value={form.valorTotal || undefined}
                 onChange={(v) => setForm({ ...form, valorTotal: v ?? 0 })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="numeroCupon">Nr Cupom</Label>
+              <Input
+                id="numeroCupon"
+                maxLength={60}
+                placeholder="Opcional"
+                value={form.numeroCupon ?? ''}
+                onChange={(e) => setForm({ ...form, numeroCupon: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="numeroSerie">Nr Série</Label>
+              <Input
+                id="numeroSerie"
+                maxLength={120}
+                placeholder="Opcional"
+                value={form.numeroSerie ?? ''}
+                onChange={(e) => setForm({ ...form, numeroSerie: e.target.value })}
               />
             </div>
           </div>
@@ -334,6 +375,8 @@ export default function AbastecimentosPage({
                           <span> · Odômetro: {formatarKm(a.odometro)} km</span>
                           {a.fornecedor && <span> · {a.fornecedor.nome}</span>}
                           {a.motorista && <span> · Motorista: {a.motorista.nome}</span>}
+                          {a.numeroCupon && <span> · Cupom: {a.numeroCupon}</span>}
+                          {a.numeroSerie && <span> · Série: {a.numeroSerie}</span>}
                           {a.registradoPor && (
                             <span className="text-xs"> · por {a.registradoPor.nome}</span>
                           )}

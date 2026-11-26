@@ -392,6 +392,31 @@ export function NovoOrcamentoWizard({
     }
   };
 
+  const salvarRascunhoAtividade = async () => {
+    const erroAtePasso2 = validarAte(state, 2);
+    if (erroAtePasso2) {
+      setErro(erroAtePasso2);
+      return;
+    }
+    // Salva imediatamente no localStorage
+    const id = salvoIdRef.current;
+    salvarRascunho(window.localStorage, id, estadoRef.current, Date.now());
+
+    // Se tiver atendimento preenchido, dispara persistência no backend via fila
+    setSalvando(true);
+    setErro(null);
+    try {
+      await naFila(() => salvarEstado(state));
+      setAutosave((e) => reducerAutosave(e, { tipo: 'sucesso', em: Date.now() }));
+    } catch (err) {
+      const msg = mensagemDeErro(err);
+      setErro(msg);
+      setAutosave((e) => reducerAutosave(e, { tipo: 'falha', mensagem: msg }));
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   const acaoEnviar = () => comSalvo((id) => enviarOrcamentoAdmin(id));
 
   const acaoAprovar = () =>
@@ -504,7 +529,14 @@ export function NovoOrcamentoWizard({
             edicao={orcamentoEdicao != null}
           />
         ) : null}
-        {state.passo === 2 ? <PassoCobertura state={state} set={set} /> : null}
+        {state.passo === 2 ? (
+          <PassoCobertura
+            state={state}
+            set={set}
+            onSalvar={salvarRascunhoAtividade}
+            salvando={salvando}
+          />
+        ) : null}
         {state.passo === 3 ? (
           <PassoFichaResumo
             state={state}

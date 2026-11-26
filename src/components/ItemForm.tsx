@@ -286,7 +286,7 @@ export function ItemForm({
 
             {(isEpi || isEquipamento) && (
               <div className="space-y-1.5">
-                <Label htmlFor="custoUnitario">Custo Unitário (R$)</Label>
+                <Label htmlFor="custoUnitario">Custo unitário (R$)</Label>
                 <InputMoeda
                   id="custoUnitario"
                   value={form.custoUnitario}

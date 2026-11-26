@@ -24,6 +24,7 @@ import {
   type PecaManutencaoInput,
 } from '../lib/api';
 import {
+  dataLocalHoje,
   diasNaOficina,
   formatarData,
   formatarValor,
@@ -58,19 +59,21 @@ function BadgeStatus({ status }: { status: string }) {
   );
 }
 
-const emptyForm: ManutencaoVeiculoInput = {
-  veiculoId: 0,
-  tipoId: 0,
-  data: '',
-  descricao: '',
-  local: '',
-  pecas: [],
-  custoMaoDeObra: undefined,
-  dataSaida: '',
-  proximaManutencao: '',
-  status: '',
-  responsavelManutencaoId: undefined,
-};
+function formVazio(): ManutencaoVeiculoInput {
+  return {
+    veiculoId: 0,
+    tipoId: 0,
+    data: dataLocalHoje(),
+    descricao: '',
+    local: '',
+    pecas: [],
+    custoMaoDeObra: undefined,
+    dataSaida: '',
+    proximaManutencao: '',
+    status: '',
+    responsavelManutencaoId: undefined,
+  };
+}
 
 export default function ManutencoesVeiculosPage({
   viewAtiva: propViewAtiva,
@@ -91,7 +94,7 @@ export default function ManutencoesVeiculosPage({
   const [busca, setBusca] = useState('');
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<ManutencaoVeiculoItem | null>(null);
-  const [form, setForm] = useState<ManutencaoVeiculoInput>(emptyForm);
+  const [form, setForm] = useState<ManutencaoVeiculoInput>(formVazio);
   const carregar = useCallback(async () => {
     setError(null);
     try {
@@ -162,7 +165,7 @@ export default function ManutencoesVeiculosPage({
 
   function cancelarEdicao() {
     setEditando(null);
-    setForm(emptyForm);
+    setForm(formVazio());
     setError(null);
     setMostrarForm(false);
     if (viewAtiva === 'novo') setViewAtiva('lista');

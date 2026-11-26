@@ -18,7 +18,6 @@ import {
   labelClasses,
   linhaDaCascata,
   numero,
-  removerAtividade,
   removerLinha,
   rotuloAtividade,
   selectClasses,
@@ -34,6 +33,8 @@ import {
 interface Props {
   state: WizardState;
   set: AtualizarEstado;
+  onSalvar?: () => Promise<void> | void;
+  salvando?: boolean;
 }
 
 /**
@@ -51,7 +52,7 @@ interface Props {
  * Todos os selects são independentes entre si (cada um lista todas as
  * opções ativas, sem filtragem cruzada nem bloqueio).
  */
-export function PassoCobertura({ state, set }: Props) {
+export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
   const [cascata, setCascata] = useState<ValorCascata>(() => ({
     ...cascataVazia(),
     subServicoId: state.servicoMarketingId ?? null,
@@ -360,13 +361,6 @@ export function PassoCobertura({ state, set }: Props) {
                         </span>
                       </span>
                     </button>
-                    <button
-                      type="button"
-                      className="text-xs text-destructive hover:underline"
-                      onClick={() => set((s) => removerAtividade(s, aIdx))}
-                    >
-                      remover atividade
-                    </button>
                   </div>
 
                   {atividadeAberta ? (
@@ -378,7 +372,7 @@ export function PassoCobertura({ state, set }: Props) {
                           return (
                           <li
                             key={lIdx}
-                            className="rounded-lg border p-2"
+                            className="rounded-lg border border-border/80 bg-muted/40 p-3 shadow-xs"
                           >
                             {emEdicao ? (
                               <div className="mb-2 flex flex-col gap-2">
@@ -676,13 +670,23 @@ export function PassoCobertura({ state, set }: Props) {
                           );
                         })}
                       </ul>
-                      <div className="mt-3 flex justify-end border-t pt-2 text-xs">
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t pt-2 text-xs">
                         <span className="text-muted-foreground">
                           Subtotal da atividade:{' '}
                           <span className="font-semibold text-foreground">
                             {brl(subtotalAtividade)}
                           </span>
                         </span>
+                        {onSalvar ? (
+                          <button
+                            type="button"
+                            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                            onClick={() => void onSalvar()}
+                            disabled={salvando}
+                          >
+                            {salvando ? 'Salvando…' : 'Salvar'}
+                          </button>
+                        ) : null}
                       </div>
                       </>
                     ) : null}

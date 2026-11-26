@@ -75,6 +75,7 @@ interface CrudApi {
     tipoInsumo?: TipoInsumo,
   ) => Promise<unknown>;
   desativar: (id: number) => Promise<unknown>;
+  remover: (id: number) => Promise<unknown>;
 }
 
 const APIS: Record<RecursoCatalogo, CrudApi> = {
@@ -136,7 +137,6 @@ export function CatalogoManager({
   const [carregando, setCarregando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
-  const [filtroStatus, setFiltroStatus] = useState<'TODOS' | 'ATIVO' | 'INATIVO'>('TODOS');
   const [itensPorPagina, setItensPorPagina] = useState(25);
 
   // Form states for "Cadastrar Novo"
@@ -232,8 +232,6 @@ export function CatalogoManager({
         if (tipoFiltro !== 'TODOS' && it.tipoInsumo !== tipoFiltro) {
           return false;
         }
-        if (filtroStatus === 'ATIVO' && !it.ativo) return false;
-        if (filtroStatus === 'INATIVO' && it.ativo) return false;
         if (busca.trim()) {
           const termo = busca.trim().toLowerCase();
           const nomeOk = it.nome.toLowerCase().includes(termo);
@@ -250,22 +248,25 @@ export function CatalogoManager({
         return true;
       })
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
-  }, [itens, tipoFiltro, filtroStatus, busca, recurso, categoriasLookup]);
+  }, [itens, tipoFiltro, busca, recurso, categoriasLookup]);
 
-  // Toggle active
-  async function handleToggleAtivo(item: ItemExtendido) {
+  // Remover item
+  async function handleRemover(item: ItemExtendido) {
+    const confirmou = window.confirm(
+      `Tem certeza que deseja remover "${item.nome}"? Esta ação é irreversível.`,
+    );
+    if (!confirmou) return;
+
     setError(null);
     try {
-      await APIS[recurso].atualizar(
-        item.id,
-        { ativo: !item.ativo },
-        tipoFixo ?? item.tipoInsumo,
-      );
-      setItens((prev) =>
-        prev.map((x) => (x.id === item.id ? { ...x, ativo: !x.ativo } : x)),
-      );
+      await APIS[recurso].remover(item.id);
+      setItens((prev) => prev.filter((x) => x.id !== item.id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao alterar status');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível remover o item. Verifique se ele possui vínculos no sistema.',
+      );
     }
   }
 
@@ -724,17 +725,6 @@ export function CatalogoManager({
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
-            <select
-              value={filtroStatus}
-              onChange={(e) =>
-                setFiltroStatus(e.target.value as 'TODOS' | 'ATIVO' | 'INATIVO')
-              }
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-44"
-            >
-              <option value="TODOS">Todos os status</option>
-              <option value="ATIVO">Apenas Ativos</option>
-              <option value="INATIVO">Apenas Inativos</option>
-            </select>
           </div>
 
           <div className="flex items-center justify-between gap-4">
@@ -776,7 +766,7 @@ export function CatalogoManager({
                 </div>
                 <h3 className="text-sm font-semibold">Nenhum registro encontrado</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {busca || filtroStatus !== 'TODOS' || tipoFiltro !== 'TODOS'
+                  {busca || tipoFiltro !== 'TODOS'
                     ? 'Tente ajustar os filtros ou a busca acima.'
                     : `Cadastre seu primeiro item em ${tituloExibido}.`}
                 </p>
@@ -820,16 +810,6 @@ export function CatalogoManager({
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold tracking-tight text-foreground">
                         {item.nome}
-                      </span>
-                      <span
-                        className={cn(
-                          'rounded-full px-2 py-0.5 text-xs font-medium',
-                          item.ativo
-                            ? 'bg-emerald-500/10 text-emerald-600'
-                            : 'bg-muted text-muted-foreground',
-                        )}
-                      >
-                        {item.ativo ? 'Ativo' : 'Inativo'}
                       </span>
                       {!tipoFixo && (
                         <span
@@ -897,9 +877,10 @@ export function CatalogoManager({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleToggleAtivo(item)}
+                      className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive"
+                      onClick={() => handleRemover(item)}
                     >
-                      {item.ativo ? 'Desativar' : 'Ativar'}
+                      Remover
                     </Button>
                   </div>
                 </div>

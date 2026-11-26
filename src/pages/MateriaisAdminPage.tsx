@@ -26,6 +26,7 @@ import {
   type UnidadeMedida,
 } from '../lib/api';
 import { Label } from '../components/ui/label';
+import { InputMoeda } from '../components/ui/input-moeda';
 import { selectClasses } from '../components/ui/form-classes';
 import { formatarData, formatarValor } from '../lib/datetime';
 import { cn } from '../lib/utils';
@@ -308,17 +309,12 @@ function MaterialForm({
         </div>
         <div>
           <Label htmlFor="custoUnitario">Custo unitário (R$)</Label>
-          <input
+          <InputMoeda
             id="custoUnitario"
-            type="number"
-            min={0}
-            step="0.01"
             value={form.custoUnitario}
-            onChange={(e) =>
-              setForm({ ...form, custoUnitario: e.target.value })
+            onChange={(v) =>
+              setForm({ ...form, custoUnitario: v !== undefined ? String(v) : '' })
             }
-            placeholder="0,00"
-            className={inputCls}
           />
         </div>
       </div>
