@@ -1,7 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { ManutencoesVeiculosAnalyticsDashboard } from '../components/analytics/ManutencoesVeiculosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
-import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -91,7 +90,7 @@ export default function ManutencoesVeiculosPage({
   const [lookups, setLookups] = useState<ManutencoesVeiculosLookups | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<string>('');
-  const [busca, setBusca] = useState('');
+  const [filtroVeiculo, setFiltroVeiculo] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<ManutencaoVeiculoItem | null>(null);
   const [form, setForm] = useState<ManutencaoVeiculoInput>(formVazio);
@@ -226,19 +225,8 @@ export default function ManutencoesVeiculosPage({
 
   const filtradas = manutencoes.filter((m) => {
     if (filtroStatus && m.status !== filtroStatus) return false;
-    const texto = busca.trim().toLowerCase();
-    if (!texto) return true;
-    return [
-      m.descricao,
-      m.veiculo?.codigo,
-      m.veiculo?.nome,
-      m.veiculo?.placa,
-      m.tipo?.nome,
-      m.local,
-      m.responsavelManutencao?.nome,
-    ]
-      .filter(Boolean)
-      .some((v) => String(v).toLowerCase().includes(texto));
+    if (filtroVeiculo && String(m.veiculoId) !== filtroVeiculo) return false;
+    return true;
   });
 
   const totalPecas = somarMoeda(...(form.pecas ?? []).map((p) => p.valor));
@@ -434,19 +422,26 @@ export default function ManutencoesVeiculosPage({
         <div className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
             <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-              <SearchInput
-                placeholder="Buscar por veículo, tipo ou descrição..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
+              <select
+                value={filtroVeiculo}
+                onChange={(e) => setFiltroVeiculo(e.target.value ? Number(e.target.value) : '')}
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
+              >
+                <option value="">Todos os veículos</option>
+                {(lookups?.veiculos ?? []).map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nome} — {v.placa}
+                  </option>
+                ))}
+              </select>
               <select
                 value={filtroStatus}
                 onChange={(e) => setFiltroStatus(e.target.value)}
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-ring-ring"
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
               >
                 <option value="">TODOS OS STATUS</option>
-                {Object.entries(STATUS_LABEL).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                {(lookups?.statusVeiculos ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>{s.nome}</option>
                 ))}
               </select>
             </div>

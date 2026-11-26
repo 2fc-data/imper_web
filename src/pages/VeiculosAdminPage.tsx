@@ -9,7 +9,6 @@ import {
   YAxis,
 } from 'recharts';
 import { Button } from '../components/ui/button';
-import { SearchInput } from '../components/ui/search-input';
 import {
   Card,
   CardContent,
@@ -283,10 +282,10 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
   const [mesAnalise, setMesAnalise] = useState(hoje.getMonth() + 1);
   const [anoAnalise] = useState(hoje.getFullYear());
   const [error, setError] = useState<string | null>(null);
-  const [busca, setBusca] = useState('');
   const [statusFiltro, setStatusFiltro] = useState<number | ''>('');
   const [tipoFiltro, setTipoFiltro] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
+  const [veiculo, setVeiculo] = useState<number | undefined>(undefined);
   const [editando, setEditando] = useState<VeiculoItem | null>(null);
   const [form, setForm] = useState<VeiculoInput>(emptyForm);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(null);
@@ -541,15 +540,22 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
       {view === 'lista' && !editando && (
         <>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <SearchInput
-              placeholder="Buscar por código, placa ou nome..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
+            <select
+              value={veiculo}
+              onChange={(e) => setVeiculo(e.target.value ? Number(e.target.value) : undefined)}
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
+            >
+              <option value="" disabled>Todos os veículos</option>
+              {veiculos.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.nome} — {v.placa}
+                </option>
+              ))}
+            </select>
             <select
               value={statusFiltro}
               onChange={(e) => setStatusFiltro(e.target.value ? Number(e.target.value) : '')}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
             >
               <option value="">TODOS OS STATUS</option>
               {(lookups?.statusVeiculos ?? []).map((s) => (
@@ -559,7 +565,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
             <select
               value={tipoFiltro}
               onChange={(e) => setTipoFiltro(e.target.value ? Number(e.target.value) : '')}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
             >
               <option value="">TODOS OS TIPOS</option>
               {(lookups?.tiposVeiculo ?? []).map((t) => (
@@ -573,8 +579,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
               (v) =>
                 (!statusFiltro || v.statusId === statusFiltro) &&
                 (!tipoFiltro || v.tipoId === tipoFiltro) &&
-                (!busca ||
-                  `${v.codigo} ${v.placa} ${v.nome}`.toLowerCase().includes(busca.toLowerCase())),
+                (!veiculo || v.id === veiculo),
             );
             return (
               <div className="space-y-3">
