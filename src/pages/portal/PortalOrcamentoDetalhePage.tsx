@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import {
   Card,
@@ -8,7 +9,11 @@ import {
   CardTitle,
 } from '../../components/ui/card';
 import type { OrcamentoAdminDetalhe } from '../../lib/api';
-import { obterOrcamentoPortal } from '../../lib/api';
+import {
+  aprovarOrcamentoPortal,
+  obterOrcamentoPortal,
+  recusarOrcamentoPortal,
+} from '../../lib/api';
 import { brl, formatarData } from '../../lib/format';
 
 export default function PortalOrcamentoDetalhePage() {
@@ -20,6 +25,11 @@ export default function PortalOrcamentoDetalhePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [naoEncontrado, setNaoEncontrado] = useState(false);
+  const [processando, setProcessando] = useState<'aprovar' | 'recusar' | null>(null);
+  const [acaoErro, setAcaoErro] = useState<string | null>(null);
+  const [recusaAberta, setRecusaAberta] = useState(false);
+  const [motivoRecusa, setMotivoRecusa] = useState('');
+  const [obraCriada, setObraCriada] = useState<{ id: number; codigo: string } | null>(null);
 
   useEffect(() => {
     if (!Number.isFinite(numeroId) || numeroId <= 0) {
@@ -54,6 +64,38 @@ export default function PortalOrcamentoDetalhePage() {
     return <Navigate to="/portal/orcamentos" replace />;
   }
 
+  async function handleAprovar() {
+    if (!orcamento) return;
+    setProcessando('aprovar');
+    setAcaoErro(null);
+    try {
+      const res = await aprovarOrcamentoPortal(orcamento.id);
+      setOrcamento((prev) => (prev ? { ...prev, status: 'APROVADO' } : prev));
+      setObraCriada(res.obra);
+      setRecusaAberta(false);
+    } catch (err) {
+      setAcaoErro(err instanceof Error ? err.message : 'Falha ao aprovar orçamento');
+    } finally {
+      setProcessando(null);
+    }
+  }
+
+  async function handleConfirmarRecusa() {
+    if (!orcamento) return;
+    setProcessando('recusar');
+    setAcaoErro(null);
+    try {
+      const atualizado = await recusarOrcamentoPortal(orcamento.id, motivoRecusa);
+      setOrcamento(atualizado);
+      setRecusaAberta(false);
+      setMotivoRecusa('');
+    } catch (err) {
+      setAcaoErro(err instanceof Error ? err.message : 'Falha ao recusar orçamento');
+    } finally {
+      setProcessando(null);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <Link
@@ -85,9 +127,102 @@ export default function PortalOrcamentoDetalhePage() {
       {!loading && !error && !naoEncontrado && orcamento && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl font-semibold">{orcamento.codigo}</h1>
-            <StatusBadge status={orcamento.status} />
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-semibold">{orcamento.codigo}</h1>
+              <StatusBadge status={orcamento.status} />
+            </div>
+
+            {orcamento.status === 'ENVIADO' && (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={processando !== null}
+                  onClick={() => {
+                    setAcaoErro(null);
+                    setRecusaAberta((prev) => !prev);
+                  }}
+                >
+                  Recusar
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={processando !== null}
+                  onClick={handleAprovar}
+                >
+                  {processando === 'aprovar' ? 'Aprovando...' : 'Aprovar'}
+                </Button>
+              </div>
+            )}
           </div>
+
+          {acaoErro && (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {acaoErro}
+            </p>
+          )}
+
+          {obraCriada && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300">
+              <span>
+                Orçamento aprovado! A obra <strong>{obraCriada.codigo}</strong> foi gerada e iniciará na data e horário estabelecidos.
+              </span>
+              <Link
+                to={`/portal/obras/${obraCriada.id}`}
+                className="font-medium underline"
+              >
+                Ver obra →
+              </Link>
+            </div>
+          )}
+
+          {orcamento.status === 'ENVIADO' && recusaAberta && (
+            <Card className="border-destructive/40">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-destructive">
+                  Recusar orçamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Se desejar, descreva o motivo da recusa ou o que gostaria de ajustar (opcional).
+                </p>
+                <textarea
+                  rows={3}
+                  maxLength={500}
+                  value={motivoRecusa}
+                  onChange={(e) => setMotivoRecusa(e.target.value)}
+                  placeholder="Descreva o motivo (opcional)..."
+                  className="w-full rounded-lg border border-input bg-background p-2.5 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={processando !== null}
+                    onClick={() => {
+                      setRecusaAberta(false);
+                      setMotivoRecusa('');
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={processando !== null}
+                    onClick={handleConfirmarRecusa}
+                  >
+                    {processando === 'recusar' ? 'Recusando...' : 'Confirmar recusa'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="pb-2">

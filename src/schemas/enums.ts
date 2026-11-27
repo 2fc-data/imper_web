@@ -54,7 +54,8 @@ export type StatusManutencao =
   | 'PENDENTE'
   | 'EM_ANDAMENTO'
   | 'CONCLUIDA'
-  | 'CANCELADA';
+  | 'CANCELADA'
+  | 'AGUARDANDO_APROVACAO';
 
 export type TipoMaterial = 'MATERIAL' | 'EQUIPAMENTO' | 'DESPESAS_EXTRAS';
 

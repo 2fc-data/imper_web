@@ -29,6 +29,10 @@ export interface ManutencaoItem {
   };
   tipo?: LookupItem | null;
   responsavelManutencao?: { id: number; nome: string } | null;
+  criadoPor?: { id: number; nome: string } | null;
+  aprovadoPor?: { id: number; nome: string } | null;
+  decididoEm?: string | null;
+  motivoDecisao?: string | null;
   pecas?: PecaManutencaoItem[];
 }
 
@@ -84,4 +88,19 @@ export async function atualizarManutencao(
 
 export async function excluirManutencao(id: number): Promise<ManutencaoItem> {
   return api.del<ManutencaoItem>(`/manutencoes/${id}`);
+}
+
+export async function listarManutencoesPendentesAprovacao(): Promise<ManutencaoItem[]> {
+  return api.get<ManutencaoItem[]>('/manutencoes/pendentes-aprovacao');
+}
+
+export async function aprovarManutencao(id: number): Promise<ManutencaoItem> {
+  return api.post<ManutencaoItem>(`/manutencoes/${id}/aprovar`);
+}
+
+export async function recusarManutencao(
+  id: number,
+  motivo: string,
+): Promise<ManutencaoItem> {
+  return api.post<ManutencaoItem>(`/manutencoes/${id}/recusar`, { motivo });
 }

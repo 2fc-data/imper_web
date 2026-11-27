@@ -45,6 +45,8 @@ export {
   listarAgendamentosPortal,
   listarOrcamentosPortal,
   obterOrcamentoPortal,
+  aprovarOrcamentoPortal,
+  recusarOrcamentoPortal,
   listarObrasPortal,
   obterObraPortal,
   atualizarPerfil,
@@ -326,6 +328,9 @@ export {
   criarManutencao,
   atualizarManutencao,
   excluirManutencao,
+  listarManutencoesPendentesAprovacao,
+  aprovarManutencao,
+  recusarManutencao,
 } from './manutencoes.js';
 export type {
   ManutencaoItem,
@@ -369,6 +374,7 @@ export {
   obterListaCompras,
   obterListaComprasPorId,
   listarRodadasListaCompras,
+  listarListasComprasPendentesAprovacao,
   salvarItensListaCompras,
   enviarListaCompras,
   aprovarListaCompras,
@@ -477,7 +483,11 @@ export {
   criarManutencaoVeiculo,
   atualizarManutencaoVeiculo,
   excluirManutencaoVeiculo,
+  listarManutencoesVeiculosPendentesAprovacao,
+  aprovarManutencaoVeiculo,
+  recusarManutencaoVeiculo,
 } from './veiculos.js';
+export * from './notificacoes.js';
 export type {
   VeiculoItem,
   VeiculoInput,

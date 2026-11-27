@@ -535,6 +535,7 @@ export function NovoOrcamentoWizard({
             set={set}
             onSalvar={salvarRascunhoAtividade}
             salvando={salvando}
+            erroGlobal={erro}
           />
         ) : null}
         {state.passo === 3 ? (

@@ -99,6 +99,20 @@ export function obterOrcamentoPortal(id: number): Promise<OrcamentoAdminDetalhe>
   return api.get(`/portal/orcamentos/${id}`);
 }
 
+export function aprovarOrcamentoPortal(
+  id: number,
+): Promise<{ orcamento: { id: number; status: string }; obra: { id: number; codigo: string } }> {
+  return api.post(`/portal/orcamentos/${id}/aprovar`);
+}
+
+export function recusarOrcamentoPortal(
+  id: number,
+  motivo?: string,
+): Promise<OrcamentoAdminDetalhe> {
+  const payload = motivo?.trim() ? { motivo: motivo.trim() } : {};
+  return api.post(`/portal/orcamentos/${id}/recusar`, payload);
+}
+
 export function listarObrasPortal(): Promise<ObraPortalItem[]> {
   return api.get('/portal/obras');
 }

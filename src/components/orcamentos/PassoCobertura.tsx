@@ -35,6 +35,7 @@ interface Props {
   set: AtualizarEstado;
   onSalvar?: () => Promise<void> | void;
   salvando?: boolean;
+  erroGlobal?: string | null;
 }
 
 /**
@@ -52,7 +53,7 @@ interface Props {
  * Todos os selects são independentes entre si (cada um lista todas as
  * opções ativas, sem filtragem cruzada nem bloqueio).
  */
-export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
+export function PassoCobertura({ state, set, onSalvar, salvando, erroGlobal }: Props) {
   const [cascata, setCascata] = useState<ValorCascata>(() => ({
     ...cascataVazia(),
     subServicoId: state.servicoMarketingId ?? null,
@@ -62,6 +63,11 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const [editandoKey, setEditandoKey] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<LinhaForm>>({});
+  const [errosEdicao, setErrosEdicao] = useState<{
+    verbo?: string;
+    objeto?: string;
+  }>({});
+  const [erroSalvarAtividade, setErroSalvarAtividade] = useState<string | null>(null);
   const [errosValidacao, setErrosValidacao] = useState<{
     etapa?: string;
     subServico?: string;
@@ -136,6 +142,8 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
 
   const iniciarEdicao = (aIdx: number, lIdx: number, l: LinhaForm) => {
     setEditandoKey(`${aIdx}:${lIdx}`);
+    setErrosEdicao({});
+    setErroSalvarAtividade(null);
     setEditForm({
       titulo: l.titulo ?? '',
       verboId: l.verboId,
@@ -151,14 +159,31 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
   };
 
   const salvarEdicao = (aIdx: number, lIdx: number) => {
+    const novosErros: { verbo?: string; objeto?: string } = {};
+    if (!editForm.verboId) {
+      novosErros.verbo = 'Selecione a ação';
+    }
+    if (!editForm.objetoId) {
+      novosErros.objeto = 'Selecione o objeto';
+    }
+
+    if (Object.keys(novosErros).length > 0) {
+      setErrosEdicao(novosErros);
+      return;
+    }
+
+    setErrosEdicao({});
     set((s) => atualizarLinha(s, aIdx, lIdx, editForm));
     setEditandoKey(null);
     setEditForm({});
+    setErroSalvarAtividade(null);
   };
 
   const cancelarEdicao = () => {
     setEditandoKey(null);
     setEditForm({});
+    setErrosEdicao({});
+    setErroSalvarAtividade(null);
   };
 
   const nomeDeOpcao = (lista: OpcaoCascata[], id: number | null) =>
@@ -410,12 +435,23 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
                                     </select>
                                   </label>
                                   <label className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-muted-foreground">Ação *</span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      Ação <span className="text-destructive font-bold">*</span>
+                                    </span>
                                     <select
-                                      className={`${selectClasses} uppercase`}
+                                      className={`${selectClasses} uppercase ${
+                                        errosEdicao.verbo
+                                          ? 'border-destructive focus-visible:ring-destructive'
+                                          : ''
+                                      }`}
                                       value={editForm.verboId ?? ''}
                                       onChange={(e) => {
                                         const id = Number(e.target.value);
+                                        setErrosEdicao((prev) => {
+                                          const next = { ...prev };
+                                          delete next.verbo;
+                                          return next;
+                                        });
                                         setEditForm((f) => ({
                                           ...f,
                                           verboId: id,
@@ -428,14 +464,30 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
                                         <option key={v.id} value={v.id} className="uppercase">{v.nome.toUpperCase()}</option>
                                       ))}
                                     </select>
+                                    {errosEdicao.verbo ? (
+                                      <span className="text-[10px] text-destructive">
+                                        {errosEdicao.verbo}
+                                      </span>
+                                    ) : null}
                                   </label>
                                   <label className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-muted-foreground">Objeto *</span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      Objeto <span className="text-destructive font-bold">*</span>
+                                    </span>
                                     <select
-                                      className={`${selectClasses} uppercase`}
+                                      className={`${selectClasses} uppercase ${
+                                        errosEdicao.objeto
+                                          ? 'border-destructive focus-visible:ring-destructive'
+                                          : ''
+                                      }`}
                                       value={editForm.objetoId ?? ''}
                                       onChange={(e) => {
                                         const id = Number(e.target.value);
+                                        setErrosEdicao((prev) => {
+                                          const next = { ...prev };
+                                          delete next.objeto;
+                                          return next;
+                                        });
                                         setEditForm((f) => ({
                                           ...f,
                                           objetoId: id,
@@ -448,6 +500,11 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
                                         <option key={o.id} value={o.id} className="uppercase">{o.nome.toUpperCase()}</option>
                                       ))}
                                     </select>
+                                    {errosEdicao.objeto ? (
+                                      <span className="text-[10px] text-destructive">
+                                        {errosEdicao.objeto}
+                                      </span>
+                                    ) : null}
                                   </label>
                                   <label className="flex flex-col gap-1">
                                     <span className="text-[10px] text-muted-foreground">Característica</span>
@@ -481,22 +538,26 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
                                     }
                                   />
                                 </label>
-                                <div className="flex gap-2">
+                                <div className="flex items-center gap-3">
                                   <button
                                     type="button"
-                                    className="text-xs font-medium text-primary hover:underline"
-                                    disabled={!editForm.verboId || !editForm.objetoId}
+                                    className="rounded bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                                     onClick={() => salvarEdicao(aIdx, lIdx)}
                                   >
-                                    salvar
+                                    Salvar alterações
                                   </button>
                                   <button
                                     type="button"
                                     className="text-xs text-muted-foreground hover:underline"
                                     onClick={cancelarEdicao}
                                   >
-                                    cancelar
+                                    Cancelar
                                   </button>
+                                  {Object.keys(errosEdicao).length > 0 ? (
+                                    <span className="text-xs font-medium text-destructive">
+                                      Preencha os campos obrigatórios (*).
+                                    </span>
+                                  ) : null}
                                 </div>
                               </div>
                             ) : (
@@ -677,16 +738,47 @@ export function PassoCobertura({ state, set, onSalvar, salvando }: Props) {
                             {brl(subtotalAtividade)}
                           </span>
                         </span>
-                        {onSalvar ? (
-                          <button
-                            type="button"
-                            className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                            onClick={() => void onSalvar()}
-                            disabled={salvando}
-                          >
-                            {salvando ? 'Salvando…' : 'Salvar'}
-                          </button>
-                        ) : null}
+                        <div className="flex flex-col items-end gap-1.5 sm:flex-row sm:items-center">
+                          {erroSalvarAtividade || erroGlobal ? (
+                            <span className="text-xs font-semibold text-destructive">
+                              {erroSalvarAtividade || erroGlobal}
+                            </span>
+                          ) : null}
+                          {onSalvar ? (
+                            <button
+                              type="button"
+                              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                              onClick={async () => {
+                                if (editandoKey) {
+                                  // Se houver uma linha em edição nessa atividade ou outra
+                                  const [editAIdxStr, editLIdxStr] = editandoKey.split(':');
+                                  const editAIdx = Number(editAIdxStr);
+                                  const editLIdx = Number(editLIdxStr);
+                                  if (editAIdx === aIdx) {
+                                    if (!editForm.verboId || !editForm.objetoId) {
+                                      setErrosEdicao({
+                                        ...(!editForm.verboId ? { verbo: 'Selecione a ação' } : {}),
+                                        ...(!editForm.objetoId ? { objeto: 'Selecione o objeto' } : {}),
+                                      });
+                                      setErroSalvarAtividade('Preencha os campos obrigatórios (*) da linha em edição antes de salvar.');
+                                      return;
+                                    }
+                                    // Salva a edição da linha antes de persistir
+                                    salvarEdicao(editAIdx, editLIdx);
+                                  } else {
+                                    setErroSalvarAtividade('Conclua ou cancele a linha em edição antes de salvar.');
+                                    return;
+                                  }
+                                }
+                                setErroSalvarAtividade(null);
+                                await onSalvar();
+                              }}
+                              disabled={salvando}
+                            >
+                              {salvando ? 'Salvando…' : 'Salvar'}
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
                       </>
                     ) : null}

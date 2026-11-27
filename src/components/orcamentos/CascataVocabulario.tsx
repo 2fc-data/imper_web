@@ -236,7 +236,9 @@ export function CascataVocabulario({
       {soTermos ? null : (
         <>
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Etapa *</span>
+            <span className={labelClasses}>
+              Etapa <span className="text-destructive font-bold">*</span>
+            </span>
             <select
               className={`${selectClasses} ${erros?.etapa ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.etapaId ?? ''}
@@ -256,7 +258,8 @@ export function CascataVocabulario({
 
           <label className="flex flex-col gap-1">
             <span className={labelClasses}>
-              {usarServicosMarketing ? 'Serviço' : 'Sub-serviço'} *
+              {usarServicosMarketing ? 'Serviço' : 'Sub-serviço'}{' '}
+              <span className="text-destructive font-bold">*</span>
             </span>
             <select
               className={`${selectClasses} ${erros?.subServico ? 'border-destructive focus-visible:ring-destructive' : ''}`}
@@ -308,7 +311,9 @@ export function CascataVocabulario({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Ação *</span>
+            <span className={labelClasses}>
+              Ação <span className="text-destructive font-bold">*</span>
+            </span>
             <select
               className={`${selectClasses} uppercase ${erros?.verbo ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.verboId ?? ''}
@@ -327,7 +332,9 @@ export function CascataVocabulario({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Objeto *</span>
+            <span className={labelClasses}>
+              Objeto <span className="text-destructive font-bold">*</span>
+            </span>
             <select
               className={`${selectClasses} uppercase ${erros?.objeto ? 'border-destructive focus-visible:ring-destructive' : ''}`}
               value={valor.objetoId ?? ''}

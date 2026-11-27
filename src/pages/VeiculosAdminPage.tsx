@@ -285,7 +285,7 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
   const [statusFiltro, setStatusFiltro] = useState<number | ''>('');
   const [tipoFiltro, setTipoFiltro] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
-  const [veiculo, setVeiculo] = useState<number | undefined>(undefined);
+  const [veiculo, setVeiculo] = useState<number | ''>('');
   const [editando, setEditando] = useState<VeiculoItem | null>(null);
   const [form, setForm] = useState<VeiculoInput>(emptyForm);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | null>(null);
@@ -542,10 +542,10 @@ export default function VeiculosAdminPage({ view, onViewChange }: Props) {
           <div className="flex flex-col gap-3 sm:flex-row">
             <select
               value={veiculo}
-              onChange={(e) => setVeiculo(e.target.value ? Number(e.target.value) : undefined)}
+              onChange={(e) => setVeiculo(e.target.value ? Number(e.target.value) : '')}
               className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
             >
-              <option value="" disabled>Todos os veículos</option>
+              <option value="">Todos os veículos</option>
               {veiculos.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.nome} — {v.placa}

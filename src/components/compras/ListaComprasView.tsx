@@ -1049,14 +1049,15 @@ export function ListaComprasView({
   }
 
   function conteudoAprovacao() {
-    const acao = podeAprovarPerm && podeAprovar(modo);
+    const usuarioEhCriador = Boolean(user?.id && lista?.enviadoPor?.id === user.id);
+    const acao = podeAprovarPerm && podeAprovar(modo) && !usuarioEhCriador;
     return (
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm text-muted-foreground">
             {lista?.itens.length ?? 0} item(ns)
           </span>
-          {acao && (
+          {acao ? (
             <div className="flex flex-wrap gap-2">
               <Button onClick={aprovar} disabled={ocupado || !lista}>
                 Aprovar
@@ -1069,7 +1070,11 @@ export function ListaComprasView({
                 Recusar
               </Button>
             </div>
-          )}
+          ) : usuarioEhCriador && podeAprovar(modo) ? (
+            <span className="text-xs italic text-amber-600 dark:text-amber-400">
+              Você enviou esta lista. A aprovação deve ser feita por outro administrador.
+            </span>
+          ) : null}
         </div>
 
         {tabelaItens()}

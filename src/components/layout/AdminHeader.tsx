@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { ThemeToggle } from '../../theme/ThemeToggle';
 import { PerfilSwitcher } from '../PerfilSwitcher';
+import { AvisosMenu } from './AvisosMenu';
 
 interface AdminHeaderProps {
   onToggleSidebar: () => void;
@@ -71,6 +72,7 @@ export function AdminHeader({
 
       <div className="ml-auto flex items-center gap-2">
         <PerfilSwitcher />
+        <AvisosMenu />
         <ThemeToggle />
         {timeLeft !== undefined && sessionDuration !== undefined && (
           <span

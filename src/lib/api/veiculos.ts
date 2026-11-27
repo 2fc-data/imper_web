@@ -122,6 +122,10 @@ export interface ManutencaoVeiculoItem {
   veiculo?: { id: number; codigo: string; nome: string; placa: string };
   tipo?: LookupItem | null;
   responsavelManutencao?: { id: number; nome: string } | null;
+  criadoPor?: { id: number; nome: string } | null;
+  aprovadoPor?: { id: number; nome: string } | null;
+  decididoEm?: string | null;
+  motivoDecisao?: string | null;
 }
 
 export interface ManutencaoVeiculoInput {
@@ -316,6 +320,12 @@ export async function listarManutencoesVeiculos(params?: {
   );
 }
 
+export async function listarManutencoesVeiculosPendentesAprovacao(): Promise<ManutencaoVeiculoItem[]> {
+  return api.get<ManutencaoVeiculoItem[]>('/manutencoes-veiculos/pendentes-aprovacao');
+}
+
+export const listarManutencoesPendentesAprovacao = listarManutencoesVeiculosPendentesAprovacao;
+
 export async function buscarManutencoesVeiculosLookups(): Promise<ManutencoesVeiculosLookups> {
   return api.get<ManutencoesVeiculosLookups>('/manutencoes-veiculos/lookups');
 }
@@ -324,6 +334,19 @@ export async function criarManutencaoVeiculo(
   input: ManutencaoVeiculoInput,
 ): Promise<ManutencaoVeiculoItem> {
   return api.post<ManutencaoVeiculoItem>('/manutencoes-veiculos', input);
+}
+
+export async function aprovarManutencaoVeiculo(
+  id: number,
+): Promise<ManutencaoVeiculoItem> {
+  return api.post<ManutencaoVeiculoItem>(`/manutencoes-veiculos/${id}/aprovar`);
+}
+
+export async function recusarManutencaoVeiculo(
+  id: number,
+  motivo: string,
+): Promise<ManutencaoVeiculoItem> {
+  return api.post<ManutencaoVeiculoItem>(`/manutencoes-veiculos/${id}/recusar`, { motivo });
 }
 
 export async function atualizarManutencaoVeiculo(

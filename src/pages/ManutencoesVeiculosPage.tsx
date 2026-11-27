@@ -1,4 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { podeAprovarManutencao } from '../components/layout/avisos';
+import { Dialog } from '../components/ui/dialog';
 import { ManutencoesVeiculosAnalyticsDashboard } from '../components/analytics/ManutencoesVeiculosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import {
@@ -13,9 +16,11 @@ import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
 import { PecasEditor } from '../components/manutencao/PecasEditor';
 import {
+  aprovarManutencaoVeiculo,
   atualizarManutencaoVeiculo,
   criarManutencaoVeiculo,
   buscarManutencoesVeiculosLookups,
+  recusarManutencaoVeiculo,
   type ManutencaoVeiculoInput,
   type ManutencaoVeiculoItem,
   listarManutencoesVeiculos,
@@ -42,6 +47,7 @@ const STATUS_LABEL: Record<string, string> = {
   EM_ANDAMENTO: 'Em andamento',
   CONCLUIDA: 'Concluída',
   CANCELADA: 'Cancelada',
+  AGUARDANDO_APROVACAO: 'Aguardando aprovação',
 };
 
 function BadgeStatus({ status }: { status: string }) {
@@ -50,6 +56,7 @@ function BadgeStatus({ status }: { status: string }) {
     EM_ANDAMENTO: 'bg-sky-500/10 text-sky-600',
     CONCLUIDA: 'bg-emerald-500/10 text-emerald-600',
     CANCELADA: 'bg-muted text-muted-foreground',
+    AGUARDANDO_APROVACAO: 'bg-amber-500/10 text-amber-600',
   };
   return (
     <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', classes[status] ?? 'bg-muted')}>
@@ -69,7 +76,6 @@ function formVazio(): ManutencaoVeiculoInput {
     custoMaoDeObra: undefined,
     dataSaida: '',
     proximaManutencao: '',
-    status: '',
     responsavelManutencaoId: undefined,
   };
 }
@@ -85,6 +91,9 @@ export default function ManutencoesVeiculosPage({
   const viewAtiva = propViewAtiva ?? internalView;
   const setViewAtiva = propOnNavegar ?? setInternalView;
 
+  const { user } = useAuth();
+  const podeAprovar = podeAprovarManutencao(user);
+
   const [mostrarForm, setMostrarForm] = useState(false);
   const [manutencoes, setManutencoes] = useState<ManutencaoVeiculoItem[]>([]);
   const [lookups, setLookups] = useState<ManutencoesVeiculosLookups | null>(null);
@@ -94,6 +103,9 @@ export default function ManutencoesVeiculosPage({
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState<ManutencaoVeiculoItem | null>(null);
   const [form, setForm] = useState<ManutencaoVeiculoInput>(formVazio);
+  const [processandoId, setProcessandoId] = useState<number | null>(null);
+  const [recusandoItem, setRecusandoItem] = useState<ManutencaoVeiculoItem | null>(null);
+  const [motivoRecusa, setMotivoRecusa] = useState('');
   const carregar = useCallback(async () => {
     setError(null);
     try {
@@ -155,7 +167,6 @@ export default function ManutencoesVeiculosPage({
       custoMaoDeObra: paraNumeroMoeda(m.custoMaoDeObra) ?? undefined,
       dataSaida: toLocalDate(m.dataSaida),
       proximaManutencao: toLocalDate(m.proximaManutencao),
-      status: m.status,
       responsavelManutencaoId: m.responsavelManutencaoId ?? undefined,
     });
     setError(null);
@@ -187,7 +198,6 @@ export default function ManutencoesVeiculosPage({
         proximaManutencao: form.proximaManutencao
           ? fromLocalDate(form.proximaManutencao)
           : undefined,
-        status: form.status,
         responsavelManutencaoId: form.responsavelManutencaoId,
       };
       if (editando) {
@@ -220,6 +230,40 @@ export default function ManutencoesVeiculosPage({
       setManutencoes((prev) => prev.map((x) => (x.id === atualizado.id ? atualizado : x)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao atualizar status');
+    }
+  }
+
+  async function handleAprovar(id: number) {
+    setProcessandoId(id);
+    setError(null);
+    try {
+      const atualizado = await aprovarManutencaoVeiculo(id);
+      setManutencoes((prev) => prev.map((x) => (x.id === atualizado.id ? atualizado : x)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao aprovar manutenção');
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function confirmarRecusa() {
+    if (!recusandoItem) return;
+    const motivo = motivoRecusa.trim();
+    if (motivo.length < 5) {
+      setError('O motivo deve ter pelo menos 5 caracteres.');
+      return;
+    }
+    setProcessandoId(recusandoItem.id);
+    setError(null);
+    try {
+      const atualizado = await recusarManutencaoVeiculo(recusandoItem.id, motivo);
+      setManutencoes((prev) => prev.map((x) => (x.id === atualizado.id ? atualizado : x)));
+      setRecusandoItem(null);
+      setMotivoRecusa('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao recusar manutenção');
+    } finally {
+      setProcessandoId(null);
     }
   }
 
@@ -294,21 +338,6 @@ export default function ManutencoesVeiculosPage({
                 value={form.data}
                 onChange={(e) => setForm({ ...form, data: e.target.value })}
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="status">Status</Label>
-              <select
-                id="status"
-                required
-                value={form.status ?? ''}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className={selectClasses}
-              >
-                <option value="" disabled>Selecione o status</option>
-                {Object.entries(STATUS_LABEL).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="dataSaida">Data de saída da oficina</Label>
@@ -424,7 +453,7 @@ export default function ManutencoesVeiculosPage({
             <div className="flex flex-1 flex-col gap-3 sm:flex-row">
               <select
                 value={filtroVeiculo}
-                onChange={(e) => setFiltroVeiculo(e.target.value ? Number(e.target.value) : '')}
+                onChange={(e) => setFiltroVeiculo(e.target.value)}
                 className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
               >
                 <option value="">Todos os veículos</option>
@@ -440,8 +469,8 @@ export default function ManutencoesVeiculosPage({
                 className="rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
               >
                 <option value="">TODOS OS STATUS</option>
-                {(lookups?.statusVeiculos ?? []).map((s) => (
-                  <option key={s.id} value={s.id}>{s.nome}</option>
+                {Object.entries(STATUS_LABEL).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
                 ))}
               </select>
             </div>
@@ -483,8 +512,42 @@ export default function ManutencoesVeiculosPage({
                     {m.responsavelManutencao && (
                       <span> · Motorista: {m.responsavelManutencao.nome}</span>
                     )}
+                    {m.criadoPor && (
+                      <span> · Criado por: {m.criadoPor.nome}</span>
+                    )}
+                    {m.aprovadoPor && (
+                      <span> · Aprovado por: {m.aprovadoPor.nome}</span>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
+                    {m.status === 'AGUARDANDO_APROVACAO' && podeAprovar && user?.id !== m.criadoPor?.id && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
+                          disabled={processandoId === m.id}
+                          onClick={() => handleAprovar(m.id)}
+                        >
+                          {processandoId === m.id ? 'Aprovando...' : 'Aprovar'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10"
+                          disabled={processandoId === m.id}
+                          onClick={() => {
+                            setError(null);
+                            setMotivoRecusa('');
+                            setRecusandoItem(m);
+                          }}
+                        >
+                          Recusar
+                        </Button>
+                      </>
+                    )}
                     {m.status === 'PENDENTE' && (
                       <Button type="button" variant="outline" size="sm" onClick={() => handleMudarStatus(m, 'EM_ANDAMENTO')}>
                         Iniciar
@@ -506,6 +569,55 @@ export default function ManutencoesVeiculosPage({
           </div>
         </div>
       )}
+
+      {/* Dialog para motivo de recusa */}
+      <Dialog
+        open={recusandoItem !== null}
+        onClose={() => setRecusandoItem(null)}
+        title="Recusar Manutenção de Frota"
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setRecusandoItem(null)}
+              disabled={processandoId !== null}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmarRecusa}
+              disabled={processandoId !== null || motivoRecusa.trim().length < 5}
+            >
+              {processandoId !== null ? 'Recusando...' : 'Confirmar Recusa'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Informe o motivo da recusa para a manutenção do veículo{' '}
+            <strong>{recusandoItem?.veiculo?.nome} ({recusandoItem?.veiculo?.placa})</strong>.
+            O solicitante receberá uma notificação com esta justificativa.
+          </p>
+          <div className="space-y-1">
+            <label htmlFor="motivo-recusa-pagina" className="text-xs font-medium">
+              Motivo da recusa (mínimo 5 caracteres) *
+            </label>
+            <textarea
+              id="motivo-recusa-pagina"
+              rows={3}
+              className="w-full rounded-lg border border-input bg-background p-2.5 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
+              placeholder="Ex.: Manutenção postergada para o próximo mês devido a restrição orçamentária."
+              value={motivoRecusa}
+              onChange={(e) => setMotivoRecusa(e.target.value)}
+            />
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

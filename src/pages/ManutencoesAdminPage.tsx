@@ -1,4 +1,7 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
+import { podeAprovarManutencaoEquipamento } from '../components/layout/avisos';
+import { Dialog } from '../components/ui/dialog';
 import { ManutencoesEquipamentosAnalyticsDashboard } from '../components/analytics/ManutencoesEquipamentosAnalyticsDashboard';
 import { Button } from '../components/ui/button';
 import { SearchInput } from '../components/ui/search-input';
@@ -14,6 +17,7 @@ import { InputMoeda } from '../components/ui/input-moeda';
 import { Label } from '../components/ui/label';
 import { PecasEditor } from '../components/manutencao/PecasEditor';
 import {
+  aprovarManutencao,
   atualizarManutencao,
   criarManutencao,
   type EquipamentoItem,
@@ -24,6 +28,7 @@ import {
   type ManutencaoInput,
   type ManutencaoItem,
   type PecaManutencaoInput,
+  recusarManutencao,
   type StatusManutencao,
 } from '../lib/api';
 import {
@@ -45,6 +50,7 @@ const STATUS_LABEL: Record<StatusManutencao, string> = {
   EM_ANDAMENTO: 'Em andamento',
   CONCLUIDA: 'Concluída',
   CANCELADA: 'Cancelada',
+  AGUARDANDO_APROVACAO: 'Aguardando aprovação',
 };
 
 export function BadgeStatusManutencao({
@@ -57,6 +63,7 @@ export function BadgeStatusManutencao({
     EM_ANDAMENTO: 'bg-sky-500/10 text-sky-600',
     CONCLUIDA: 'bg-emerald-500/10 text-emerald-600',
     CANCELADA: 'bg-muted text-muted-foreground',
+    AGUARDANDO_APROVACAO: 'bg-amber-500/10 text-amber-600',
   };
   return (
     <span
@@ -233,6 +240,9 @@ export default function ManutencoesAdminPage({
   viewAtiva?: 'analises' | 'lista' | 'novo';
   onNavegar?: (v: 'analises' | 'lista' | 'novo') => void;
 }) {
+  const { user } = useAuth();
+  const podeAprovar = podeAprovarManutencaoEquipamento(user);
+
   const [manutencoes, setManutencoes] = useState<ManutencaoItem[]>([]);
   const [equipamentos, setEquipamentos] = useState<EquipamentoItem[]>([]);
   const [tipos, setTipos] = useState<{ id: number; nome: string }[]>([]);
@@ -247,6 +257,9 @@ export default function ManutencoesAdminPage({
     null,
   );
   const [excluindo, setExcluindo] = useState<number | null>(null);
+  const [processandoId, setProcessandoId] = useState<number | null>(null);
+  const [recusandoItem, setRecusandoItem] = useState<ManutencaoItem | null>(null);
+  const [motivoRecusa, setMotivoRecusa] = useState('');
 
   const carregar = useCallback(async () => {
     setError(null);
@@ -385,8 +398,50 @@ export default function ManutencoesAdminPage({
       );
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Falha ao atualizar manutenção',
+        err instanceof Error ? err.message : 'Falha ao atualizar status',
       );
+    }
+  }
+
+  async function handleAprovar(id: number) {
+    setProcessandoId(id);
+    setError(null);
+    try {
+      const atualizado = await aprovarManutencao(id);
+      setManutencoes((prev) =>
+        prev.map((x) => (x.id === atualizado.id ? atualizado : x)),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Falha ao aprovar manutenção',
+      );
+    } finally {
+      setProcessandoId(null);
+    }
+  }
+
+  async function confirmarRecusa() {
+    if (!recusandoItem) return;
+    const motivo = motivoRecusa.trim();
+    if (motivo.length < 5) {
+      setError('O motivo deve ter pelo menos 5 caracteres.');
+      return;
+    }
+    setProcessandoId(recusandoItem.id);
+    setError(null);
+    try {
+      const atualizado = await recusarManutencao(recusandoItem.id, motivo);
+      setManutencoes((prev) =>
+        prev.map((x) => (x.id === atualizado.id ? atualizado : x)),
+      );
+      setRecusandoItem(null);
+      setMotivoRecusa('');
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Falha ao recusar manutenção',
+      );
+    } finally {
+      setProcessandoId(null);
     }
   }
 
@@ -816,7 +871,7 @@ export default function ManutencoesAdminPage({
         >
           <option value="">TODOS OS STATUS</option>
           {(
-            ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'] as const
+            ['PENDENTE', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA', 'AGUARDANDO_APROVACAO'] as const
           ).map((s) => (
             <option key={s} value={s}>
               {STATUS_LABEL[s]}
@@ -854,6 +909,12 @@ export default function ManutencoesAdminPage({
                   {m.responsavelManutencao && (
                     <span>Resp.: {m.responsavelManutencao.nome} · </span>
                   )}
+                  {m.criadoPor && (
+                    <span>Criado por: {m.criadoPor.nome} · </span>
+                  )}
+                  {m.aprovadoPor && (
+                    <span>Aprovado por: {m.aprovadoPor.nome} · </span>
+                  )}
                   {(m.pecas && m.pecas.length > 0) || Number(m.custoPecas ?? 0) > 0 ? (
                     <span>
                       Peças: {formatarValor(m.custoPecas)} · Mão de obra: {formatarValor(m.custoMaoDeObra)} · Total: {formatarValor(m.custo)}
@@ -870,6 +931,34 @@ export default function ManutencoesAdminPage({
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  {m.status === 'AGUARDANDO_APROVACAO' && podeAprovar && user?.id !== m.criadoPor?.id && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
+                        disabled={processandoId === m.id}
+                        onClick={() => handleAprovar(m.id)}
+                      >
+                        {processandoId === m.id ? 'Aprovando...' : 'Aprovar'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10"
+                        disabled={processandoId === m.id}
+                        onClick={() => {
+                          setError(null);
+                          setMotivoRecusa('');
+                          setRecusandoItem(m);
+                        }}
+                      >
+                        Recusar
+                      </Button>
+                    </>
+                  )}
                   {m.status === 'PENDENTE' && (
                     <Button
                       type="button"
@@ -951,6 +1040,57 @@ export default function ManutencoesAdminPage({
           </p>
         )}
       </div>
+
+      {/* Dialog para motivo de recusa de manutenção de equipamento */}
+      <Dialog
+        open={recusandoItem !== null}
+        onClose={() => setRecusandoItem(null)}
+        title="Recusar Manutenção de Equipamento"
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setRecusandoItem(null)}
+              disabled={processandoId !== null}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={confirmarRecusa}
+              disabled={processandoId !== null || motivoRecusa.trim().length < 5}
+            >
+              {processandoId !== null ? 'Recusando...' : 'Confirmar Recusa'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Informe o motivo da recusa para a manutenção do equipamento{' '}
+            <strong>
+              {recusandoItem?.equipamento?.codigo} ({recusandoItem?.equipamento?.descricao})
+            </strong>.
+            O solicitante receberá uma notificação com esta justificativa.
+          </p>
+          <div className="space-y-1">
+            <label htmlFor="motivo-recusa-equip" className="text-xs font-medium">
+              Motivo da recusa (mínimo 5 caracteres) *
+            </label>
+            <textarea
+              id="motivo-recusa-equip"
+              rows={3}
+              className="w-full rounded-lg border border-input bg-background p-2.5 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500"
+              placeholder="Ex.: Manutenção postergada para o próximo mês devido a restrição orçamentária."
+              value={motivoRecusa}
+              onChange={(e) => setMotivoRecusa(e.target.value)}
+            />
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

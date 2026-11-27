@@ -166,7 +166,9 @@ export function PassoFichaResumo({ state, set, codigo }: Props) {
         <h3 className="mb-3 text-sm font-semibold">Validade da proposta</h3>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
-            <span className={labelClasses}>Validade *</span>
+            <span className={labelClasses}>
+              Validade <span className="text-destructive font-bold">*</span>
+            </span>
             <select
               className={selectClasses}
               value={diasSelecionados ?? ''}

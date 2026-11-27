@@ -119,6 +119,10 @@ export interface ComprarItemInput {
   dataCompra?: string | null;
 }
 
+export async function listarListasComprasPendentesAprovacao(): Promise<ListaCompraDto[]> {
+  return api.get<ListaCompraDto[]>('/listas-compras/pendentes-aprovacao');
+}
+
 export async function salvarItensListaCompras(
   tipo: TipoListaCompra,
   setor: SetorCompra,

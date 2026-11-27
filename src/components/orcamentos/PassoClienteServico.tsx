@@ -145,7 +145,9 @@ export function PassoClienteServico({
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1">
-        <span className={labelClasses}>Atendimento *</span>
+        <span className={labelClasses}>
+          Atendimento <span className="text-destructive font-bold">*</span>
+        </span>
         <select
           className={selectClasses}
           value={state.atendimentoId ?? ''}
